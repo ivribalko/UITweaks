@@ -2,6 +2,8 @@ local addonName, addonTable = ...
 local L = addonTable
 
 local UITweaks = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0")
+local AceConfig = LibStub("AceConfig-3.0")
+local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 
 local defaults = {
     profile = {
@@ -106,6 +108,18 @@ function UITweaks:SetSuppressTalentAlert(enabled)
     self:HookTalentAlertFrames()
 end
 
+function UITweaks:OpenOptionsPanel()
+    if InterfaceOptionsFrame_OpenToCategory and self.optionsFrame then
+        InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
+        InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
+        return
+    end
+
+    if AceConfigDialog then
+        AceConfigDialog:Open(addonName)
+    end
+end
+
 function UITweaks:EnsureTalentAlertHooks()
     if not self.microButtonAlertHooked and MainMenuMicroButton_ShowMicroAlert then
         hooksecurefunc("MainMenuMicroButton_ShowMicroAlert", function(alertFrame)
@@ -197,11 +211,21 @@ function UITweaks:OnInitialize()
                 end,
                 order = 3,
             },
+            reloadUI = {
+                type = "execute",
+                name = "Reload UI",
+                desc = "Reload the interface to immediately apply changes.",
+                width = "full",
+                func = function()
+                    ReloadUI()
+                end,
+                order = 4,
+            },
         },
     }
 
-    LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
-    LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, "UI Tweaks")
+    AceConfig:RegisterOptionsTable(addonName, options)
+    self.optionsFrame = AceConfigDialog:AddToBlizOptions(addonName, "UI Tweaks")
 end
 
 function UITweaks:OnEnable()
@@ -209,6 +233,14 @@ function UITweaks:OnEnable()
     self:ApplyChatLineFade()
     self:HookTalentAlertFrames()
     self:RegisterEvent("ADDON_LOADED")
+
+    if C_Timer and C_Timer.After then
+        C_Timer.After(1, function()
+            self:OpenOptionsPanel()
+        end)
+    else
+        self:OpenOptionsPanel()
+    end
 end
 
 function UITweaks:ADDON_LOADED(event, addonName)
