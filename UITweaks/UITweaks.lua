@@ -648,8 +648,8 @@ function UITweaks:OnInitialize()
             },
             hidePlayerFrameOutOfCombat = {
                 type = "toggle",
-                name = "Hide Player Frame Out of Combat",
-                desc = "Hide the player unit frame when you are not in combat.",
+                name = "Hide Player Frame Out of Combat (5s Delay)",
+                desc = "Hide the player unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the damage meter/objective tracker).",
                 width = "full",
                 get = function()
                     return self.db.profile.hidePlayerFrameOutOfCombat
@@ -663,8 +663,8 @@ function UITweaks:OnInitialize()
             },
             hideDamageMeter = {
                 type = "toggle",
-                name = "Hide Damage Meter Out of Combat with a Delay",
-                desc = "Hide the built-in damage meter frame five seconds after you leave combat, with a delay before hiding.",
+                name = "Hide Damage Meter Out of Combat (5s Delay)",
+                desc = "Hide the built-in damage meter frame five seconds after you leave combat (shares the delay with the player frame/objective tracker).",
                 width = "full",
                 get = function()
                     return self.db.profile.hideDamageMeter
@@ -735,8 +735,8 @@ function UITweaks:OnInitialize()
             },
             collapseObjectiveTrackerInCombat = {
                 type = "toggle",
-                name = "Collapse Objective Tracker In Combat",
-                desc = "Collapse the quest/objective tracker during combat and expand afterwards.",
+                name = "Collapse Objective Tracker In Combat (5s Delay)",
+                desc = "Collapse the quest/objective tracker during combat and re-expand it five seconds after combat ends (shares the delay with the damage meter/player frame).",
                 width = "full",
                 get = function()
                     return self.db.profile.collapseObjectiveTrackerInCombat
