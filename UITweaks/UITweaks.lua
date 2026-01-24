@@ -436,7 +436,7 @@ function UITweaks:OnInitialize()
                 args = {
                     chatLineFadeEnabled = {
                         type = "toggle",
-                        name = "Enable Fade Override",
+                        name = "Enable",
                         desc = "Override how long chat lines remain visible before fading.",
                         width = "half",
                         get = function() return self.db.profile.chatLineFadeEnabled end,
@@ -482,7 +482,7 @@ function UITweaks:OnInitialize()
                 args = {
                     chatFontOverrideEnabled = {
                         type = "toggle",
-                        name = "Enable Font Override",
+                        name = "Enable",
                         desc = "Override the chat window font size for all tabs.",
                         width = "half",
                         get = function()
