@@ -12,6 +12,7 @@ local defaults = {
         suppressTalentAlert = false,
         collapseObjectiveTrackerInCombat = false,
         collapseBuffFrame = false,
+        hidePlayerFrameOutOfCombat = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -289,6 +290,28 @@ function UITweaks:ApplyBuffFrameCollapse(retry)
     end
 end
 
+function UITweaks:UpdatePlayerFrameVisibility(forceShow)
+    if not PlayerFrame then
+        return
+    end
+
+    if self.db.profile.hidePlayerFrameOutOfCombat then
+        if not self.playerFrameVisibilityDriver then
+            RegisterStateDriver(PlayerFrame, "visibility", "[combat] show; hide")
+            self.playerFrameVisibilityDriver = true
+        end
+        PlayerFrame:Show()
+    else
+        if self.playerFrameVisibilityDriver then
+            UnregisterStateDriver(PlayerFrame, "visibility")
+            self.playerFrameVisibilityDriver = nil
+        end
+        if forceShow then
+            PlayerFrame:Show()
+        end
+    end
+end
+
 function UITweaks:OpenOptionsPanel()
     if InterfaceOptionsFrame_OpenToCategory and self.optionsFrame then
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
@@ -462,6 +485,20 @@ function UITweaks:OnInitialize()
                 end,
                 order = 4,
             },
+            hidePlayerFrameOutOfCombat = {
+                type = "toggle",
+                name = "Hide Player Frame Out of Combat",
+                desc = "Hide the player unit frame when you are not in combat.",
+                width = "full",
+                get = function()
+                    return self.db.profile.hidePlayerFrameOutOfCombat
+                end,
+                set = function(_, val)
+                    self.db.profile.hidePlayerFrameOutOfCombat = val
+                    self:UpdatePlayerFrameVisibility(true)
+                end,
+                order = 5,
+            },
             collapseObjectiveTrackerInCombat = {
                 type = "toggle",
                 name = "Collapse Objective Tracker In Combat",
@@ -473,7 +510,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetCollapseObjectiveTrackerInCombat(val)
                 end,
-                order = 5,
+                order = 6,
             },
             reloadUI = {
                 type = "execute",
@@ -483,7 +520,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 6,
+                order = 7,
             },
         },
     }
@@ -498,6 +535,7 @@ function UITweaks:OnEnable()
     self:ApplyChatFontSize()
     self:HookTalentAlertFrames()
     self:ApplyBuffFrameCollapse()
+    self:UpdatePlayerFrameVisibility(true)
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -518,6 +556,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:HookTalentAlertFrames()
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameCollapse()
+        self:UpdatePlayerFrameVisibility(true)
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
     end
@@ -527,14 +566,17 @@ function UITweaks:PLAYER_REGEN_DISABLED()
     if self.db.profile.collapseObjectiveTrackerInCombat then
         self:CollapseTrackerIfNeeded()
     end
+    self:UpdatePlayerFrameVisibility(true)
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
     if self.db.profile.collapseObjectiveTrackerInCombat then
         self:ExpandTrackerIfNeeded()
     end
+    self:UpdatePlayerFrameVisibility()
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameCollapse()
+    self:UpdatePlayerFrameVisibility(true)
 end
