@@ -11,7 +11,7 @@ local defaults = {
         chatLineFadeSeconds = 5,
         suppressTalentAlert = false,
         collapseObjectiveTrackerInCombat = false,
-        collapseBuffFrame = false,
+        hideBuffFrame = false,
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
         hideDamageMeter = false,
@@ -249,12 +249,13 @@ function UITweaks:UpdateObjectiveTrackerState()
     end
 end
 
-local function collapseBuffFrame()
-    if not BuffFrame then return end
-    if BuffFrame.CollapseAndExpandButton and BuffFrame.SetBuffsExpandedState then
-        BuffFrame.CollapseAndExpandButton:SetChecked(true)
-        BuffFrame.CollapseAndExpandButton:UpdateOrientation()
-        BuffFrame:SetBuffsExpandedState(false)
+local function hideBuffFrame()
+    if not BuffFrame then
+        return
+    end
+    BuffFrame:Hide()
+    if BuffFrame.CollapseAndExpandButton then
+        BuffFrame.CollapseAndExpandButton:Hide()
     end
 end
 
@@ -271,18 +272,27 @@ local function ensureBuffFrameLoaded()
     end
 end
 
-function UITweaks:ApplyBuffFrameCollapse(retry)
+function UITweaks:ApplyBuffFrameHide(retry)
     if not ensureBuffFrameLoaded() or not BuffFrame then
         if not retry and C_Timer and C_Timer.After then
             C_Timer.After(0.5, function()
-                self:ApplyBuffFrameCollapse(true)
+                self:ApplyBuffFrameHide(true)
             end)
         end
         return
     end
 
-    if self.db.profile.collapseBuffFrame then
-        collapseBuffFrame()
+    if self.db.profile.hideBuffFrame then
+        if BuffFrame and not BuffFrame.UITweaksHooked then
+            -- Keep the buff frame hidden after UI refreshes.
+            BuffFrame:HookScript("OnShow", function()
+                if UITweaks.db and UITweaks.db.profile.hideBuffFrame then
+                    hideBuffFrame()
+                end
+            end)
+            BuffFrame.UITweaksHooked = true
+        end
+        hideBuffFrame()
     end
 end
 
@@ -728,13 +738,13 @@ function UITweaks:OnInitialize()
                     self:HookTalentAlertFrames()
                 end
             ),
-            collapseBuffFrame = toggleOption(
-                "collapseBuffFrame",
-                "Collapse Player Buffs (WIP)",
-                "Collapse the default player buff frame UI (work in progress).",
+            hideBuffFrame = toggleOption(
+                "hideBuffFrame",
+                "Hide Buff Frame",
+                "Hide the default player buff frame UI.",
                 3,
                 function()
-                    self:ApplyBuffFrameCollapse()
+                    self:ApplyBuffFrameHide()
                 end
             ),
             combatVisibility = {
@@ -872,7 +882,7 @@ function UITweaks:OnEnable()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
     self:HookTalentAlertFrames()
-    self:ApplyBuffFrameCollapse()
+    self:ApplyBuffFrameHide()
     self:ApplyVisibilityState(true)
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
@@ -896,7 +906,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
     if addonName == "Blizzard_TalentUI" or addonName == "Blizzard_PlayerSpells" then
         self:HookTalentAlertFrames()
     elseif addonName == "Blizzard_BuffFrame" then
-        self:ApplyBuffFrameCollapse()
+        self:ApplyBuffFrameHide()
         self:ApplyVisibilityState(true)
         self:ScheduleDelayedVisibilityUpdate()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
@@ -927,7 +937,7 @@ function UITweaks:PLAYER_REGEN_ENABLED()
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
-    self:ApplyBuffFrameCollapse()
+    self:ApplyBuffFrameHide()
     self:ApplyVisibilityState(true)
     self:ScheduleDelayedVisibilityUpdate()
 end
