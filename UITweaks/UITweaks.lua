@@ -19,6 +19,7 @@ local defaults = {
         showTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideStanceButtons = false,
+        collapseObjectiveTrackerOnlyInstances = false,
         showOptionsOnReload = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
@@ -213,6 +214,13 @@ end
 function UITweaks:CollapseTrackerIfNeeded()
     if not self.db.profile.collapseObjectiveTrackerInCombat then
         return
+    end
+
+    if self.db.profile.collapseObjectiveTrackerOnlyInstances then
+        local inInstance, instanceType = IsInInstance()
+        if not (inInstance and (instanceType == "party" or instanceType == "raid")) then
+            return
+        end
     end
 
     if not self:EnsureObjectiveTrackerLoaded() then
@@ -574,7 +582,7 @@ function UITweaks:OnInitialize()
         end
     end
 
-    local function toggleOption(key, name, desc, order, onSet)
+    local function toggleOption(key, name, desc, order, onSet, disabledKey)
         return {
             type = "toggle",
             name = name,
@@ -583,6 +591,9 @@ function UITweaks:OnInitialize()
             order = order,
             get = getOption(key),
             set = setOption(key, onSet),
+            disabled = function()
+                return disabledKey and not self.db.profile[disabledKey]
+            end,
         }
     end
 
@@ -741,6 +752,16 @@ function UITweaks:OnInitialize()
                         function()
                             self:UpdateObjectiveTrackerState()
                         end
+                    ),
+                    collapseObjectiveTrackerOnlyInstances = toggleOption(
+                        "collapseObjectiveTrackerOnlyInstances",
+                        "    Only In Dungeons/Raids",
+                        "Only collapse the objective tracker while in dungeon or raid instances.",
+                        5,
+                        function()
+                            self:UpdateObjectiveTrackerState()
+                        end,
+                        "collapseObjectiveTrackerInCombat"
                     ),
                 },
             },
