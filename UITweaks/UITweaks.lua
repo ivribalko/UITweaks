@@ -24,6 +24,7 @@ local defaults = {
         chatFontSize = 16,
     }
 }
+local defaultsProfile = defaults.profile
 
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS or 10
 
@@ -88,7 +89,7 @@ function UITweaks:ApplyChatFontSize()
     local frames = getChatFrames()
 
     if self.db.profile.chatFontOverrideEnabled then
-        local size = sanitizeFontSize(self.db.profile.chatFontSize) or defaults.profile.chatFontSize
+        local size = sanitizeFontSize(self.db.profile.chatFontSize) or defaultsProfile.chatFontSize
         for index, frame in ipairs(frames) do
             if frame.SetFont then
                 local defaultFont = self.defaultChatFonts[index]
@@ -112,7 +113,7 @@ end
 function UITweaks:ApplyChatLineFade()
     local frames = getChatFrames()
     if self.db.profile.chatLineFadeEnabled then
-        local seconds = sanitizeSeconds(self.db.profile.chatLineFadeSeconds) or defaults.profile.chatLineFadeSeconds
+        local seconds = sanitizeSeconds(self.db.profile.chatLineFadeSeconds) or defaultsProfile.chatLineFadeSeconds
         for _, frame in ipairs(frames) do
             if frame.SetTimeVisible then
                 frame:SetTimeVisible(seconds)
@@ -166,11 +167,6 @@ function UITweaks:HookTalentAlertFrames()
     end
 end
 
-function UITweaks:SetSuppressTalentAlert(enabled)
-    self.db.profile.suppressTalentAlert = enabled
-    self:HookTalentAlertFrames()
-end
-
 local function collapseObjectiveTracker()
     if ObjectiveTrackerFrame and ObjectiveTrackerFrame.SetCollapsed then
         ObjectiveTrackerFrame:SetCollapsed(true)
@@ -202,11 +198,6 @@ function UITweaks:EnsureObjectiveTrackerLoaded()
             return true
         end
     end
-end
-
-function UITweaks:SetCollapseObjectiveTrackerInCombat(enabled)
-    self.db.profile.collapseObjectiveTrackerInCombat = enabled
-    self:UpdateObjectiveTrackerState()
 end
 
 function UITweaks:IsObjectiveTrackerCollapsed()
@@ -522,6 +513,16 @@ function UITweaks:OpenOptionsPanel()
     end
 end
 
+function UITweaks:ApplyVisibilityState(forceShow)
+    self:UpdatePlayerFrameVisibility(forceShow)
+    self:UpdateTargetFrameVisibility(forceShow)
+    self:UpdateDamageMeterVisibility(forceShow)
+    self:UpdateTargetTooltip()
+    self:UpdateChatTabsVisibility()
+    self:UpdateStanceButtonsVisibility()
+    self:UpdateBackpackButtonVisibility()
+end
+
 function UITweaks:EnsureTalentAlertHooks()
     if not self.microButtonAlertHooked and MainMenuMicroButton_ShowMicroAlert then
         hooksecurefunc("MainMenuMicroButton_ShowMicroAlert", function(alertFrame)
@@ -558,6 +559,64 @@ end
 function UITweaks:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", defaults, true)
 
+    local function getOption(key)
+        return function()
+            return self.db.profile[key]
+        end
+    end
+
+    local function setOption(key, onSet)
+        return function(_, val)
+            self.db.profile[key] = val
+            if onSet then
+                onSet(val)
+            end
+        end
+    end
+
+    local function toggleOption(key, name, desc, order, onSet)
+        return {
+            type = "toggle",
+            name = name,
+            desc = desc,
+            width = "full",
+            order = order,
+            get = getOption(key),
+            set = setOption(key, onSet),
+        }
+    end
+
+    local function numberOption(key, name, desc, order, sanitizer, errorText, onSet, disabledKey)
+        return {
+            type = "input",
+            name = name,
+            desc = desc,
+            width = "half",
+            order = order,
+            get = function()
+                return tostring(self.db.profile[key])
+            end,
+            set = function(_, val)
+                local value = sanitizer(val)
+                if value then
+                    self.db.profile[key] = value
+                    if onSet then
+                        onSet(value)
+                    end
+                end
+            end,
+            validate = function(_, value)
+                if sanitizer(value) then
+                    return true
+                end
+                return errorText
+            end,
+            disabled = function()
+                return disabledKey and not self.db.profile[disabledKey]
+            end,
+        }
+    end
+
     local options = {
         name = "UI Tweaks",
         type = "group",
@@ -568,251 +627,158 @@ function UITweaks:OnInitialize()
                 inline = true,
                 order = 1,
                 args = {
-                    chatLineFadeEnabled = {
-                        type = "toggle",
-                        name = "Override Chat Line Fade",
-                        desc = "Enable a custom duration for how long chat lines remain visible before fading.",
-                        width = "full",
-                        order = 1,
-                        get = function()
-                            return self.db.profile.chatLineFadeEnabled
-                        end,
-                        set = function(_, val)
-                            self.db.profile.chatLineFadeEnabled = val
+                    chatLineFadeEnabled = toggleOption(
+                        "chatLineFadeEnabled",
+                        "Override Chat Line Fade",
+                        "Enable a custom duration for how long chat lines remain visible before fading.",
+                        1,
+                        function()
+                            self:ApplyChatLineFade()
+                        end
+                    ),
+                    chatLineFadeSeconds = numberOption(
+                        "chatLineFadeSeconds",
+                        "Fade Seconds",
+                        "Number of seconds a chat line stays before fading when the override is enabled.",
+                        2,
+                        sanitizeSeconds,
+                        "Enter a positive number of seconds.",
+                        function()
                             self:ApplyChatLineFade()
                         end,
-                    },
-                    chatLineFadeSeconds = {
-                        type = "input",
-                        name = "Fade Seconds",
-                        desc = "Number of seconds a chat line stays before fading when the override is enabled.",
-                        width = "half",
-                        order = 2,
-                        get = function()
-                            return tostring(self.db.profile.chatLineFadeSeconds)
-                        end,
-                        set = function(_, val)
-                            local seconds = sanitizeSeconds(val)
-                            if seconds then
-                                self.db.profile.chatLineFadeSeconds = seconds
-                                self:ApplyChatLineFade()
-                            end
-                        end,
-                        validate = function(_, value)
-                            if sanitizeSeconds(value) then
-                                return true
-                            end
-                            return "Enter a positive number of seconds."
-                        end,
-                        disabled = function()
-                            return not self.db.profile.chatLineFadeEnabled
-                        end,
-                    },
-                    chatFontOverrideEnabled = {
-                        type = "toggle",
-                        name = "Override Chat Font Size",
-                        desc = "Enable a custom chat window font size for all tabs.",
-                        width = "full",
-                        order = 3,
-                        get = function()
-                            return self.db.profile.chatFontOverrideEnabled
-                        end,
-                        set = function(_, val)
-                            self.db.profile.chatFontOverrideEnabled = val
+                        "chatLineFadeEnabled"
+                    ),
+                    chatFontOverrideEnabled = toggleOption(
+                        "chatFontOverrideEnabled",
+                        "Override Chat Font Size",
+                        "Enable a custom chat window font size for all tabs.",
+                        3,
+                        function()
+                            self:ApplyChatFontSize()
+                        end
+                    ),
+                    chatFontSize = numberOption(
+                        "chatFontSize",
+                        "Font Size (8-48)",
+                        "Font size to use when the override is enabled.",
+                        4,
+                        sanitizeFontSize,
+                        "Enter a number between 8 and 48.",
+                        function()
                             self:ApplyChatFontSize()
                         end,
-                    },
-                    chatFontSize = {
-                        type = "input",
-                        name = "Font Size (8-48)",
-                        desc = "Font size to use when the override is enabled.",
-                        width = "half",
-                        order = 4,
-                        get = function()
-                            return tostring(self.db.profile.chatFontSize)
-                        end,
-                        set = function(_, val)
-                            local size = sanitizeFontSize(val)
-                            if size then
-                                self.db.profile.chatFontSize = size
-                                self:ApplyChatFontSize()
-                            end
-                        end,
-                        validate = function(_, value)
-                            if sanitizeFontSize(value) then
-                                return true
-                            end
-                            return "Enter a number between 8 and 48."
-                        end,
-                        disabled = function()
-                            return not self.db.profile.chatFontOverrideEnabled
-                        end,
-                    },
-                    hideChatTabs = {
-                        type = "toggle",
-                        name = "Hide Chat Tabs",
-                        desc = "Hide chat tab titles while leaving the windows visible.",
-                        width = "full",
-                        order = 5,
-                        get = function()
-                            return self.db.profile.hideChatTabs
-                        end,
-                        set = function(_, val)
-                            self.db.profile.hideChatTabs = val
+                        "chatFontOverrideEnabled"
+                    ),
+                    hideChatTabs = toggleOption(
+                        "hideChatTabs",
+                        "Hide Chat Tabs",
+                        "Hide chat tab titles while leaving the windows visible.",
+                        5,
+                        function()
                             self:UpdateChatTabsVisibility()
-                        end,
-                    },
+                        end
+                    ),
                 },
             },
-            suppressTalentAlert = {
-                type = "toggle",
-                name = "Hide Talent Alert",
-                desc = "Prevent the 'You have unspent talent points' reminder from popping up.",
-                width = "full",
-                get = function()
-                    return self.db.profile.suppressTalentAlert
-                end,
-                set = function(_, val)
-                    self:SetSuppressTalentAlert(val)
-                end,
-                order = 2,
-            },
-            collapseBuffFrame = {
-                type = "toggle",
-                name = "Collapse Player Buffs (WIP)",
-                desc = "Collapse the default player buff frame UI (work in progress).",
-                width = "full",
-                get = function()
-                    return self.db.profile.collapseBuffFrame
-                end,
-                set = function(_, val)
-                    self.db.profile.collapseBuffFrame = val
+            suppressTalentAlert = toggleOption(
+                "suppressTalentAlert",
+                "Hide Talent Alert",
+                "Prevent the 'You have unspent talent points' reminder from popping up.",
+                2,
+                function()
+                    self:HookTalentAlertFrames()
+                end
+            ),
+            collapseBuffFrame = toggleOption(
+                "collapseBuffFrame",
+                "Collapse Player Buffs (WIP)",
+                "Collapse the default player buff frame UI (work in progress).",
+                3,
+                function()
                     self:ApplyBuffFrameCollapse()
-                end,
-                order = 3,
-            },
+                end
+            ),
             combatVisibility = {
                 type = "group",
                 name = "Combat Visibility (5s Delay)",
                 inline = true,
                 order = 4,
                 args = {
-                    hidePlayerFrameOutOfCombat = {
-                        type = "toggle",
-                        name = "Hide Player Frame Out of Combat",
-                        desc = "Hide the player unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the damage meter/objective tracker).",
-                        width = "full",
-                        get = function()
-                            return self.db.profile.hidePlayerFrameOutOfCombat
-                        end,
-                        set = function(_, val)
-                            self.db.profile.hidePlayerFrameOutOfCombat = val
+                    hidePlayerFrameOutOfCombat = toggleOption(
+                        "hidePlayerFrameOutOfCombat",
+                        "Hide Player Frame Out of Combat",
+                        "Hide the player unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the damage meter/objective tracker).",
+                        1,
+                        function()
                             self:UpdatePlayerFrameVisibility(true)
                             self:ScheduleDelayedVisibilityUpdate()
-                        end,
-                        order = 1,
-                    },
-                    hideTargetFrameOutOfCombat = {
-                        type = "toggle",
-                        name = "Hide Target Frame Out of Combat",
-                        desc = "Hide the target unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the other frame options).",
-                        width = "full",
-                        get = function()
-                            return self.db.profile.hideTargetFrameOutOfCombat
-                        end,
-                        set = function(_, val)
-                            self.db.profile.hideTargetFrameOutOfCombat = val
+                        end
+                    ),
+                    hideTargetFrameOutOfCombat = toggleOption(
+                        "hideTargetFrameOutOfCombat",
+                        "Hide Target Frame Out of Combat",
+                        "Hide the target unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the other frame options).",
+                        2,
+                        function()
                             self:UpdateTargetFrameVisibility(true)
                             self:ScheduleDelayedVisibilityUpdate()
-                        end,
-                        order = 2,
-                    },
-                    hideDamageMeter = {
-                        type = "toggle",
-                        name = "Hide Damage Meter Out of Combat",
-                        desc = "Hide the built-in damage meter frame five seconds after you leave combat (shares the delay with the player frame/objective tracker).",
-                        width = "full",
-                        get = function()
-                            return self.db.profile.hideDamageMeter
-                        end,
-                        set = function(_, val)
-                            self.db.profile.hideDamageMeter = val
+                        end
+                    ),
+                    hideDamageMeter = toggleOption(
+                        "hideDamageMeter",
+                        "Hide Damage Meter Out of Combat",
+                        "Hide the built-in damage meter frame five seconds after you leave combat (shares the delay with the player frame/objective tracker).",
+                        3,
+                        function()
                             self:UpdateDamageMeterVisibility()
-                        end,
-                        order = 3,
-                    },
-                    collapseObjectiveTrackerInCombat = {
-                        type = "toggle",
-                        name = "Collapse Objective Tracker In Combat",
-                        desc = "Collapse the quest/objective tracker during combat and re-expand it five seconds after combat ends (shares the delay with the damage meter/player frame).",
-                        width = "full",
-                        get = function()
-                            return self.db.profile.collapseObjectiveTrackerInCombat
-                        end,
-                        set = function(_, val)
-                            self:SetCollapseObjectiveTrackerInCombat(val)
-                        end,
-                        order = 4,
-                    },
+                        end
+                    ),
+                    collapseObjectiveTrackerInCombat = toggleOption(
+                        "collapseObjectiveTrackerInCombat",
+                        "Collapse Objective Tracker In Combat",
+                        "Collapse the quest/objective tracker during combat and re-expand it five seconds after combat ends (shares the delay with the damage meter/player frame).",
+                        4,
+                        function()
+                            self:UpdateObjectiveTrackerState()
+                        end
+                    ),
                 },
             },
-            showTargetTooltipOutOfCombat = {
-                type = "toggle",
-                name = "Show Tooltip For Selected Target",
-                desc = "Automatically display the currently selected target's tooltip while out of combat.",
-                width = "full",
-                get = function()
-                    return self.db.profile.showTargetTooltipOutOfCombat
-                end,
-                set = function(_, val)
-                    self.db.profile.showTargetTooltipOutOfCombat = val
+            showTargetTooltipOutOfCombat = toggleOption(
+                "showTargetTooltipOutOfCombat",
+                "Show Tooltip For Selected Target",
+                "Automatically display the currently selected target's tooltip while out of combat.",
+                5,
+                function(val)
                     if not val then
                         GameTooltip:Hide()
                     end
-                end,
-                order = 5,
-            },
-            hideStanceButtons = {
-                type = "toggle",
-                name = "Hide Stance Buttons",
-                desc = "Hide the Blizzard stance bar/buttons when you don't need them.",
-                width = "full",
-                get = function()
-                    return self.db.profile.hideStanceButtons
-                end,
-                set = function(_, val)
-                    self.db.profile.hideStanceButtons = val
+                end
+            ),
+            hideStanceButtons = toggleOption(
+                "hideStanceButtons",
+                "Hide Stance Buttons",
+                "Hide the Blizzard stance bar/buttons when you don't need them.",
+                6,
+                function()
                     self:UpdateStanceButtonsVisibility()
-                end,
-                order = 6,
-            },
-            hideBackpackButton = {
-                type = "toggle",
-                name = "Hide Bags Bar",
-                desc = "Hide the entire Blizzard Bags Bar next to the action bars.",
-                width = "full",
-                get = function()
-                    return self.db.profile.hideBackpackButton
-                end,
-                set = function(_, val)
-                    self.db.profile.hideBackpackButton = val
+                end
+            ),
+            hideBackpackButton = toggleOption(
+                "hideBackpackButton",
+                "Hide Bags Bar",
+                "Hide the entire Blizzard Bags Bar next to the action bars.",
+                7,
+                function()
                     self:UpdateBackpackButtonVisibility()
-                end,
-                order = 7,
-            },
-            showOptionsOnReload = {
-                type = "toggle",
-                name = "Show These Options on Reload",
-                desc = "Re-open the UI Tweaks options panel after /reload (useful for development).",
-                width = "full",
-                get = function()
-                    return self.db.profile.showOptionsOnReload
-                end,
-                set = function(_, val)
-                    self.db.profile.showOptionsOnReload = val
-                end,
-                order = 8,
-            },
+                end
+            ),
+            showOptionsOnReload = toggleOption(
+                "showOptionsOnReload",
+                "Show These Options on Reload",
+                "Re-open the UI Tweaks options panel after /reload (useful for development).",
+                8
+            ),
             reloadUI = {
                 type = "execute",
                 name = "Reload UI",
@@ -835,13 +801,7 @@ function UITweaks:OnEnable()
     self:ApplyChatFontSize()
     self:HookTalentAlertFrames()
     self:ApplyBuffFrameCollapse()
-    self:UpdatePlayerFrameVisibility(true)
-    self:UpdateTargetFrameVisibility(true)
-    self:UpdateDamageMeterVisibility()
-    self:UpdateTargetTooltip()
-    self:UpdateChatTabsVisibility()
-    self:UpdateStanceButtonsVisibility()
-    self:UpdateBackpackButtonVisibility()
+    self:ApplyVisibilityState(true)
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -865,12 +825,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:HookTalentAlertFrames()
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameCollapse()
-        self:UpdatePlayerFrameVisibility(true)
-        self:UpdateTargetFrameVisibility(true)
-        self:UpdateDamageMeterVisibility()
-        self:UpdateTargetTooltip()
-        self:UpdateChatTabsVisibility()
-        self:UpdateBackpackButtonVisibility()
+        self:ApplyVisibilityState(true)
         self:ScheduleDelayedVisibilityUpdate()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
@@ -901,13 +856,7 @@ end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameCollapse()
-    self:UpdatePlayerFrameVisibility(true)
-    self:UpdateTargetFrameVisibility(true)
-    self:UpdateDamageMeterVisibility()
-    self:UpdateTargetTooltip()
-    self:UpdateChatTabsVisibility()
-    self:UpdateStanceButtonsVisibility()
-    self:UpdateBackpackButtonVisibility()
+    self:ApplyVisibilityState(true)
     self:ScheduleDelayedVisibilityUpdate()
 end
 
