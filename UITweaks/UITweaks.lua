@@ -646,34 +646,55 @@ function UITweaks:OnInitialize()
                 end,
                 order = 4,
             },
-            hidePlayerFrameOutOfCombat = {
-                type = "toggle",
-                name = "Hide Player Frame Out of Combat (5s Delay)",
-                desc = "Hide the player unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the damage meter/objective tracker).",
-                width = "full",
-                get = function()
-                    return self.db.profile.hidePlayerFrameOutOfCombat
-                end,
-                set = function(_, val)
-                    self.db.profile.hidePlayerFrameOutOfCombat = val
-                    self:UpdatePlayerFrameVisibility(true)
-                    self:ScheduleDelayedVisibilityUpdate()
-                end,
+            combatVisibility = {
+                type = "group",
+                name = "Combat Visibility (5s Delay)",
+                inline = true,
                 order = 5,
-            },
-            hideDamageMeter = {
-                type = "toggle",
-                name = "Hide Damage Meter Out of Combat (5s Delay)",
-                desc = "Hide the built-in damage meter frame five seconds after you leave combat (shares the delay with the player frame/objective tracker).",
-                width = "full",
-                get = function()
-                    return self.db.profile.hideDamageMeter
-                end,
-                set = function(_, val)
-                    self.db.profile.hideDamageMeter = val
-                    self:UpdateDamageMeterVisibility()
-                end,
-                order = 6,
+                args = {
+                    hidePlayerFrameOutOfCombat = {
+                        type = "toggle",
+                        name = "Hide Player Frame Out of Combat",
+                        desc = "Hide the player unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the damage meter/objective tracker).",
+                        width = "full",
+                        get = function()
+                            return self.db.profile.hidePlayerFrameOutOfCombat
+                        end,
+                        set = function(_, val)
+                            self.db.profile.hidePlayerFrameOutOfCombat = val
+                            self:UpdatePlayerFrameVisibility(true)
+                            self:ScheduleDelayedVisibilityUpdate()
+                        end,
+                        order = 1,
+                    },
+                    hideDamageMeter = {
+                        type = "toggle",
+                        name = "Hide Damage Meter Out of Combat",
+                        desc = "Hide the built-in damage meter frame five seconds after you leave combat (shares the delay with the player frame/objective tracker).",
+                        width = "full",
+                        get = function()
+                            return self.db.profile.hideDamageMeter
+                        end,
+                        set = function(_, val)
+                            self.db.profile.hideDamageMeter = val
+                            self:UpdateDamageMeterVisibility()
+                        end,
+                        order = 2,
+                    },
+                    collapseObjectiveTrackerInCombat = {
+                        type = "toggle",
+                        name = "Collapse Objective Tracker In Combat",
+                        desc = "Collapse the quest/objective tracker during combat and re-expand it five seconds after combat ends (shares the delay with the damage meter/player frame).",
+                        width = "full",
+                        get = function()
+                            return self.db.profile.collapseObjectiveTrackerInCombat
+                        end,
+                        set = function(_, val)
+                            self:SetCollapseObjectiveTrackerInCombat(val)
+                        end,
+                        order = 3,
+                    },
+                },
             },
             showTargetTooltipOutOfCombat = {
                 type = "toggle",
@@ -689,7 +710,7 @@ function UITweaks:OnInitialize()
                         GameTooltip:Hide()
                     end
                 end,
-                order = 7,
+                order = 6,
             },
             hideChatTabs = {
                 type = "toggle",
@@ -703,7 +724,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideChatTabs = val
                     self:UpdateChatTabsVisibility()
                 end,
-                order = 8,
+                order = 7,
             },
             hideStanceButtons = {
                 type = "toggle",
@@ -717,7 +738,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideStanceButtons = val
                     self:UpdateStanceButtonsVisibility()
                 end,
-                order = 9,
+                order = 8,
             },
             hideBackpackButton = {
                 type = "toggle",
@@ -731,20 +752,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideBackpackButton = val
                     self:UpdateBackpackButtonVisibility()
                 end,
-                order = 10,
-            },
-            collapseObjectiveTrackerInCombat = {
-                type = "toggle",
-                name = "Collapse Objective Tracker In Combat (5s Delay)",
-                desc = "Collapse the quest/objective tracker during combat and re-expand it five seconds after combat ends (shares the delay with the damage meter/player frame).",
-                width = "full",
-                get = function()
-                    return self.db.profile.collapseObjectiveTrackerInCombat
-                end,
-                set = function(_, val)
-                    self:SetCollapseObjectiveTrackerInCombat(val)
-                end,
-                order = 11,
+                order = 9,
             },
             showOptionsOnReload = {
                 type = "toggle",
@@ -757,7 +765,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self.db.profile.showOptionsOnReload = val
                 end,
-                order = 12,
+                order = 10,
             },
             reloadUI = {
                 type = "execute",
@@ -767,7 +775,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 13,
+                order = 11,
             },
         },
     }
