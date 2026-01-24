@@ -302,15 +302,29 @@ function UITweaks:UpdatePlayerFrameVisibility(forceShow)
         return
     end
 
-    local inCombat = InCombatLockdown and InCombatLockdown()
-
     if not self.db.profile.hidePlayerFrameOutOfCombat then
         return
     end
 
-    if forceShow or inCombat then
-        PlayerFrame:Show()
-    else
+    if not PlayerFrame.UITweaksHooked then
+        -- Keep the player frame hidden when addons or quest updates try to show it.
+        PlayerFrame:HookScript("OnShow", function(frame)
+            if UITweaks.db and UITweaks.db.profile.hidePlayerFrameOutOfCombat then
+                if not (InCombatLockdown and InCombatLockdown()) then
+                    frame:Hide()
+                end
+            end
+        end)
+        PlayerFrame.UITweaksHooked = true
+    end
+
+    if RegisterStateDriver then
+        if InCombatLockdown and InCombatLockdown() then
+            return
+        end
+        RegisterStateDriver(PlayerFrame, "visibility", "[combat] show; hide")
+    end
+    if not (InCombatLockdown and InCombatLockdown()) then
         PlayerFrame:Hide()
     end
 end
