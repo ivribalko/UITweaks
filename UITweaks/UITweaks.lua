@@ -315,22 +315,15 @@ function UITweaks:UpdatePlayerFrameVisibility(forceShow)
 end
 
 function UITweaks:UpdateBackpackButtonVisibility()
-    local bagButtons = {
-        MainMenuBarBackpackButton,
-        CharacterBag0Slot,
-        CharacterBag1Slot,
-        CharacterBag2Slot,
-        CharacterBag3Slot,
-    }
+    local bagBar = _G.BagsBar
+    if not bagBar then
+        return
+    end
 
-    for _, button in ipairs(bagButtons) do
-        if button then
-            if self.db.profile.hideBackpackButton then
-                button:Hide()
-            else
-                button:Show()
-            end
-        end
+    if self.db.profile.hideBackpackButton then
+        bagBar:Hide()
+    else
+        bagBar:Show()
     end
 end
 
@@ -572,8 +565,8 @@ function UITweaks:OnInitialize()
             },
             hideBackpackButton = {
                 type = "toggle",
-                name = "Hide Backpack Button",
-                desc = "Hide the backpack button next to the action bars.",
+                name = "Hide Bags Bar",
+                desc = "Hide the entire Blizzard Bags Bar next to the action bars.",
                 width = "full",
                 get = function()
                     return self.db.profile.hideBackpackButton
@@ -582,7 +575,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideBackpackButton = val
                     self:UpdateBackpackButtonVisibility()
                 end,
-                order = 7,
+                order = 8,
             },
             collapseObjectiveTrackerInCombat = {
                 type = "toggle",
