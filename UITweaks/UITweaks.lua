@@ -362,6 +362,7 @@ function UITweaks:UpdateChatTabsVisibility()
         local tabName = "ChatFrame" .. i .. "Tab"
         local tab = _G[tabName]
         if tab and not tab.UITweaksHooked then
+            -- Keep tabs hidden even when hover/OnShow tries to reveal them.
             tab:HookScript("OnShow", function(frame)
                 if UITweaks.db and UITweaks.db.profile.hideChatTabs then
                     frame:Hide()
@@ -397,6 +398,7 @@ end
 local function hookStanceButtons()
     for _, stanceBar in ipairs(getStanceBars()) do
         if stanceBar and not stanceBar.UITweaksHooked then
+            -- Prevent stance bar reappearing when attack while on a mount refreshes action bars.
             stanceBar.UITweaksHooked = true
         end
     end
@@ -427,6 +429,7 @@ function UITweaks:UpdateStanceButtonsVisibility()
     for _, stanceBar in ipairs(getStanceBars()) do
         if RegisterStateDriver and UnregisterStateDriver then
             if hide then
+                -- Force-hide stance bar to avoid mount/combat refresh flashes.
                 RegisterStateDriver(stanceBar, "visibility", "hide")
             else
                 UnregisterStateDriver(stanceBar, "visibility")

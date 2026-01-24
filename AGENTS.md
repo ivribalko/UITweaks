@@ -24,6 +24,9 @@ Use four-space indentation, `local` scoping, and double-quoted strings. Keep Ace
 ## UI Option Behavior
 When implementing option toggles, use only `if enabled then ... end` flows. Avoid `else` branches that restore or change behavior when the option is disabled.
 
+## Debugging Tip
+Use `/console scriptErrors 1` to surface Lua errors while testing.
+
 ## Testing Guidelines
 Automated tests are not configured, so rely on in-game manual verification. Toggle options under Interface → AddOns → UI Tweaks, relog or `/reload`, and observe chat output. Document scenarios, client build, and observed results in the PR description. Temporary debug prints are acceptable if gated and removed before release.
 
