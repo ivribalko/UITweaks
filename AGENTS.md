@@ -25,7 +25,7 @@ Use four-space indentation, `local` scoping, and double-quoted strings. Keep Ace
 Automated tests are not configured, so rely on in-game manual verification. Toggle options under Interface → AddOns → UI Tweaks, relog or `/reload`, and observe chat output. Document scenarios, client build, and observed results in the PR description. Temporary debug prints are acceptable if gated and removed before release.
 
 ## Commit & Pull Request Guidelines
-Write imperative commit subjects (e.g., "Add login greeting toggle") and keep each commit focused. Pull requests should include the motivation or linked issue, summary of user-facing changes, manual test notes, screenshots/GIFs for UI tweaks, and callouts for SavedVariables or dependency updates.
+Write imperative commit subjects (e.g., "Add chat fade override") and keep each commit focused. Pull requests should include the motivation or linked issue, summary of user-facing changes, manual test notes, screenshots/GIFs for UI tweaks, and callouts for SavedVariables or dependency updates.
 
 ## Security & Configuration Tips
 Never commit WTF/SavedVariables or account data. Treat `Libs/` as vendored: update from upstream Ace3 releases and cite the source version in the PR. When adding options, seed sane defaults in AceDB before reading them to prevent nil access during login.

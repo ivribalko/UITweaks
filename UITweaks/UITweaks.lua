@@ -5,7 +5,6 @@ local UITweaks = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "
 
 local defaults = {
     profile = {
-        printOnLogin = false,
         chatLineFadeEnabled = false,
         chatLineFadeSeconds = 5,
         suppressTalentAlert = false,
@@ -147,14 +146,6 @@ function UITweaks:OnInitialize()
         name = "UI Tweaks",
         type = "group",
         args = {
-            printOnLogin = {
-                type = "toggle",
-                name = "Print 'Hello World' on Login",
-                desc = "If enabled, 'Hello World' will be printed to chat every time you log in.",
-                get = function(info) return self.db.profile.printOnLogin end,
-                set = function(info, val) self.db.profile.printOnLogin = val end,
-                order = 1,
-            },
             chatLineFadeEnabled = {
                 type = "toggle",
                 name = "Custom Chat Line Fade",
@@ -164,7 +155,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.chatLineFadeEnabled = val
                     self:ApplyChatLineFade()
                 end,
-                order = 2,
+                order = 1,
             },
             chatLineFadeSeconds = {
                 type = "input",
@@ -189,7 +180,7 @@ function UITweaks:OnInitialize()
                 disabled = function()
                     return not self.db.profile.chatLineFadeEnabled
                 end,
-                order = 3,
+                order = 2,
             },
             suppressTalentAlert = {
                 type = "toggle",
@@ -201,7 +192,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetSuppressTalentAlert(val)
                 end,
-                order = 4,
+                order = 3,
             },
         },
     }
@@ -211,10 +202,6 @@ function UITweaks:OnInitialize()
 end
 
 function UITweaks:OnEnable()
-    if self.db.profile.printOnLogin then
-        print("Hello World")
-    end
-
     self:CacheDefaultChatWindowTimes()
     self:ApplyChatLineFade()
     self:HookTalentAlertFrames()
