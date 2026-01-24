@@ -666,7 +666,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 9,
+                order = 11,
             },
         },
     }
