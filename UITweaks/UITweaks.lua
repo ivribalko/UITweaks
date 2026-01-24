@@ -17,6 +17,7 @@ local defaults = {
         hideDamageMeter = false,
         showTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
+        hideStanceButtons = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -365,6 +366,58 @@ function UITweaks:UpdateChatTabsVisibility()
     end
 end
 
+local function hookStanceButtons()
+    local stanceBar = _G.StanceBar
+    if stanceBar and not stanceBar.UITweaksHooked then
+        stanceBar:HookScript("OnShow", function(frame)
+            if UITweaks.db and UITweaks.db.profile.hideStanceButtons then
+                frame:Hide()
+            end
+        end)
+        stanceBar.UITweaksHooked = true
+    end
+
+    local numButtons = NUM_STANCE_SLOTS or NUM_SHAPESHIFT_SLOTS or 10
+    for i = 1, numButtons do
+        local button = _G["StanceButton" .. i] or _G["ShapeshiftButton" .. i]
+        if button and not button.UITweaksHooked then
+            button:HookScript("OnShow", function(btn)
+                if UITweaks.db and UITweaks.db.profile.hideStanceButtons then
+                    btn:Hide()
+                end
+            end)
+            button.UITweaksHooked = true
+        end
+    end
+end
+
+function UITweaks:UpdateStanceButtonsVisibility()
+    hookStanceButtons()
+
+    local stanceBar = _G.StanceBar
+    local hide = self.db.profile.hideStanceButtons
+
+    if stanceBar then
+        if hide then
+            stanceBar:Hide()
+        else
+            stanceBar:Show()
+        end
+    end
+
+    local numButtons = NUM_STANCE_SLOTS or NUM_SHAPESHIFT_SLOTS or 10
+    for i = 1, numButtons do
+        local button = _G["StanceButton" .. i] or _G["ShapeshiftButton" .. i]
+        if button then
+            if hide then
+                button:Hide()
+            else
+                button:Show()
+            end
+        end
+    end
+end
+
 function UITweaks:UpdateTargetTooltip(forceHide)
     if not GameTooltip then
         return
@@ -631,6 +684,20 @@ function UITweaks:OnInitialize()
                 end,
                 order = 8,
             },
+            hideStanceButtons = {
+                type = "toggle",
+                name = "Hide Stance Buttons",
+                desc = "Hide the Blizzard stance bar/buttons when you don't need them.",
+                width = "full",
+                get = function()
+                    return self.db.profile.hideStanceButtons
+                end,
+                set = function(_, val)
+                    self.db.profile.hideStanceButtons = val
+                    self:UpdateStanceButtonsVisibility()
+                end,
+                order = 9,
+            },
             hideBackpackButton = {
                 type = "toggle",
                 name = "Hide Bags Bar",
@@ -643,7 +710,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideBackpackButton = val
                     self:UpdateBackpackButtonVisibility()
                 end,
-                order = 9,
+                order = 10,
             },
             collapseObjectiveTrackerInCombat = {
                 type = "toggle",
@@ -656,7 +723,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetCollapseObjectiveTrackerInCombat(val)
                 end,
-                order = 10,
+                order = 11,
             },
             reloadUI = {
                 type = "execute",
@@ -666,7 +733,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 11,
+                order = 12,
             },
         },
     }
@@ -685,6 +752,7 @@ function UITweaks:OnEnable()
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
+    self:UpdateStanceButtonsVisibility()
     self:UpdateBackpackButtonVisibility()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
@@ -713,6 +781,8 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:UpdateChatTabsVisibility()
         self:UpdateBackpackButtonVisibility()
         self:ScheduleDamageMeterHide()
+    elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
+        self:UpdateStanceButtonsVisibility()
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
     end
@@ -748,6 +818,7 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
+    self:UpdateStanceButtonsVisibility()
     self:UpdateBackpackButtonVisibility()
     self:ScheduleDamageMeterHide()
 end
