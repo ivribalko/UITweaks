@@ -393,15 +393,24 @@ function UITweaks:UpdateChatTabsVisibility()
     end
 end
 
-local function hookStanceButtons()
+local function getStanceBars()
+    local bars = {}
     local stanceBar = _G.StanceBar
-    if stanceBar and not stanceBar.UITweaksHooked then
-        stanceBar:HookScript("OnShow", function(frame)
-            if UITweaks.db and UITweaks.db.profile.hideStanceButtons then
-                frame:Hide()
-            end
-        end)
-        stanceBar.UITweaksHooked = true
+    local shapeshiftBar = _G.ShapeshiftBarFrame
+    if stanceBar then
+        table.insert(bars, stanceBar)
+    end
+    if shapeshiftBar and shapeshiftBar ~= stanceBar then
+        table.insert(bars, shapeshiftBar)
+    end
+    return bars
+end
+
+local function hookStanceButtons()
+    for _, stanceBar in ipairs(getStanceBars()) do
+        if stanceBar and not stanceBar.UITweaksHooked then
+            stanceBar.UITweaksHooked = true
+        end
     end
 
     local numButtons = NUM_STANCE_SLOTS or NUM_SHAPESHIFT_SLOTS or 10
@@ -421,10 +430,16 @@ end
 function UITweaks:UpdateStanceButtonsVisibility()
     hookStanceButtons()
 
-    local stanceBar = _G.StanceBar
     local hide = self.db.profile.hideStanceButtons
 
-    if stanceBar then
+    for _, stanceBar in ipairs(getStanceBars()) do
+        if RegisterStateDriver and UnregisterStateDriver then
+            if hide then
+                RegisterStateDriver(stanceBar, "visibility", "hide")
+            else
+                UnregisterStateDriver(stanceBar, "visibility")
+            end
+        end
         if hide then
             stanceBar:Hide()
         else
