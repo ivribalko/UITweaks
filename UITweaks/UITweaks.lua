@@ -358,14 +358,23 @@ end
 function UITweaks:UpdateChatTabsVisibility()
     self.hiddenChatTabs = self.hiddenChatTabs or {}
 
-    if not self.db.profile.hideChatTabs then
-        return
-    end
-
     for i = 1, NUM_CHAT_WINDOWS do
         local tabName = "ChatFrame" .. i .. "Tab"
         local tab = _G[tabName]
-        if tab and tab:IsShown() then
+        if tab and not tab.UITweaksHooked then
+            tab:HookScript("OnShow", function(frame)
+                if UITweaks.db and UITweaks.db.profile.hideChatTabs then
+                    frame:Hide()
+                end
+            end)
+            tab:HookScript("OnEnter", function(frame)
+                if UITweaks.db and UITweaks.db.profile.hideChatTabs then
+                    frame:Hide()
+                end
+            end)
+            tab.UITweaksHooked = true
+        end
+        if tab and tab:IsShown() and self.db.profile.hideChatTabs then
             tab:Hide()
             self.hiddenChatTabs[tabName] = true
         end
