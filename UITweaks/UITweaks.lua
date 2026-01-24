@@ -11,6 +11,7 @@ local defaults = {
         chatLineFadeSeconds = 5,
         suppressTalentAlert = false,
         collapseObjectiveTrackerInCombat = false,
+        collapseBuffFrame = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -251,6 +252,43 @@ function UITweaks:UpdateObjectiveTrackerState()
     end
 end
 
+local function collapseBuffFrame()
+    if not BuffFrame then return end
+    if BuffFrame.CollapseAndExpandButton and BuffFrame.SetBuffsExpandedState then
+        BuffFrame.CollapseAndExpandButton:SetChecked(true)
+        BuffFrame.CollapseAndExpandButton:UpdateOrientation()
+        BuffFrame:SetBuffsExpandedState(false)
+    end
+end
+
+local function ensureBuffFrameLoaded()
+    if BuffFrame then
+        return true
+    end
+
+    if UIParentLoadAddOn then
+        local loaded = UIParentLoadAddOn("Blizzard_BuffFrame")
+        if loaded and BuffFrame then
+            return true
+        end
+    end
+end
+
+function UITweaks:ApplyBuffFrameCollapse(retry)
+    if not ensureBuffFrameLoaded() or not BuffFrame then
+        if not retry and C_Timer and C_Timer.After then
+            C_Timer.After(0.5, function()
+                self:ApplyBuffFrameCollapse(true)
+            end)
+        end
+        return
+    end
+
+    if self.db.profile.collapseBuffFrame then
+        collapseBuffFrame()
+    end
+end
+
 function UITweaks:OpenOptionsPanel()
     if InterfaceOptionsFrame_OpenToCategory and self.optionsFrame then
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
@@ -410,6 +448,20 @@ function UITweaks:OnInitialize()
                 end,
                 order = 3,
             },
+            collapseBuffFrame = {
+                type = "toggle",
+                name = "Collapse Player Buffs",
+                desc = "Collapse the default player buff frame UI.",
+                width = "full",
+                get = function()
+                    return self.db.profile.collapseBuffFrame
+                end,
+                set = function(_, val)
+                    self.db.profile.collapseBuffFrame = val
+                    self:ApplyBuffFrameCollapse()
+                end,
+                order = 4,
+            },
             collapseObjectiveTrackerInCombat = {
                 type = "toggle",
                 name = "Collapse Objective Tracker In Combat",
@@ -421,7 +473,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetCollapseObjectiveTrackerInCombat(val)
                 end,
-                order = 4,
+                order = 5,
             },
             reloadUI = {
                 type = "execute",
@@ -431,7 +483,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 5,
+                order = 6,
             },
         },
     }
@@ -445,8 +497,10 @@ function UITweaks:OnEnable()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
     self:HookTalentAlertFrames()
+    self:ApplyBuffFrameCollapse()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
 
@@ -462,6 +516,8 @@ end
 function UITweaks:ADDON_LOADED(event, addonName)
     if addonName == "Blizzard_TalentUI" or addonName == "Blizzard_PlayerSpells" then
         self:HookTalentAlertFrames()
+    elseif addonName == "Blizzard_BuffFrame" then
+        self:ApplyBuffFrameCollapse()
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
     end
@@ -477,4 +533,8 @@ function UITweaks:PLAYER_REGEN_ENABLED()
     if self.db.profile.collapseObjectiveTrackerInCombat then
         self:ExpandTrackerIfNeeded()
     end
+end
+
+function UITweaks:PLAYER_ENTERING_WORLD()
+    self:ApplyBuffFrameCollapse()
 end
