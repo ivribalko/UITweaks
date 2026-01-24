@@ -602,35 +602,34 @@ function UITweaks:OnInitialize()
         return option
     end
 
-    local function numberOption(key, name, desc, order, sanitizer, errorText, onSet, disabledKey)
-        return {
-            type = "input",
+    local function rangeOption(key, name, desc, order, minValue, maxValue, step, onSet, disabledKey, width)
+        local option = {
+            type = "range",
             name = name,
             desc = desc,
-            width = "half",
             order = order,
+            min = minValue,
+            max = maxValue,
+            step = step,
             get = function()
-                return tostring(self.db.profile[key])
+                return self.db.profile[key]
             end,
             set = function(_, val)
-                local value = sanitizer(val)
-                if value then
-                    self.db.profile[key] = value
-                    if onSet then
-                        onSet(value)
-                    end
+                self.db.profile[key] = val
+                if onSet then
+                    onSet(val)
                 end
-            end,
-            validate = function(_, value)
-                if sanitizer(value) then
-                    return true
-                end
-                return errorText
             end,
             disabled = function()
                 return disabledKey and not self.db.profile[disabledKey]
             end,
         }
+
+        if width ~= "auto" then
+            option.width = width or "full"
+        end
+
+        return option
     end
 
     local options = {
@@ -645,51 +644,59 @@ function UITweaks:OnInitialize()
                 args = {
                     chatLineFadeEnabled = toggleOption(
                         "chatLineFadeEnabled",
-                        "Override Chat Line Fade",
+                        "Chat Line Fade Override",
                         "Enable a custom duration for how long chat lines remain visible before fading.",
                         1,
                         function()
                             self:ApplyChatLineFade()
-                        end
+                        end,
+                        nil,
+                        1.2
                     ),
-                    chatLineFadeSeconds = numberOption(
+                    chatLineFadeSeconds = rangeOption(
                         "chatLineFadeSeconds",
                         "Fade Seconds",
                         "Number of seconds a chat line stays before fading when the override is enabled.",
-                        2,
-                        sanitizeSeconds,
-                        "Enter a positive number of seconds.",
+                        1.1,
+                        1,
+                        60,
+                        1,
                         function()
                             self:ApplyChatLineFade()
                         end,
-                        "chatLineFadeEnabled"
+                        "chatLineFadeEnabled",
+                        1.8
                     ),
                     chatFontOverrideEnabled = toggleOption(
                         "chatFontOverrideEnabled",
-                        "Override Chat Font Size",
+                        "Chat Font Size Override",
                         "Enable a custom chat window font size for all tabs.",
-                        3,
-                        function()
-                            self:ApplyChatFontSize()
-                        end
-                    ),
-                    chatFontSize = numberOption(
-                        "chatFontSize",
-                        "Font Size (8-48)",
-                        "Font size to use when the override is enabled.",
-                        4,
-                        sanitizeFontSize,
-                        "Enter a number between 8 and 48.",
+                        2,
                         function()
                             self:ApplyChatFontSize()
                         end,
-                        "chatFontOverrideEnabled"
+                        nil,
+                        1.2
+                    ),
+                    chatFontSize = rangeOption(
+                        "chatFontSize",
+                        "Font Size",
+                        "Font size to use when the override is enabled.",
+                        2.1,
+                        8,
+                        48,
+                        1,
+                        function()
+                            self:ApplyChatFontSize()
+                        end,
+                        "chatFontOverrideEnabled",
+                        1.8
                     ),
                     hideChatTabs = toggleOption(
                         "hideChatTabs",
                         "Hide Chat Tabs",
                         "Hide chat tab titles while leaving the windows visible.",
-                        5,
+                        3,
                         function()
                             self:UpdateChatTabsVisibility()
                         end
