@@ -18,6 +18,7 @@ local defaults = {
         showTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideStanceButtons = false,
+        showOptionsOnReload = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -725,6 +726,19 @@ function UITweaks:OnInitialize()
                 end,
                 order = 11,
             },
+            showOptionsOnReload = {
+                type = "toggle",
+                name = "Show These Options on Reload",
+                desc = "Re-open the UI Tweaks options panel after /reload (useful for development).",
+                width = "full",
+                get = function()
+                    return self.db.profile.showOptionsOnReload
+                end,
+                set = function(_, val)
+                    self.db.profile.showOptionsOnReload = val
+                end,
+                order = 12,
+            },
             reloadUI = {
                 type = "execute",
                 name = "Reload UI",
@@ -733,7 +747,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 12,
+                order = 13,
             },
         },
     }
@@ -761,12 +775,14 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
 
-    if C_Timer and C_Timer.After then
-        C_Timer.After(1, function()
+    if self.db.profile.showOptionsOnReload then
+        if C_Timer and C_Timer.After then
+            C_Timer.After(1, function()
+                self:OpenOptionsPanel()
+            end)
+        else
             self:OpenOptionsPanel()
-        end)
-    else
-        self:OpenOptionsPanel()
+        end
     end
 end
 
