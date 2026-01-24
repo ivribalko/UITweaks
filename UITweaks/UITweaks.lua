@@ -20,6 +20,7 @@ local defaults = {
         hideChatTabs = false,
         hideStanceButtons = false,
         collapseObjectiveTrackerOnlyInstances = false,
+        visibilityDelaySeconds = 5,
         showOptionsOnReload = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
@@ -501,7 +502,8 @@ function UITweaks:ScheduleDelayedVisibilityUpdate()
     end
 
     if C_Timer and C_Timer.NewTimer then
-        self.visibilityTimer = C_Timer.NewTimer(5, function()
+        local delay = self.db.profile.visibilityDelaySeconds or defaultsProfile.visibilityDelaySeconds
+        self.visibilityTimer = C_Timer.NewTimer(delay, function()
             if not InCombatLockdown or not InCombatLockdown() then
                 self:ApplyDelayedVisibility()
             end
@@ -723,14 +725,26 @@ function UITweaks:OnInitialize()
             ),
             combatVisibility = {
                 type = "group",
-                name = "Combat Visibility (5s Delay)",
+                name = "Combat Visibility",
                 inline = true,
                 order = 4,
                 args = {
+                    visibilityDelaySeconds = rangeOption(
+                        "visibilityDelaySeconds",
+                        "Delay Seconds",
+                        "Delay before restoring frames after combat ends.",
+                        0,
+                        0,
+                        20,
+                        1,
+                        function()
+                            self:ScheduleDelayedVisibilityUpdate()
+                        end
+                    ),
                     hidePlayerFrameOutOfCombat = toggleOption(
                         "hidePlayerFrameOutOfCombat",
                         "Hide Player Frame Out of Combat",
-                        "Hide the player unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the damage meter/objective tracker).",
+                        "Hide the player unit frame outside combat and restore it after the shared delay.",
                         1,
                         function()
                             self:UpdatePlayerFrameVisibility(true)
@@ -740,7 +754,7 @@ function UITweaks:OnInitialize()
                     hideTargetFrameOutOfCombat = toggleOption(
                         "hideTargetFrameOutOfCombat",
                         "Hide Target Frame Out of Combat",
-                        "Hide the target unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the other frame options).",
+                        "Hide the target unit frame outside combat and restore it after the shared delay.",
                         2,
                         function()
                             self:UpdateTargetFrameVisibility(true)
@@ -750,7 +764,7 @@ function UITweaks:OnInitialize()
                     hideDamageMeter = toggleOption(
                         "hideDamageMeter",
                         "Hide Damage Meter Out of Combat",
-                        "Hide the built-in damage meter frame five seconds after you leave combat (shares the delay with the player frame/objective tracker).",
+                        "Hide the built-in damage meter frame after you leave combat (shares the delay with the player frame/objective tracker).",
                         3,
                         function()
                             self:UpdateDamageMeterVisibility()
@@ -765,7 +779,7 @@ function UITweaks:OnInitialize()
                             collapseObjectiveTrackerInCombat = toggleOption(
                                 "collapseObjectiveTrackerInCombat",
                                 "Collapse In Combat",
-                                "Collapse the quest/objective tracker during combat and re-expand it five seconds after combat ends (shares the delay with the damage meter/player frame).",
+                                "Collapse the quest/objective tracker during combat and re-expand it after combat ends (shares the delay with the damage meter/player frame).",
                                 0,
                                 function()
                                     self:UpdateObjectiveTrackerState()
