@@ -530,8 +530,8 @@ function UITweaks:OnInitialize()
             },
             collapseBuffFrame = {
                 type = "toggle",
-                name = "Collapse Player Buffs",
-                desc = "Collapse the default player buff frame UI.",
+                name = "Collapse Player Buffs (WIP)",
+                desc = "Collapse the default player buff frame UI (work in progress).",
                 width = "full",
                 get = function()
                     return self.db.profile.collapseBuffFrame
