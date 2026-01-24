@@ -18,6 +18,7 @@ local defaults = {
         hideTargetFrameOutOfCombat = false,
         showTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
+        hideChatMenuButton = false,
         hideStanceButtons = false,
         collapseObjectiveTrackerOnlyInstances = false,
         visibilityDelaySeconds = 5,
@@ -392,6 +393,29 @@ function UITweaks:UpdateChatTabsVisibility()
     end
 end
 
+function UITweaks:UpdateChatMenuButtonVisibility()
+    if not self.db.profile.hideChatMenuButton then
+        return
+    end
+
+    local button = _G.ChatFrameMenuButton
+    if not button then
+        return
+    end
+
+    if not button.UITweaksHooked then
+        -- Keep the menu button hidden even when UI code shows it.
+        button:HookScript("OnShow", function(frame)
+            if UITweaks.db and UITweaks.db.profile.hideChatMenuButton then
+                frame:Hide()
+            end
+        end)
+        button.UITweaksHooked = true
+    end
+
+    button:Hide()
+end
+
 local function getStanceBars()
     local bars = {}
     local stanceBar = _G.StanceBar
@@ -553,6 +577,7 @@ function UITweaks:ApplyVisibilityState(forceShow)
     self:UpdateDamageMeterVisibility(forceShow)
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
+    self:UpdateChatMenuButtonVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateBackpackButtonVisibility()
 end
@@ -725,6 +750,15 @@ function UITweaks:OnInitialize()
                         3,
                         function()
                             self:UpdateChatTabsVisibility()
+                        end
+                    ),
+                    hideChatMenuButton = toggleOption(
+                        "hideChatMenuButton",
+                        "Hide Chat Menu Button",
+                        "Hide the chat menu button with the speech bubble icon.",
+                        3.1,
+                        function()
+                            self:UpdateChatMenuButtonVisibility()
                         end
                     ),
                 },
