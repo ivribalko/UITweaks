@@ -150,6 +150,7 @@ function UITweaks:OnInitialize()
                 type = "toggle",
                 name = "Custom Chat Line Fade",
                 desc = "Override how long chat lines remain visible before fading.",
+                width = "full",
                 get = function() return self.db.profile.chatLineFadeEnabled end,
                 set = function(_, val)
                     self.db.profile.chatLineFadeEnabled = val
@@ -161,6 +162,7 @@ function UITweaks:OnInitialize()
                 type = "input",
                 name = "Chat Line Lifetime (seconds)",
                 desc = "Number of seconds a chat line stays before fading when the override is enabled.",
+                width = "full",
                 get = function()
                     return tostring(self.db.profile.chatLineFadeSeconds)
                 end,
@@ -186,6 +188,7 @@ function UITweaks:OnInitialize()
                 type = "toggle",
                 name = "Hide Talent Alert",
                 desc = "Prevent the 'You have unspent talent points' reminder from popping up.",
+                width = "full",
                 get = function()
                     return self.db.profile.suppressTalentAlert
                 end,
