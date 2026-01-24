@@ -15,6 +15,7 @@ local defaults = {
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
         hideDamageMeter = false,
+        showTargetTooltipOutOfCombat = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -340,6 +341,19 @@ function UITweaks:UpdateDamageMeterVisibility()
     end
 end
 
+function UITweaks:UpdateTargetTooltip(forceHide)
+    if not GameTooltip then
+        return
+    end
+
+    if self.db.profile.showTargetTooltipOutOfCombat and UnitExists("target") and not (InCombatLockdown and InCombatLockdown()) then
+        GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+        GameTooltip:SetUnit("target")
+    elseif forceHide or not UnitExists("target") then
+        GameTooltip:Hide()
+    end
+end
+
 function UITweaks:ScheduleDamageMeterHide()
     if self.damageMeterTimer then
         self.damageMeterTimer:Cancel()
@@ -563,6 +577,22 @@ function UITweaks:OnInitialize()
                 end,
                 order = 6,
             },
+            showTargetTooltipOutOfCombat = {
+                type = "toggle",
+                name = "Show Tooltip For Selected Target",
+                desc = "Automatically display the currently selected target's tooltip while out of combat.",
+                width = "full",
+                get = function()
+                    return self.db.profile.showTargetTooltipOutOfCombat
+                end,
+                set = function(_, val)
+                    self.db.profile.showTargetTooltipOutOfCombat = val
+                    if not val then
+                        GameTooltip:Hide()
+                    end
+                end,
+                order = 7,
+            },
             hideBackpackButton = {
                 type = "toggle",
                 name = "Hide Bags Bar",
@@ -588,7 +618,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetCollapseObjectiveTrackerInCombat(val)
                 end,
-                order = 8,
+                order = 9,
             },
             reloadUI = {
                 type = "execute",
@@ -615,12 +645,14 @@ function UITweaks:OnEnable()
     self:ApplyBuffFrameCollapse()
     self:UpdatePlayerFrameVisibility(true)
     self:UpdateDamageMeterVisibility()
+    self:UpdateTargetTooltip()
     self:UpdateBackpackButtonVisibility()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
+    self:RegisterEvent("PLAYER_TARGET_CHANGED")
 
     if C_Timer and C_Timer.After then
         C_Timer.After(1, function()
@@ -638,6 +670,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:ApplyBuffFrameCollapse()
         self:UpdatePlayerFrameVisibility(true)
         self:UpdateDamageMeterVisibility()
+        self:UpdateTargetTooltip()
         self:UpdateBackpackButtonVisibility()
         self:ScheduleDamageMeterHide()
     elseif addonName == "Blizzard_ObjectiveTracker" then
@@ -651,6 +684,9 @@ function UITweaks:PLAYER_REGEN_DISABLED()
     end
     self:UpdatePlayerFrameVisibility(true)
     self:UpdateDamageMeterVisibility()
+    if self.db.profile.showTargetTooltipOutOfCombat then
+        GameTooltip:Hide()
+    end
     if self.damageMeterTimer then
         self.damageMeterTimer:Cancel()
         self.damageMeterTimer = nil
@@ -663,12 +699,18 @@ function UITweaks:PLAYER_REGEN_ENABLED()
     end
     self:UpdatePlayerFrameVisibility()
     self:ScheduleDamageMeterHide()
+    self:UpdateTargetTooltip()
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameCollapse()
     self:UpdatePlayerFrameVisibility(true)
     self:UpdateDamageMeterVisibility()
+    self:UpdateTargetTooltip()
     self:UpdateBackpackButtonVisibility()
     self:ScheduleDamageMeterHide()
+end
+
+function UITweaks:PLAYER_TARGET_CHANGED()
+    self:UpdateTargetTooltip(true)
 end
