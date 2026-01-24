@@ -90,23 +90,18 @@ function UITweaks:ApplyChatFontSize()
     self:CacheDefaultChatFonts()
     local frames = getChatFrames()
 
-    if self.db.profile.chatFontOverrideEnabled then
-        local size = sanitizeFontSize(self.db.profile.chatFontSize) or defaultsProfile.chatFontSize
-        for index, frame in ipairs(frames) do
-            if frame.SetFont then
-                local defaultFont = self.defaultChatFonts[index]
-                local font = defaultFont and defaultFont.font or (frame.GetFont and select(1, frame:GetFont()))
-                local flags = defaultFont and defaultFont.flags or (frame.GetFont and select(3, frame:GetFont()))
-                if font then
-                    frame:SetFont(font, size, flags)
-                end
-            end
-        end
-    elseif self.defaultChatFonts then
-        for index, frame in ipairs(frames) do
+    if not self.db.profile.chatFontOverrideEnabled then
+        return
+    end
+
+    local size = sanitizeFontSize(self.db.profile.chatFontSize) or defaultsProfile.chatFontSize
+    for index, frame in ipairs(frames) do
+        if frame.SetFont then
             local defaultFont = self.defaultChatFonts[index]
-            if defaultFont and frame.SetFont then
-                frame:SetFont(defaultFont.font, defaultFont.size, defaultFont.flags)
+            local font = defaultFont and defaultFont.font or (frame.GetFont and select(1, frame:GetFont()))
+            local flags = defaultFont and defaultFont.flags or (frame.GetFont and select(3, frame:GetFont()))
+            if font then
+                frame:SetFont(font, size, flags)
             end
         end
     end
@@ -114,19 +109,14 @@ end
 
 function UITweaks:ApplyChatLineFade()
     local frames = getChatFrames()
-    if self.db.profile.chatLineFadeEnabled then
-        local seconds = sanitizeSeconds(self.db.profile.chatLineFadeSeconds) or defaultsProfile.chatLineFadeSeconds
-        for _, frame in ipairs(frames) do
-            if frame.SetTimeVisible then
-                frame:SetTimeVisible(seconds)
-            end
-        end
-    elseif self.defaultChatWindowTimeVisible then
-        for index, frame in ipairs(frames) do
-            local original = self.defaultChatWindowTimeVisible[index]
-            if original and frame.SetTimeVisible then
-                frame:SetTimeVisible(original)
-            end
+    if not self.db.profile.chatLineFadeEnabled then
+        return
+    end
+
+    local seconds = sanitizeSeconds(self.db.profile.chatLineFadeSeconds) or defaultsProfile.chatLineFadeSeconds
+    for _, frame in ipairs(frames) do
+        if frame.SetTimeVisible then
+            frame:SetTimeVisible(seconds)
         end
     end
 end
@@ -249,7 +239,6 @@ end
 
 function UITweaks:UpdateObjectiveTrackerState()
     if not self.db.profile.collapseObjectiveTrackerInCombat then
-        self:ExpandTrackerIfNeeded(true)
         return
     end
 
@@ -305,7 +294,6 @@ function UITweaks:UpdatePlayerFrameVisibility(forceShow)
     local inCombat = InCombatLockdown and InCombatLockdown()
 
     if not self.db.profile.hidePlayerFrameOutOfCombat then
-        PlayerFrame:Show()
         return
     end
 
@@ -325,9 +313,6 @@ function UITweaks:UpdateTargetFrameVisibility(forceShow)
     local inCombat = InCombatLockdown and InCombatLockdown()
 
     if not self.db.profile.hideTargetFrameOutOfCombat then
-        if UnitExists("target") or forceShow then
-            frame:Show()
-        end
         return
     end
 
@@ -346,11 +331,11 @@ function UITweaks:UpdateBackpackButtonVisibility()
         return
     end
 
-    if self.db.profile.hideBackpackButton then
-        bagBar:Hide()
-    else
-        bagBar:Show()
+    if not self.db.profile.hideBackpackButton then
+        return
     end
+
+    bagBar:Hide()
 end
 
 function UITweaks:UpdateDamageMeterVisibility(forceShow)
@@ -359,36 +344,30 @@ function UITweaks:UpdateDamageMeterVisibility(forceShow)
         return
     end
 
-    if self.db.profile.hideDamageMeter then
-        if forceShow then
-            frame:Show()
-        else
-            frame:Hide()
-        end
-    else
+    if not self.db.profile.hideDamageMeter then
+        return
+    end
+
+    if forceShow then
         frame:Show()
+    else
+        frame:Hide()
     end
 end
 
 function UITweaks:UpdateChatTabsVisibility()
     self.hiddenChatTabs = self.hiddenChatTabs or {}
 
-    if self.db.profile.hideChatTabs then
-        for i = 1, NUM_CHAT_WINDOWS do
-            local tabName = "ChatFrame" .. i .. "Tab"
-            local tab = _G[tabName]
-            if tab and tab:IsShown() then
-                tab:Hide()
-                self.hiddenChatTabs[tabName] = true
-            end
-        end
-    else
-        for tabName in pairs(self.hiddenChatTabs) do
-            local tab = _G[tabName]
-            if tab then
-                tab:Show()
-            end
-            self.hiddenChatTabs[tabName] = nil
+    if not self.db.profile.hideChatTabs then
+        return
+    end
+
+    for i = 1, NUM_CHAT_WINDOWS do
+        local tabName = "ChatFrame" .. i .. "Tab"
+        local tab = _G[tabName]
+        if tab and tab:IsShown() then
+            tab:Hide()
+            self.hiddenChatTabs[tabName] = true
         end
     end
 end
@@ -432,6 +411,10 @@ function UITweaks:UpdateStanceButtonsVisibility()
 
     local hide = self.db.profile.hideStanceButtons
 
+    if not hide then
+        return
+    end
+
     for _, stanceBar in ipairs(getStanceBars()) do
         if RegisterStateDriver and UnregisterStateDriver then
             if hide then
@@ -465,7 +448,11 @@ function UITweaks:UpdateTargetTooltip(forceHide)
         return
     end
 
-    if self.db.profile.showTargetTooltipOutOfCombat and UnitExists("target") and not (InCombatLockdown and InCombatLockdown()) then
+    if not self.db.profile.showTargetTooltipOutOfCombat then
+        return
+    end
+
+    if UnitExists("target") and not (InCombatLockdown and InCombatLockdown()) then
         GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
         GameTooltip:SetUnit("target")
     elseif forceHide or not UnitExists("target") then

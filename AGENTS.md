@@ -21,6 +21,9 @@ There is no build step. Copy or symlink `UITweaks/` into your WoW AddOns directo
 ## Coding Style & Naming Conventions
 Use four-space indentation, `local` scoping, and double-quoted strings. Keep Ace3 option tables declarative, grouped by feature, and hold defaults in the shared `defaults.profile` table. Prefix frames, slash commands, and SavedVariables with `UITweaks` to avoid collisions. Do not modify vendored libraries; extend or override behavior in addon files instead.
 
+## UI Option Behavior
+When implementing option toggles, use only `if enabled then ... end` flows. Avoid `else` branches that restore or change behavior when the option is disabled.
+
 ## Testing Guidelines
 Automated tests are not configured, so rely on in-game manual verification. Toggle options under Interface → AddOns → UI Tweaks, relog or `/reload`, and observe chat output. Document scenarios, client build, and observed results in the PR description. Temporary debug prints are acceptable if gated and removed before release.
 
