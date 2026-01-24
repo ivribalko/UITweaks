@@ -10,6 +10,7 @@ local defaults = {
         chatLineFadeEnabled = false,
         chatLineFadeSeconds = 5,
         suppressTalentAlert = false,
+        collapseObjectiveTrackerInCombat = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -159,6 +160,95 @@ end
 function UITweaks:SetSuppressTalentAlert(enabled)
     self.db.profile.suppressTalentAlert = enabled
     self:HookTalentAlertFrames()
+end
+
+local function collapseObjectiveTracker()
+    if ObjectiveTrackerFrame and ObjectiveTrackerFrame.SetCollapsed then
+        ObjectiveTrackerFrame:SetCollapsed(true)
+    elseif ObjectiveTrackerFrame and ObjectiveTrackerFrame.Collapse then
+        ObjectiveTrackerFrame:Collapse()
+    elseif ObjectiveTracker_Collapse then
+        ObjectiveTracker_Collapse()
+    end
+end
+
+local function expandObjectiveTracker()
+    if ObjectiveTrackerFrame and ObjectiveTrackerFrame.SetCollapsed then
+        ObjectiveTrackerFrame:SetCollapsed(false)
+    elseif ObjectiveTrackerFrame and ObjectiveTrackerFrame.Expand then
+        ObjectiveTrackerFrame:Expand()
+    elseif ObjectiveTracker_Expand then
+        ObjectiveTracker_Expand()
+    end
+end
+
+function UITweaks:EnsureObjectiveTrackerLoaded()
+    if ObjectiveTrackerFrame and (ObjectiveTrackerFrame.SetCollapsed or ObjectiveTrackerFrame.Collapse) then
+        return true
+    end
+
+    if UIParentLoadAddOn then
+        local loaded = UIParentLoadAddOn("Blizzard_ObjectiveTracker")
+        if loaded and ObjectiveTrackerFrame then
+            return true
+        end
+    end
+end
+
+function UITweaks:SetCollapseObjectiveTrackerInCombat(enabled)
+    self.db.profile.collapseObjectiveTrackerInCombat = enabled
+    self:UpdateObjectiveTrackerState()
+end
+
+function UITweaks:IsObjectiveTrackerCollapsed()
+    if ObjectiveTrackerFrame then
+        if ObjectiveTrackerFrame.IsCollapsed then
+            return ObjectiveTrackerFrame:IsCollapsed()
+        elseif ObjectiveTrackerFrame.collapsed ~= nil then
+            return ObjectiveTrackerFrame.collapsed
+        end
+    end
+end
+
+function UITweaks:CollapseTrackerIfNeeded()
+    if not self.db.profile.collapseObjectiveTrackerInCombat then
+        return
+    end
+
+    if not self:EnsureObjectiveTrackerLoaded() then
+        return
+    end
+
+    if not self:IsObjectiveTrackerCollapsed() then
+        collapseObjectiveTracker()
+        self.trackerCollapsedByAddon = true
+    else
+        self.trackerCollapsedByAddon = false
+    end
+end
+
+function UITweaks:ExpandTrackerIfNeeded(force)
+    if not self:EnsureObjectiveTrackerLoaded() then
+        return
+    end
+
+    if force or self.trackerCollapsedByAddon then
+        expandObjectiveTracker()
+        self.trackerCollapsedByAddon = false
+    end
+end
+
+function UITweaks:UpdateObjectiveTrackerState()
+    if not self.db.profile.collapseObjectiveTrackerInCombat then
+        self:ExpandTrackerIfNeeded(true)
+        return
+    end
+
+    if InCombatLockdown and InCombatLockdown() then
+        self:CollapseTrackerIfNeeded()
+    else
+        self:ExpandTrackerIfNeeded()
+    end
 end
 
 function UITweaks:OpenOptionsPanel()
@@ -320,6 +410,19 @@ function UITweaks:OnInitialize()
                 end,
                 order = 3,
             },
+            collapseObjectiveTrackerInCombat = {
+                type = "toggle",
+                name = "Collapse Objective Tracker In Combat",
+                desc = "Collapse the quest/objective tracker during combat and expand afterwards.",
+                width = "full",
+                get = function()
+                    return self.db.profile.collapseObjectiveTrackerInCombat
+                end,
+                set = function(_, val)
+                    self:SetCollapseObjectiveTrackerInCombat(val)
+                end,
+                order = 4,
+            },
             reloadUI = {
                 type = "execute",
                 name = "Reload UI",
@@ -328,7 +431,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 4,
+                order = 5,
             },
         },
     }
@@ -342,7 +445,10 @@ function UITweaks:OnEnable()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
     self:HookTalentAlertFrames()
+    self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
+    self:RegisterEvent("PLAYER_REGEN_DISABLED")
+    self:RegisterEvent("PLAYER_REGEN_ENABLED")
 
     if C_Timer and C_Timer.After then
         C_Timer.After(1, function()
@@ -356,5 +462,19 @@ end
 function UITweaks:ADDON_LOADED(event, addonName)
     if addonName == "Blizzard_TalentUI" or addonName == "Blizzard_PlayerSpells" then
         self:HookTalentAlertFrames()
+    elseif addonName == "Blizzard_ObjectiveTracker" then
+        self:UpdateObjectiveTrackerState()
+    end
+end
+
+function UITweaks:PLAYER_REGEN_DISABLED()
+    if self.db.profile.collapseObjectiveTrackerInCombat then
+        self:CollapseTrackerIfNeeded()
+    end
+end
+
+function UITweaks:PLAYER_REGEN_ENABLED()
+    if self.db.profile.collapseObjectiveTrackerInCombat then
+        self:ExpandTrackerIfNeeded()
     end
 end
