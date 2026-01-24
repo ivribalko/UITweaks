@@ -686,6 +686,9 @@ function UITweaks:OnInitialize()
                 end
             end,
             disabled = function()
+                if type(disabledKey) == "function" then
+                    return disabledKey()
+                end
                 return disabledKey and not self.db.profile[disabledKey]
             end,
         }
@@ -729,7 +732,9 @@ function UITweaks:OnInitialize()
                         function()
                             self:ApplyChatLineFade()
                         end,
-                        "chatLineFadeEnabled",
+                        function()
+                            return not self.db.profile.chatLineFadeEnabled
+                        end,
                         1.8
                     ),
                     chatFontOverrideEnabled = toggleOption(
@@ -754,7 +759,9 @@ function UITweaks:OnInitialize()
                         function()
                             self:ApplyChatFontSize()
                         end,
-                        "chatFontOverrideEnabled",
+                        function()
+                            return not self.db.profile.chatFontOverrideEnabled
+                        end,
                         1.8
                     ),
                     hideChatTabs = toggleOption(
@@ -768,8 +775,8 @@ function UITweaks:OnInitialize()
                     ),
                     hideChatMenuButton = toggleOption(
                         "hideChatMenuButton",
-                        "Hide Chat Menu Button",
-                        "Hide the chat menu button with the speech bubble icon.",
+                        "Hide Chat Bubble Button",
+                        "Hide the chat button with the speech bubble icon.",
                         3.1,
                         function()
                             self:UpdateChatMenuButtonVisibility()
@@ -859,17 +866,23 @@ function UITweaks:OnInitialize()
                                 nil,
                                 "auto"
                             ),
-                            collapseObjectiveTrackerOnlyInstances = toggleOption(
-                                "collapseObjectiveTrackerOnlyInstances",
-                                "Only In Dungeons/Raids",
-                                "Only collapse the objective tracker while in dungeon or raid instances.",
-                                1,
-                                function()
+                            collapseObjectiveTrackerOnlyInstances = {
+                                type = "toggle",
+                                name = "Only In Dungeons/Raids",
+                                desc = "Only collapse the objective tracker while in dungeon or raid instances.",
+                                width = "auto",
+                                order = 1,
+                                get = function()
+                                    return self.db.profile.collapseObjectiveTrackerOnlyInstances
+                                end,
+                                set = function(_, val)
+                                    self.db.profile.collapseObjectiveTrackerOnlyInstances = val
                                     self:UpdateObjectiveTrackerState()
                                 end,
-                                "collapseObjectiveTrackerInCombat",
-                                "auto"
-                            ),
+                                disabled = function()
+                                    return not self.db.profile.collapseObjectiveTrackerInCombat
+                                end,
+                            },
                         },
                     },
                 },
@@ -905,7 +918,7 @@ function UITweaks:OnInitialize()
             ),
             showOptionsOnReload = toggleOption(
                 "showOptionsOnReload",
-                "Show These Options on Reload",
+                "Open This Settings Menu on Reload",
                 "Re-open the UI Tweaks options panel after /reload (useful for development).",
                 8
             ),
