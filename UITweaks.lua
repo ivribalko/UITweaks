@@ -712,8 +712,8 @@ function UITweaks:OnInitialize()
                 args = {
                     chatLineFadeEnabled = toggleOption(
                         "chatLineFadeEnabled",
-                        "Chat Line Fade Override",
-                        "Enable a custom duration for how long chat lines remain visible before fading.",
+                        "Chat Message Fade Override",
+                        "Enable a custom duration for how long chat messages remain visible before fading.",
                         1,
                         function()
                             self:ApplyChatLineFade()
@@ -724,7 +724,7 @@ function UITweaks:OnInitialize()
                     chatLineFadeSeconds = rangeOption(
                         "chatLineFadeSeconds",
                         "Fade Seconds",
-                        "Number of seconds a chat line stays before fading when the override is enabled.",
+                        "Number of seconds a chat message stays before fading when the override is enabled.",
                         1.1,
                         1,
                         60,
@@ -786,7 +786,7 @@ function UITweaks:OnInitialize()
             },
             suppressTalentAlert = toggleOption(
                 "suppressTalentAlert",
-                "Hide Talent Alert",
+                "Hide Unspent Talent Alert",
                 "Prevent the 'You have unspent talent points' reminder from popping up.",
                 2,
                 function()
