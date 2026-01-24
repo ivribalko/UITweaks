@@ -8,8 +8,11 @@ local defaults = {
         printOnLogin = false,
         chatLineFadeEnabled = false,
         chatLineFadeSeconds = 5,
+        suppressTalentAlert = false,
     }
 }
+
+local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS or 10
 
 local function sanitizeSeconds(value)
     local seconds = tonumber(value)
@@ -58,6 +61,82 @@ function UITweaks:ApplyChatLineFade()
                 frame:SetTimeVisible(original)
             end
         end
+    end
+end
+
+local talentAlertFrameNames = {
+    "TalentMicroButtonAlert",
+    "PlayerSpellsMicroButtonAlert",
+}
+local talentAlertFrameLookup = {}
+for _, name in ipairs(talentAlertFrameNames) do
+    talentAlertFrameLookup[name] = true
+end
+
+local suppressedTalentTextMatchers = {
+    function(text)
+        return text and text:lower():find("unspent talent points", 1, true)
+    end,
+}
+
+local function hideTalentAlertOnShow(frame)
+    if UITweaks.db and UITweaks.db.profile.suppressTalentAlert then
+        frame:Hide()
+    end
+end
+
+function UITweaks:HookTalentAlertFrames()
+    self:EnsureTalentAlertHooks()
+
+    for _, frameName in ipairs(talentAlertFrameNames) do
+        local frame = _G[frameName]
+        if frame then
+            if not frame.UITweaksHooked then
+                frame:HookScript("OnShow", hideTalentAlertOnShow)
+                frame.UITweaksHooked = true
+            end
+            if self.db.profile.suppressTalentAlert then
+                frame:Hide()
+            end
+        end
+    end
+end
+
+function UITweaks:SetSuppressTalentAlert(enabled)
+    self.db.profile.suppressTalentAlert = enabled
+    self:HookTalentAlertFrames()
+end
+
+function UITweaks:EnsureTalentAlertHooks()
+    if not self.microButtonAlertHooked and MainMenuMicroButton_ShowMicroAlert then
+        hooksecurefunc("MainMenuMicroButton_ShowMicroAlert", function(alertFrame)
+            if not (UITweaks.db and UITweaks.db.profile.suppressTalentAlert) then
+                return
+            end
+            if alertFrame and talentAlertFrameLookup[alertFrame:GetName() or ""] then
+                alertFrame:Hide()
+            end
+        end)
+        self.microButtonAlertHooked = true
+    end
+
+    if HelpTip and not self.helpTipHooked then
+        hooksecurefunc(HelpTip, "Show", function(_, owner, info)
+            if not (UITweaks.db and UITweaks.db.profile.suppressTalentAlert) then
+                return
+            end
+            local text = info and info.text
+            if not text then
+                return
+            end
+            for _, matcher in ipairs(suppressedTalentTextMatchers) do
+                if matcher(text) then
+                    HelpTip:Hide(owner, info.text)
+                    break
+                end
+            end
+        end)
+        self.helpTipHooked = true
     end
 end
 
@@ -112,6 +191,18 @@ function UITweaks:OnInitialize()
                 end,
                 order = 3,
             },
+            suppressTalentAlert = {
+                type = "toggle",
+                name = "Hide Talent Alert",
+                desc = "Prevent the 'You have unspent talent points' reminder from popping up.",
+                get = function()
+                    return self.db.profile.suppressTalentAlert
+                end,
+                set = function(_, val)
+                    self:SetSuppressTalentAlert(val)
+                end,
+                order = 4,
+            },
         },
     }
 
@@ -126,4 +217,12 @@ function UITweaks:OnEnable()
 
     self:CacheDefaultChatWindowTimes()
     self:ApplyChatLineFade()
+    self:HookTalentAlertFrames()
+    self:RegisterEvent("ADDON_LOADED")
+end
+
+function UITweaks:ADDON_LOADED(event, addonName)
+    if addonName == "Blizzard_TalentUI" or addonName == "Blizzard_PlayerSpells" then
+        self:HookTalentAlertFrames()
+    end
 end
