@@ -301,20 +301,17 @@ function UITweaks:UpdatePlayerFrameVisibility(forceShow)
         return
     end
 
-    if self.db.profile.hidePlayerFrameOutOfCombat then
-        if not self.playerFrameVisibilityDriver then
-            RegisterStateDriver(PlayerFrame, "visibility", "[combat] show; hide")
-            self.playerFrameVisibilityDriver = true
-        end
+    local inCombat = InCombatLockdown and InCombatLockdown()
+
+    if not self.db.profile.hidePlayerFrameOutOfCombat then
+        PlayerFrame:Show()
+        return
+    end
+
+    if forceShow or inCombat then
         PlayerFrame:Show()
     else
-        if self.playerFrameVisibilityDriver then
-            UnregisterStateDriver(PlayerFrame, "visibility")
-            self.playerFrameVisibilityDriver = nil
-        end
-        if forceShow then
-            PlayerFrame:Show()
-        end
+        PlayerFrame:Hide()
     end
 end
 
@@ -331,14 +328,18 @@ function UITweaks:UpdateBackpackButtonVisibility()
     end
 end
 
-function UITweaks:UpdateDamageMeterVisibility()
+function UITweaks:UpdateDamageMeterVisibility(forceShow)
     local frame = _G.DamageMeter
     if not frame then
         return
     end
 
     if self.db.profile.hideDamageMeter then
-        frame:Hide()
+        if forceShow then
+            frame:Show()
+        else
+            frame:Hide()
+        end
     else
         frame:Show()
     end
@@ -432,23 +433,41 @@ function UITweaks:UpdateTargetTooltip(forceHide)
     end
 end
 
-function UITweaks:ScheduleDamageMeterHide()
-    if self.damageMeterTimer then
-        self.damageMeterTimer:Cancel()
-        self.damageMeterTimer = nil
+function UITweaks:HasDelayedVisibilityFeatures()
+    return self.db.profile.hideDamageMeter or self.db.profile.hidePlayerFrameOutOfCombat or self.db.profile.collapseObjectiveTrackerInCombat
+end
+
+function UITweaks:ApplyDelayedVisibility()
+    if self.db.profile.hideDamageMeter then
+        local frame = _G.DamageMeter
+        if frame then
+            frame:Hide()
+        end
     end
 
-    if not self.db.profile.hideDamageMeter then
+    if self.db.profile.hidePlayerFrameOutOfCombat then
+        self:UpdatePlayerFrameVisibility()
+    end
+
+    if self.db.profile.collapseObjectiveTrackerInCombat then
+        self:ExpandTrackerIfNeeded()
+    end
+end
+
+function UITweaks:ScheduleDelayedVisibilityUpdate()
+    if self.visibilityTimer then
+        self.visibilityTimer:Cancel()
+        self.visibilityTimer = nil
+    end
+
+    if not self:HasDelayedVisibilityFeatures() then
         return
     end
 
     if C_Timer and C_Timer.NewTimer then
-        self.damageMeterTimer = C_Timer.NewTimer(5, function()
+        self.visibilityTimer = C_Timer.NewTimer(5, function()
             if not InCombatLockdown or not InCombatLockdown() then
-                local frame = _G.DamageMeter
-                if frame then
-                    frame:Hide()
-                end
+                self:ApplyDelayedVisibility()
             end
         end)
     end
@@ -638,6 +657,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self.db.profile.hidePlayerFrameOutOfCombat = val
                     self:UpdatePlayerFrameVisibility(true)
+                    self:ScheduleDelayedVisibilityUpdate()
                 end,
                 order = 5,
             },
@@ -796,7 +816,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:UpdateTargetTooltip()
         self:UpdateChatTabsVisibility()
         self:UpdateBackpackButtonVisibility()
-        self:ScheduleDamageMeterHide()
+        self:ScheduleDelayedVisibilityUpdate()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
     elseif addonName == "Blizzard_ObjectiveTracker" then
@@ -809,22 +829,18 @@ function UITweaks:PLAYER_REGEN_DISABLED()
         self:CollapseTrackerIfNeeded()
     end
     self:UpdatePlayerFrameVisibility(true)
-    self:UpdateDamageMeterVisibility()
+    self:UpdateDamageMeterVisibility(true)
     if self.db.profile.showTargetTooltipOutOfCombat then
         GameTooltip:Hide()
     end
-    if self.damageMeterTimer then
-        self.damageMeterTimer:Cancel()
-        self.damageMeterTimer = nil
+    if self.visibilityTimer then
+        self.visibilityTimer:Cancel()
+        self.visibilityTimer = nil
     end
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
-    if self.db.profile.collapseObjectiveTrackerInCombat then
-        self:ExpandTrackerIfNeeded()
-    end
-    self:UpdatePlayerFrameVisibility()
-    self:ScheduleDamageMeterHide()
+    self:ScheduleDelayedVisibilityUpdate()
     self:UpdateTargetTooltip()
 end
 
@@ -836,7 +852,7 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:UpdateChatTabsVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateBackpackButtonVisibility()
-    self:ScheduleDamageMeterHide()
+    self:ScheduleDelayedVisibilityUpdate()
 end
 
 function UITweaks:PLAYER_TARGET_CHANGED()
