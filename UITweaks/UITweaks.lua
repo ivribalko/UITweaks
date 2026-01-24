@@ -14,6 +14,7 @@ local defaults = {
         collapseBuffFrame = false,
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
+        hideDamageMeter = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -333,6 +334,41 @@ function UITweaks:UpdateBackpackButtonVisibility()
     end
 end
 
+function UITweaks:UpdateDamageMeterVisibility()
+    local frame = _G.DamageMeter
+    if not frame then
+        return
+    end
+
+    if self.db.profile.hideDamageMeter then
+        frame:Hide()
+    else
+        frame:Show()
+    end
+end
+
+function UITweaks:ScheduleDamageMeterHide()
+    if self.damageMeterTimer then
+        self.damageMeterTimer:Cancel()
+        self.damageMeterTimer = nil
+    end
+
+    if not self.db.profile.hideDamageMeter then
+        return
+    end
+
+    if C_Timer and C_Timer.NewTimer then
+        self.damageMeterTimer = C_Timer.NewTimer(5, function()
+            if not InCombatLockdown or not InCombatLockdown() then
+                local frame = _G.DamageMeter
+                if frame then
+                    frame:Hide()
+                end
+            end
+        end)
+    end
+end
+
 function UITweaks:OpenOptionsPanel()
     if InterfaceOptionsFrame_OpenToCategory and self.optionsFrame then
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
@@ -520,6 +556,20 @@ function UITweaks:OnInitialize()
                 end,
                 order = 5,
             },
+            hideDamageMeter = {
+                type = "toggle",
+                name = "Hide Damage Meter Out of Combat with a Delay",
+                desc = "Hide the built-in damage meter frame five seconds after you leave combat, with a delay before hiding.",
+                width = "full",
+                get = function()
+                    return self.db.profile.hideDamageMeter
+                end,
+                set = function(_, val)
+                    self.db.profile.hideDamageMeter = val
+                    self:UpdateDamageMeterVisibility()
+                end,
+                order = 6,
+            },
             hideBackpackButton = {
                 type = "toggle",
                 name = "Hide Backpack Button",
@@ -532,7 +582,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideBackpackButton = val
                     self:UpdateBackpackButtonVisibility()
                 end,
-                order = 6,
+                order = 7,
             },
             collapseObjectiveTrackerInCombat = {
                 type = "toggle",
@@ -545,7 +595,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetCollapseObjectiveTrackerInCombat(val)
                 end,
-                order = 7,
+                order = 8,
             },
             reloadUI = {
                 type = "execute",
@@ -555,7 +605,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 8,
+                order = 9,
             },
         },
     }
@@ -571,6 +621,7 @@ function UITweaks:OnEnable()
     self:HookTalentAlertFrames()
     self:ApplyBuffFrameCollapse()
     self:UpdatePlayerFrameVisibility(true)
+    self:UpdateDamageMeterVisibility()
     self:UpdateBackpackButtonVisibility()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
@@ -593,7 +644,9 @@ function UITweaks:ADDON_LOADED(event, addonName)
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameCollapse()
         self:UpdatePlayerFrameVisibility(true)
+        self:UpdateDamageMeterVisibility()
         self:UpdateBackpackButtonVisibility()
+        self:ScheduleDamageMeterHide()
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
     end
@@ -604,6 +657,11 @@ function UITweaks:PLAYER_REGEN_DISABLED()
         self:CollapseTrackerIfNeeded()
     end
     self:UpdatePlayerFrameVisibility(true)
+    self:UpdateDamageMeterVisibility()
+    if self.damageMeterTimer then
+        self.damageMeterTimer:Cancel()
+        self.damageMeterTimer = nil
+    end
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
@@ -611,10 +669,13 @@ function UITweaks:PLAYER_REGEN_ENABLED()
         self:ExpandTrackerIfNeeded()
     end
     self:UpdatePlayerFrameVisibility()
+    self:ScheduleDamageMeterHide()
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameCollapse()
     self:UpdatePlayerFrameVisibility(true)
+    self:UpdateDamageMeterVisibility()
     self:UpdateBackpackButtonVisibility()
+    self:ScheduleDamageMeterHide()
 end
