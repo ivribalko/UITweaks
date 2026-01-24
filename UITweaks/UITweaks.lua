@@ -13,6 +13,7 @@ local defaults = {
         collapseObjectiveTrackerInCombat = false,
         collapseBuffFrame = false,
         hidePlayerFrameOutOfCombat = false,
+        hideBackpackButton = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -312,6 +313,26 @@ function UITweaks:UpdatePlayerFrameVisibility(forceShow)
     end
 end
 
+function UITweaks:UpdateBackpackButtonVisibility()
+    local bagButtons = {
+        MainMenuBarBackpackButton,
+        CharacterBag0Slot,
+        CharacterBag1Slot,
+        CharacterBag2Slot,
+        CharacterBag3Slot,
+    }
+
+    for _, button in ipairs(bagButtons) do
+        if button then
+            if self.db.profile.hideBackpackButton then
+                button:Hide()
+            else
+                button:Show()
+            end
+        end
+    end
+end
+
 function UITweaks:OpenOptionsPanel()
     if InterfaceOptionsFrame_OpenToCategory and self.optionsFrame then
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
@@ -499,6 +520,20 @@ function UITweaks:OnInitialize()
                 end,
                 order = 5,
             },
+            hideBackpackButton = {
+                type = "toggle",
+                name = "Hide Backpack Button",
+                desc = "Hide the backpack button next to the action bars.",
+                width = "full",
+                get = function()
+                    return self.db.profile.hideBackpackButton
+                end,
+                set = function(_, val)
+                    self.db.profile.hideBackpackButton = val
+                    self:UpdateBackpackButtonVisibility()
+                end,
+                order = 6,
+            },
             collapseObjectiveTrackerInCombat = {
                 type = "toggle",
                 name = "Collapse Objective Tracker In Combat",
@@ -510,7 +545,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetCollapseObjectiveTrackerInCombat(val)
                 end,
-                order = 6,
+                order = 7,
             },
             reloadUI = {
                 type = "execute",
@@ -520,7 +555,7 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 7,
+                order = 8,
             },
         },
     }
@@ -536,6 +571,7 @@ function UITweaks:OnEnable()
     self:HookTalentAlertFrames()
     self:ApplyBuffFrameCollapse()
     self:UpdatePlayerFrameVisibility(true)
+    self:UpdateBackpackButtonVisibility()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -557,6 +593,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameCollapse()
         self:UpdatePlayerFrameVisibility(true)
+        self:UpdateBackpackButtonVisibility()
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
     end
@@ -579,4 +616,5 @@ end
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameCollapse()
     self:UpdatePlayerFrameVisibility(true)
+    self:UpdateBackpackButtonVisibility()
 end
