@@ -582,12 +582,11 @@ function UITweaks:OnInitialize()
         end
     end
 
-    local function toggleOption(key, name, desc, order, onSet, disabledKey)
-        return {
+    local function toggleOption(key, name, desc, order, onSet, disabledKey, width)
+        local option = {
             type = "toggle",
             name = name,
             desc = desc,
-            width = "full",
             order = order,
             get = getOption(key),
             set = setOption(key, onSet),
@@ -595,6 +594,12 @@ function UITweaks:OnInitialize()
                 return disabledKey and not self.db.profile[disabledKey]
             end,
         }
+
+        if width ~= "auto" then
+            option.width = width or "full"
+        end
+
+        return option
     end
 
     local function numberOption(key, name, desc, order, sanitizer, errorText, onSet, disabledKey)
@@ -744,25 +749,36 @@ function UITweaks:OnInitialize()
                             self:UpdateDamageMeterVisibility()
                         end
                     ),
-                    collapseObjectiveTrackerInCombat = toggleOption(
-                        "collapseObjectiveTrackerInCombat",
-                        "Collapse Objective Tracker In Combat",
-                        "Collapse the quest/objective tracker during combat and re-expand it five seconds after combat ends (shares the delay with the damage meter/player frame).",
-                        4,
-                        function()
-                            self:UpdateObjectiveTrackerState()
-                        end
-                    ),
-                    collapseObjectiveTrackerOnlyInstances = toggleOption(
-                        "collapseObjectiveTrackerOnlyInstances",
-                        "    Only In Dungeons/Raids",
-                        "Only collapse the objective tracker while in dungeon or raid instances.",
-                        5,
-                        function()
-                            self:UpdateObjectiveTrackerState()
-                        end,
-                        "collapseObjectiveTrackerInCombat"
-                    ),
+                    objectiveTrackerVisibility = {
+                        type = "group",
+                        name = "Objective Tracker",
+                        inline = true,
+                        order = 4,
+                        args = {
+                            collapseObjectiveTrackerInCombat = toggleOption(
+                                "collapseObjectiveTrackerInCombat",
+                                "Collapse In Combat",
+                                "Collapse the quest/objective tracker during combat and re-expand it five seconds after combat ends (shares the delay with the damage meter/player frame).",
+                                0,
+                                function()
+                                    self:UpdateObjectiveTrackerState()
+                                end,
+                                nil,
+                                "auto"
+                            ),
+                            collapseObjectiveTrackerOnlyInstances = toggleOption(
+                                "collapseObjectiveTrackerOnlyInstances",
+                                "Only In Dungeons/Raids",
+                                "Only collapse the objective tracker while in dungeon or raid instances.",
+                                1,
+                                function()
+                                    self:UpdateObjectiveTrackerState()
+                                end,
+                                "collapseObjectiveTrackerInCombat",
+                                "auto"
+                            ),
+                        },
+                    },
                 },
             },
             showTargetTooltipOutOfCombat = toggleOption(
