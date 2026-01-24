@@ -450,7 +450,7 @@ function UITweaks:ApplyDelayedVisibility()
     end
 
     if self.db.profile.collapseObjectiveTrackerInCombat then
-        self:ExpandTrackerIfNeeded()
+        self:ExpandTrackerIfNeeded(true)
     end
 end
 
@@ -525,29 +525,32 @@ function UITweaks:OnInitialize()
         name = "UI Tweaks",
         type = "group",
         args = {
-            chatLineFade = {
+            chatSettings = {
                 type = "group",
-                name = "Chat Line Fade",
+                name = "Chat Settings",
                 inline = true,
                 order = 1,
                 args = {
                     chatLineFadeEnabled = {
                         type = "toggle",
-                        name = "Enable",
-                        desc = "Override how long chat lines remain visible before fading.",
-                        width = "half",
-                        get = function() return self.db.profile.chatLineFadeEnabled end,
+                        name = "Override Chat Line Fade",
+                        desc = "Enable a custom duration for how long chat lines remain visible before fading.",
+                        width = "full",
+                        order = 1,
+                        get = function()
+                            return self.db.profile.chatLineFadeEnabled
+                        end,
                         set = function(_, val)
                             self.db.profile.chatLineFadeEnabled = val
                             self:ApplyChatLineFade()
                         end,
-                        order = 1,
                     },
                     chatLineFadeSeconds = {
                         type = "input",
-                        name = "Seconds",
+                        name = "Fade Seconds",
                         desc = "Number of seconds a chat line stays before fading when the override is enabled.",
                         width = "half",
+                        order = 2,
                         get = function()
                             return tostring(self.db.profile.chatLineFadeSeconds)
                         end,
@@ -567,21 +570,13 @@ function UITweaks:OnInitialize()
                         disabled = function()
                             return not self.db.profile.chatLineFadeEnabled
                         end,
-                        order = 2,
                     },
-                },
-            },
-            chatFontSizeGroup = {
-                type = "group",
-                name = "Chat Font Size",
-                inline = true,
-                order = 2,
-                args = {
                     chatFontOverrideEnabled = {
                         type = "toggle",
-                        name = "Enable",
-                        desc = "Override the chat window font size for all tabs.",
-                        width = "half",
+                        name = "Override Chat Font Size",
+                        desc = "Enable a custom chat window font size for all tabs.",
+                        width = "full",
+                        order = 3,
                         get = function()
                             return self.db.profile.chatFontOverrideEnabled
                         end,
@@ -589,13 +584,13 @@ function UITweaks:OnInitialize()
                             self.db.profile.chatFontOverrideEnabled = val
                             self:ApplyChatFontSize()
                         end,
-                        order = 1,
                     },
                     chatFontSize = {
                         type = "input",
-                        name = "Font Size",
-                        desc = "Font size to use when the override is enabled (8-48).",
+                        name = "Font Size (8-48)",
+                        desc = "Font size to use when the override is enabled.",
                         width = "half",
+                        order = 4,
                         get = function()
                             return tostring(self.db.profile.chatFontSize)
                         end,
@@ -615,7 +610,20 @@ function UITweaks:OnInitialize()
                         disabled = function()
                             return not self.db.profile.chatFontOverrideEnabled
                         end,
-                        order = 2,
+                    },
+                    hideChatTabs = {
+                        type = "toggle",
+                        name = "Hide Chat Tabs",
+                        desc = "Hide chat tab titles while leaving the windows visible.",
+                        width = "full",
+                        order = 5,
+                        get = function()
+                            return self.db.profile.hideChatTabs
+                        end,
+                        set = function(_, val)
+                            self.db.profile.hideChatTabs = val
+                            self:UpdateChatTabsVisibility()
+                        end,
                     },
                 },
             },
@@ -630,7 +638,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetSuppressTalentAlert(val)
                 end,
-                order = 3,
+                order = 2,
             },
             collapseBuffFrame = {
                 type = "toggle",
@@ -644,13 +652,13 @@ function UITweaks:OnInitialize()
                     self.db.profile.collapseBuffFrame = val
                     self:ApplyBuffFrameCollapse()
                 end,
-                order = 4,
+                order = 3,
             },
             combatVisibility = {
                 type = "group",
                 name = "Combat Visibility (5s Delay)",
                 inline = true,
-                order = 5,
+                order = 4,
                 args = {
                     hidePlayerFrameOutOfCombat = {
                         type = "toggle",
@@ -710,21 +718,7 @@ function UITweaks:OnInitialize()
                         GameTooltip:Hide()
                     end
                 end,
-                order = 6,
-            },
-            hideChatTabs = {
-                type = "toggle",
-                name = "Hide Chat Tabs",
-                desc = "Hide chat tab titles while leaving the windows visible.",
-                width = "full",
-                get = function()
-                    return self.db.profile.hideChatTabs
-                end,
-                set = function(_, val)
-                    self.db.profile.hideChatTabs = val
-                    self:UpdateChatTabsVisibility()
-                end,
-                order = 7,
+                order = 5,
             },
             hideStanceButtons = {
                 type = "toggle",
@@ -738,7 +732,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideStanceButtons = val
                     self:UpdateStanceButtonsVisibility()
                 end,
-                order = 8,
+                order = 6,
             },
             hideBackpackButton = {
                 type = "toggle",
@@ -752,7 +746,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideBackpackButton = val
                     self:UpdateBackpackButtonVisibility()
                 end,
-                order = 9,
+                order = 7,
             },
             showOptionsOnReload = {
                 type = "toggle",
@@ -765,7 +759,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self.db.profile.showOptionsOnReload = val
                 end,
-                order = 10,
+                order = 8,
             },
             reloadUI = {
                 type = "execute",
@@ -775,11 +769,10 @@ function UITweaks:OnInitialize()
                 func = function()
                     ReloadUI()
                 end,
-                order = 11,
+                order = 9,
             },
         },
     }
-
     AceConfig:RegisterOptionsTable(addonName, options)
     self.optionsFrame = AceConfigDialog:AddToBlizOptions(addonName, "UI Tweaks")
 end
