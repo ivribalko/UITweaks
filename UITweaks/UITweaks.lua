@@ -10,6 +10,8 @@ local defaults = {
         chatLineFadeEnabled = false,
         chatLineFadeSeconds = 5,
         suppressTalentAlert = false,
+        chatFontOverrideEnabled = false,
+        chatFontSize = 16,
     }
 }
 
@@ -19,6 +21,13 @@ local function sanitizeSeconds(value)
     local seconds = tonumber(value)
     if seconds and seconds > 0 then
         return seconds
+    end
+end
+
+local function sanitizeFontSize(value)
+    local size = tonumber(value)
+    if size and size >= 8 and size <= 48 then
+        return size
     end
 end
 
@@ -42,6 +51,50 @@ function UITweaks:CacheDefaultChatWindowTimes()
     for index, frame in ipairs(getChatFrames()) do
         if frame.GetTimeVisible then
             self.defaultChatWindowTimeVisible[index] = frame:GetTimeVisible()
+        end
+    end
+end
+
+function UITweaks:CacheDefaultChatFonts()
+    if self.defaultChatFonts then
+        return
+    end
+
+    self.defaultChatFonts = {}
+    for index, frame in ipairs(getChatFrames()) do
+        if frame.GetFont then
+            local font, size, flags = frame:GetFont()
+            self.defaultChatFonts[index] = {
+                font = font,
+                size = size,
+                flags = flags,
+            }
+        end
+    end
+end
+
+function UITweaks:ApplyChatFontSize()
+    self:CacheDefaultChatFonts()
+    local frames = getChatFrames()
+
+    if self.db.profile.chatFontOverrideEnabled then
+        local size = sanitizeFontSize(self.db.profile.chatFontSize) or defaults.profile.chatFontSize
+        for index, frame in ipairs(frames) do
+            if frame.SetFont then
+                local defaultFont = self.defaultChatFonts[index]
+                local font = defaultFont and defaultFont.font or (frame.GetFont and select(1, frame:GetFont()))
+                local flags = defaultFont and defaultFont.flags or (frame.GetFont and select(3, frame:GetFont()))
+                if font then
+                    frame:SetFont(font, size, flags)
+                end
+            end
+        end
+    elseif self.defaultChatFonts then
+        for index, frame in ipairs(frames) do
+            local defaultFont = self.defaultChatFonts[index]
+            if defaultFont and frame.SetFont then
+                frame:SetFont(defaultFont.font, defaultFont.size, defaultFont.flags)
+            end
         end
     end
 end
@@ -160,43 +213,99 @@ function UITweaks:OnInitialize()
         name = "UI Tweaks",
         type = "group",
         args = {
-            chatLineFadeEnabled = {
-                type = "toggle",
-                name = "Custom Chat Line Fade",
-                desc = "Override how long chat lines remain visible before fading.",
-                width = "full",
-                get = function() return self.db.profile.chatLineFadeEnabled end,
-                set = function(_, val)
-                    self.db.profile.chatLineFadeEnabled = val
-                    self:ApplyChatLineFade()
-                end,
+            chatLineFade = {
+                type = "group",
+                name = "Chat Line Fade",
+                inline = true,
                 order = 1,
+                args = {
+                    chatLineFadeEnabled = {
+                        type = "toggle",
+                        name = "Enable Fade Override",
+                        desc = "Override how long chat lines remain visible before fading.",
+                        width = "half",
+                        get = function() return self.db.profile.chatLineFadeEnabled end,
+                        set = function(_, val)
+                            self.db.profile.chatLineFadeEnabled = val
+                            self:ApplyChatLineFade()
+                        end,
+                        order = 1,
+                    },
+                    chatLineFadeSeconds = {
+                        type = "input",
+                        name = "Seconds",
+                        desc = "Number of seconds a chat line stays before fading when the override is enabled.",
+                        width = "half",
+                        get = function()
+                            return tostring(self.db.profile.chatLineFadeSeconds)
+                        end,
+                        set = function(_, val)
+                            local seconds = sanitizeSeconds(val)
+                            if seconds then
+                                self.db.profile.chatLineFadeSeconds = seconds
+                                self:ApplyChatLineFade()
+                            end
+                        end,
+                        validate = function(_, value)
+                            if sanitizeSeconds(value) then
+                                return true
+                            end
+                            return "Enter a positive number of seconds."
+                        end,
+                        disabled = function()
+                            return not self.db.profile.chatLineFadeEnabled
+                        end,
+                        order = 2,
+                    },
+                },
             },
-            chatLineFadeSeconds = {
-                type = "input",
-                name = "Chat Line Lifetime (seconds)",
-                desc = "Number of seconds a chat line stays before fading when the override is enabled.",
-                width = "full",
-                get = function()
-                    return tostring(self.db.profile.chatLineFadeSeconds)
-                end,
-                set = function(_, val)
-                    local seconds = sanitizeSeconds(val)
-                    if seconds then
-                        self.db.profile.chatLineFadeSeconds = seconds
-                        self:ApplyChatLineFade()
-                    end
-                end,
-                validate = function(_, value)
-                    if sanitizeSeconds(value) then
-                        return true
-                    end
-                    return "Enter a positive number of seconds."
-                end,
-                disabled = function()
-                    return not self.db.profile.chatLineFadeEnabled
-                end,
+            chatFontSizeGroup = {
+                type = "group",
+                name = "Chat Font Size",
+                inline = true,
                 order = 2,
+                args = {
+                    chatFontOverrideEnabled = {
+                        type = "toggle",
+                        name = "Enable Font Override",
+                        desc = "Override the chat window font size for all tabs.",
+                        width = "half",
+                        get = function()
+                            return self.db.profile.chatFontOverrideEnabled
+                        end,
+                        set = function(_, val)
+                            self.db.profile.chatFontOverrideEnabled = val
+                            self:ApplyChatFontSize()
+                        end,
+                        order = 1,
+                    },
+                    chatFontSize = {
+                        type = "input",
+                        name = "Font Size",
+                        desc = "Font size to use when the override is enabled (8-48).",
+                        width = "half",
+                        get = function()
+                            return tostring(self.db.profile.chatFontSize)
+                        end,
+                        set = function(_, val)
+                            local size = sanitizeFontSize(val)
+                            if size then
+                                self.db.profile.chatFontSize = size
+                                self:ApplyChatFontSize()
+                            end
+                        end,
+                        validate = function(_, value)
+                            if sanitizeFontSize(value) then
+                                return true
+                            end
+                            return "Enter a number between 8 and 48."
+                        end,
+                        disabled = function()
+                            return not self.db.profile.chatFontOverrideEnabled
+                        end,
+                        order = 2,
+                    },
+                },
             },
             suppressTalentAlert = {
                 type = "toggle",
@@ -231,6 +340,7 @@ end
 function UITweaks:OnEnable()
     self:CacheDefaultChatWindowTimes()
     self:ApplyChatLineFade()
+    self:ApplyChatFontSize()
     self:HookTalentAlertFrames()
     self:RegisterEvent("ADDON_LOADED")
 
