@@ -16,6 +16,7 @@ local defaults = {
         hideBackpackButton = false,
         hideDamageMeter = false,
         showTargetTooltipOutOfCombat = false,
+        hideChatTabs = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
     }
@@ -341,6 +342,29 @@ function UITweaks:UpdateDamageMeterVisibility()
     end
 end
 
+function UITweaks:UpdateChatTabsVisibility()
+    self.hiddenChatTabs = self.hiddenChatTabs or {}
+
+    if self.db.profile.hideChatTabs then
+        for i = 1, NUM_CHAT_WINDOWS do
+            local tabName = "ChatFrame" .. i .. "Tab"
+            local tab = _G[tabName]
+            if tab and tab:IsShown() then
+                tab:Hide()
+                self.hiddenChatTabs[tabName] = true
+            end
+        end
+    else
+        for tabName in pairs(self.hiddenChatTabs) do
+            local tab = _G[tabName]
+            if tab then
+                tab:Show()
+            end
+            self.hiddenChatTabs[tabName] = nil
+        end
+    end
+end
+
 function UITweaks:UpdateTargetTooltip(forceHide)
     if not GameTooltip then
         return
@@ -593,6 +617,20 @@ function UITweaks:OnInitialize()
                 end,
                 order = 7,
             },
+            hideChatTabs = {
+                type = "toggle",
+                name = "Hide Chat Tabs",
+                desc = "Hide chat tab titles while leaving the windows visible.",
+                width = "full",
+                get = function()
+                    return self.db.profile.hideChatTabs
+                end,
+                set = function(_, val)
+                    self.db.profile.hideChatTabs = val
+                    self:UpdateChatTabsVisibility()
+                end,
+                order = 8,
+            },
             hideBackpackButton = {
                 type = "toggle",
                 name = "Hide Bags Bar",
@@ -605,7 +643,7 @@ function UITweaks:OnInitialize()
                     self.db.profile.hideBackpackButton = val
                     self:UpdateBackpackButtonVisibility()
                 end,
-                order = 8,
+                order = 9,
             },
             collapseObjectiveTrackerInCombat = {
                 type = "toggle",
@@ -618,7 +656,7 @@ function UITweaks:OnInitialize()
                 set = function(_, val)
                     self:SetCollapseObjectiveTrackerInCombat(val)
                 end,
-                order = 9,
+                order = 10,
             },
             reloadUI = {
                 type = "execute",
@@ -646,6 +684,7 @@ function UITweaks:OnEnable()
     self:UpdatePlayerFrameVisibility(true)
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
+    self:UpdateChatTabsVisibility()
     self:UpdateBackpackButtonVisibility()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
@@ -671,6 +710,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:UpdatePlayerFrameVisibility(true)
         self:UpdateDamageMeterVisibility()
         self:UpdateTargetTooltip()
+        self:UpdateChatTabsVisibility()
         self:UpdateBackpackButtonVisibility()
         self:ScheduleDamageMeterHide()
     elseif addonName == "Blizzard_ObjectiveTracker" then
@@ -707,6 +747,7 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:UpdatePlayerFrameVisibility(true)
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
+    self:UpdateChatTabsVisibility()
     self:UpdateBackpackButtonVisibility()
     self:ScheduleDamageMeterHide()
 end
