@@ -15,6 +15,7 @@ local defaults = {
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
         hideDamageMeter = false,
+        hideTargetFrameOutOfCombat = false,
         showTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideStanceButtons = false,
@@ -315,6 +316,30 @@ function UITweaks:UpdatePlayerFrameVisibility(forceShow)
     end
 end
 
+function UITweaks:UpdateTargetFrameVisibility(forceShow)
+    local frame = _G.TargetFrame
+    if not frame then
+        return
+    end
+
+    local inCombat = InCombatLockdown and InCombatLockdown()
+
+    if not self.db.profile.hideTargetFrameOutOfCombat then
+        if UnitExists("target") or forceShow then
+            frame:Show()
+        end
+        return
+    end
+
+    if forceShow or inCombat then
+        if UnitExists("target") or forceShow then
+            frame:Show()
+        end
+    else
+        frame:Hide()
+    end
+end
+
 function UITweaks:UpdateBackpackButtonVisibility()
     local bagBar = _G.BagsBar
     if not bagBar then
@@ -434,7 +459,11 @@ function UITweaks:UpdateTargetTooltip(forceHide)
 end
 
 function UITweaks:HasDelayedVisibilityFeatures()
-    return self.db.profile.hideDamageMeter or self.db.profile.hidePlayerFrameOutOfCombat or self.db.profile.collapseObjectiveTrackerInCombat
+    return self.db.profile.hideDamageMeter
+        or self.db.profile.hidePlayerFrameOutOfCombat
+        or self.db.profile.hideTargetFrameOutOfCombat
+        or self.db.profile.collapseObjectiveTrackerInCombat
+        or self.db.profile.showTargetTooltipOutOfCombat
 end
 
 function UITweaks:ApplyDelayedVisibility()
@@ -449,8 +478,16 @@ function UITweaks:ApplyDelayedVisibility()
         self:UpdatePlayerFrameVisibility()
     end
 
+    if self.db.profile.hideTargetFrameOutOfCombat then
+        self:UpdateTargetFrameVisibility()
+    end
+
     if self.db.profile.collapseObjectiveTrackerInCombat then
         self:ExpandTrackerIfNeeded(true)
+    end
+
+    if self.db.profile.showTargetTooltipOutOfCombat then
+        self:UpdateTargetTooltip()
     end
 end
 
@@ -675,6 +712,21 @@ function UITweaks:OnInitialize()
                         end,
                         order = 1,
                     },
+                    hideTargetFrameOutOfCombat = {
+                        type = "toggle",
+                        name = "Hide Target Frame Out of Combat",
+                        desc = "Hide the target unit frame outside combat and restore it five seconds after leaving combat (shares the delay with the other frame options).",
+                        width = "full",
+                        get = function()
+                            return self.db.profile.hideTargetFrameOutOfCombat
+                        end,
+                        set = function(_, val)
+                            self.db.profile.hideTargetFrameOutOfCombat = val
+                            self:UpdateTargetFrameVisibility(true)
+                            self:ScheduleDelayedVisibilityUpdate()
+                        end,
+                        order = 2,
+                    },
                     hideDamageMeter = {
                         type = "toggle",
                         name = "Hide Damage Meter Out of Combat",
@@ -687,7 +739,7 @@ function UITweaks:OnInitialize()
                             self.db.profile.hideDamageMeter = val
                             self:UpdateDamageMeterVisibility()
                         end,
-                        order = 2,
+                        order = 3,
                     },
                     collapseObjectiveTrackerInCombat = {
                         type = "toggle",
@@ -700,7 +752,7 @@ function UITweaks:OnInitialize()
                         set = function(_, val)
                             self:SetCollapseObjectiveTrackerInCombat(val)
                         end,
-                        order = 3,
+                        order = 4,
                     },
                 },
             },
@@ -784,6 +836,7 @@ function UITweaks:OnEnable()
     self:HookTalentAlertFrames()
     self:ApplyBuffFrameCollapse()
     self:UpdatePlayerFrameVisibility(true)
+    self:UpdateTargetFrameVisibility(true)
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
@@ -813,6 +866,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameCollapse()
         self:UpdatePlayerFrameVisibility(true)
+        self:UpdateTargetFrameVisibility(true)
         self:UpdateDamageMeterVisibility()
         self:UpdateTargetTooltip()
         self:UpdateChatTabsVisibility()
@@ -830,6 +884,7 @@ function UITweaks:PLAYER_REGEN_DISABLED()
         self:CollapseTrackerIfNeeded()
     end
     self:UpdatePlayerFrameVisibility(true)
+    self:UpdateTargetFrameVisibility(true)
     self:UpdateDamageMeterVisibility(true)
     if self.db.profile.showTargetTooltipOutOfCombat then
         GameTooltip:Hide()
@@ -842,12 +897,12 @@ end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
     self:ScheduleDelayedVisibilityUpdate()
-    self:UpdateTargetTooltip()
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameCollapse()
     self:UpdatePlayerFrameVisibility(true)
+    self:UpdateTargetFrameVisibility(true)
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
@@ -858,4 +913,5 @@ end
 
 function UITweaks:PLAYER_TARGET_CHANGED()
     self:UpdateTargetTooltip(true)
+    self:UpdateTargetFrameVisibility()
 end
