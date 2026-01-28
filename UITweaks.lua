@@ -5,8 +5,8 @@ local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local defaults = {
     profile = {
-        chatMessageFadeEnabled = false,
-        chatMessageFadeSeconds = 5,
+        chatMessageFadeAfterOverride = false,
+        chatMessageFadeAfterSeconds = 5,
         suppressTalentAlert = false,
         collapseObjectiveTrackerInCombat = false,
         hideBuffFrame = false,
@@ -90,8 +90,8 @@ end
 
 function UITweaks:ApplyChatLineFade()
     local frames = getChatFrames()
-    if self.db.profile.chatMessageFadeEnabled then
-        local seconds = sanitizeSeconds(self.db.profile.chatMessageFadeSeconds) or defaultsProfile.chatMessageFadeSeconds
+    if self.db.profile.chatMessageFadeAfterOverride then
+        local seconds = sanitizeSeconds(self.db.profile.chatMessageFadeAfterSeconds) or defaultsProfile.chatMessageFadeAfterSeconds
         for _, frame in ipairs(frames) do
             if frame.SetTimeVisible then frame:SetTimeVisible(seconds) end
         end
@@ -536,8 +536,8 @@ function UITweaks:OnInitialize()
                 inline = true,
                 order = 1,
                 args = {
-                    chatMessageFadeEnabled = toggleOption(
-                        "chatMessageFadeEnabled",
+                    chatMessageFadeAfterOverride = toggleOption(
+                        "chatMessageFadeAfterOverride",
                         "Chat Message Fade Override",
                         "Enable a custom duration for how long chat messages remain visible before fading.",
                         1,
@@ -547,8 +547,8 @@ function UITweaks:OnInitialize()
                         nil,
                         1.2
                     ),
-                    chatMessageFadeSeconds = rangeOption(
-                        "chatMessageFadeSeconds",
+                    chatMessageFadeAfterSeconds = rangeOption(
+                        "chatMessageFadeAfterSeconds",
                         "Fade After Seconds",
                         "Number of seconds a chat message stays before fading when the override is enabled.",
                         1.1,
@@ -559,7 +559,7 @@ function UITweaks:OnInitialize()
                             self:ApplyChatLineFade()
                         end,
                         function()
-                            return not self.db.profile.chatMessageFadeEnabled
+                            return not self.db.profile.chatMessageFadeAfterOverride
                         end,
                         1.8
                     ),
