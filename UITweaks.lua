@@ -675,6 +675,17 @@ function UITweaks:OnInitialize()
                             self:UpdateDamageMeterVisibility()
                         end
                     ),
+                    showTargetTooltipOutOfCombat = toggleOption(
+                        "showTargetTooltipOutOfCombat",
+                        "Show Tooltip For Selected Target Out of Combat",
+                        "Automatically display the currently selected target's tooltip while out of combat.",
+                        3.1,
+                        function(val)
+                            if not val then
+                                GameTooltip:Hide()
+                            end
+                        end
+                    ),
                     objectiveTrackerVisibility = {
                         type = "group",
                         name = "Objective Tracker",
@@ -713,17 +724,6 @@ function UITweaks:OnInitialize()
                     },
                 },
             },
-            showTargetTooltipOutOfCombat = toggleOption(
-                "showTargetTooltipOutOfCombat",
-                "Show Tooltip For Selected Target",
-                "Automatically display the currently selected target's tooltip while out of combat.",
-                5,
-                function(val)
-                    if not val then
-                        GameTooltip:Hide()
-                    end
-                end
-            ),
             hideStanceButtons = toggleOption(
                 "hideStanceButtons",
                 "Hide Stance Buttons",
