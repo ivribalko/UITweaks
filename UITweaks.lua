@@ -7,8 +7,8 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 
 local defaults = {
     profile = {
-        chatLineFadeEnabled = false,
-        chatLineFadeSeconds = 5,
+        chatMessageFadeEnabled = false,
+        chatMessageFadeSeconds = 5,
         suppressTalentAlert = false,
         collapseObjectiveTrackerInCombat = false,
         hideBuffFrame = false,
@@ -104,8 +104,8 @@ end
 
 function UITweaks:ApplyChatLineFade()
     local frames = getChatFrames()
-    if self.db.profile.chatLineFadeEnabled then
-        local seconds = sanitizeSeconds(self.db.profile.chatLineFadeSeconds) or defaultsProfile.chatLineFadeSeconds
+    if self.db.profile.chatMessageFadeEnabled then
+        local seconds = sanitizeSeconds(self.db.profile.chatMessageFadeSeconds) or defaultsProfile.chatMessageFadeSeconds
         for _, frame in ipairs(frames) do
             if frame.SetTimeVisible then
                 frame:SetTimeVisible(seconds)
@@ -653,8 +653,8 @@ function UITweaks:OnInitialize()
                 inline = true,
                 order = 1,
                 args = {
-                    chatLineFadeEnabled = toggleOption(
-                        "chatLineFadeEnabled",
+                    chatMessageFadeEnabled = toggleOption(
+                        "chatMessageFadeEnabled",
                         "Chat Message Fade Override",
                         "Enable a custom duration for how long chat messages remain visible before fading.",
                         1,
@@ -664,8 +664,8 @@ function UITweaks:OnInitialize()
                         nil,
                         1.2
                     ),
-                    chatLineFadeSeconds = rangeOption(
-                        "chatLineFadeSeconds",
+                    chatMessageFadeSeconds = rangeOption(
+                        "chatMessageFadeSeconds",
                         "Fade Seconds",
                         "Number of seconds a chat message stays before fading when the override is enabled.",
                         1.1,
@@ -676,7 +676,7 @@ function UITweaks:OnInitialize()
                             self:ApplyChatLineFade()
                         end,
                         function()
-                            return not self.db.profile.chatLineFadeEnabled
+                            return not self.db.profile.chatMessageFadeEnabled
                         end,
                         1.8
                     ),
