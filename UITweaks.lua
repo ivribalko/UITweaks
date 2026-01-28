@@ -19,7 +19,7 @@ local defaults = {
         hideChatMenuButton = false,
         hideStanceButtons = false,
         collapseObjectiveTrackerOnlyInstances = false,
-        visibilityDelaySeconds = 5,
+        combatVisibilityDelaySeconds = 5,
         showOptionsOnReload = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
@@ -409,8 +409,8 @@ function UITweaks:ScheduleDelayedVisibilityUpdate()
     self.visibilityDelayActive = false
     if self:HasDelayedVisibilityFeatures() then
         if C_Timer and C_Timer.NewTimer then
-            local delay = tonumber(self.db.profile.visibilityDelaySeconds)
-            if not delay or delay < 0 then delay = defaultsProfile.visibilityDelaySeconds end
+            local delay = tonumber(self.db.profile.combatVisibilityDelaySeconds)
+            if not delay or delay < 0 then delay = defaultsProfile.combatVisibilityDelaySeconds end
             if delay <= 0 then
                 self:ApplyDelayedVisibility()
             else
@@ -634,8 +634,8 @@ function UITweaks:OnInitialize()
                 inline = true,
                 order = 4,
                 args = {
-                    visibilityDelaySeconds = rangeOption(
-                        "visibilityDelaySeconds",
+                    combatVisibilityDelaySeconds = rangeOption(
+                        "combatVisibilityDelaySeconds",
                         "Delay Seconds",
                         "Delay before restoring frames after combat ends.",
                         0,
