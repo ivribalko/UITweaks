@@ -297,54 +297,21 @@ function UITweaks:ApplyBuffFrameHide(retry)
     end
 end
 
-function UITweaks:UpdatePlayerFrameVisibility()
-    if not PlayerFrame then
-        return
-    end
-
-    if not self.db.profile.hidePlayerFrameOutOfCombat then
-        return
-    end
-
-    if not PlayerFrame.UITweaksHooked then
-        -- Keep the player frame hidden when addons or quest updates try to show it.
-        PlayerFrame:HookScript("OnShow", function(frame)
-            if UITweaks.db and UITweaks.db.profile.hidePlayerFrameOutOfCombat then
-                if not (InCombatLockdown and InCombatLockdown()) then
-                    frame:Hide()
-                end
-            end
-        end)
-        PlayerFrame.UITweaksHooked = true
-    end
-
-    if RegisterStateDriver then
-        if InCombatLockdown and InCombatLockdown() then
-            return
-        end
-        RegisterStateDriver(PlayerFrame, "visibility", "[combat] show; hide")
-    end
-    if not (InCombatLockdown and InCombatLockdown()) then
-        PlayerFrame:Hide()
-    end
-end
-
-function UITweaks:UpdateTargetFrameVisibility()
-    local frame = _G.TargetFrame
+local function UpdateCombatFrameVisibility(frame, profileKey, stateDriver)
     if not frame then
         return
     end
 
-    if not self.db.profile.hideTargetFrameOutOfCombat then
+    if not (UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey]) then
         return
     end
 
     if not frame.UITweaksHooked then
-        -- Keep the target frame hidden outside combat when addons try to show it.
-        frame:HookScript("OnShow", function(targetFrame)
-            if UITweaks.db and UITweaks.db.profile.hideTargetFrameOutOfCombat then
+        -- Keep frames hidden outside combat when addons try to show them.
+        frame:HookScript("OnShow", function(shownFrame)
+            if UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey] then
                 if not (InCombatLockdown and InCombatLockdown()) then
-                    targetFrame:Hide()
+                    shownFrame:Hide()
                 end
             end
         end)
@@ -353,13 +320,21 @@ function UITweaks:UpdateTargetFrameVisibility()
 
     if RegisterStateDriver then
         if not (InCombatLockdown and InCombatLockdown()) then
-            RegisterStateDriver(frame, "visibility", "[combat,@target,exists] show; hide")
+            RegisterStateDriver(frame, "visibility", stateDriver)
         end
     end
 
     if not (InCombatLockdown and InCombatLockdown()) then
         frame:Hide()
     end
+end
+
+function UITweaks:UpdatePlayerFrameVisibility()
+    UpdateCombatFrameVisibility(PlayerFrame, "hidePlayerFrameOutOfCombat", "[combat] show; hide")
+end
+
+function UITweaks:UpdateTargetFrameVisibility()
+    UpdateCombatFrameVisibility(_G.TargetFrame, "hideTargetFrameOutOfCombat", "[combat,@target,exists] show; hide")
 end
 
 function UITweaks:UpdateBackpackButtonVisibility()
