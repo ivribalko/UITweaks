@@ -297,7 +297,7 @@ function UITweaks:ApplyBuffFrameHide(retry)
     end
 end
 
-function UITweaks:UpdatePlayerFrameVisibility(forceShow)
+function UITweaks:UpdatePlayerFrameVisibility()
     if not PlayerFrame then
         return
     end
@@ -329,22 +329,35 @@ function UITweaks:UpdatePlayerFrameVisibility(forceShow)
     end
 end
 
-function UITweaks:UpdateTargetFrameVisibility(forceShow)
+function UITweaks:UpdateTargetFrameVisibility()
     local frame = _G.TargetFrame
     if not frame then
         return
     end
 
-    local inCombat = InCombatLockdown and InCombatLockdown()
-    local hasTarget = UnitExists("target")
-
     if not self.db.profile.hideTargetFrameOutOfCombat then
         return
     end
 
-    if (forceShow or inCombat) and hasTarget then
-        frame:Show()
-    else
+    if not frame.UITweaksHooked then
+        -- Keep the target frame hidden outside combat when addons try to show it.
+        frame:HookScript("OnShow", function(targetFrame)
+            if UITweaks.db and UITweaks.db.profile.hideTargetFrameOutOfCombat then
+                if not (InCombatLockdown and InCombatLockdown()) then
+                    targetFrame:Hide()
+                end
+            end
+        end)
+        frame.UITweaksHooked = true
+    end
+
+    if RegisterStateDriver then
+        if not (InCombatLockdown and InCombatLockdown()) then
+            RegisterStateDriver(frame, "visibility", "[combat,@target,exists] show; hide")
+        end
+    end
+
+    if not (InCombatLockdown and InCombatLockdown()) then
         frame:Hide()
     end
 end
@@ -362,7 +375,7 @@ function UITweaks:UpdateBackpackButtonVisibility()
     bagBar:Hide()
 end
 
-function UITweaks:UpdateDamageMeterVisibility(forceShow)
+function UITweaks:UpdateDamageMeterVisibility()
     local frame = _G.DamageMeter
     if not frame then
         return
@@ -372,11 +385,7 @@ function UITweaks:UpdateDamageMeterVisibility(forceShow)
         return
     end
 
-    if forceShow then
-        frame:Show()
-    else
-        frame:Hide()
-    end
+    frame:Hide()
 end
 
 function UITweaks:UpdateChatTabsVisibility()
@@ -584,10 +593,10 @@ function UITweaks:OpenOptionsPanel()
     end
 end
 
-function UITweaks:ApplyVisibilityState(forceShow)
-    self:UpdatePlayerFrameVisibility(forceShow)
-    self:UpdateTargetFrameVisibility(forceShow)
-    self:UpdateDamageMeterVisibility(forceShow)
+function UITweaks:ApplyVisibilityState()
+    self:UpdatePlayerFrameVisibility()
+    self:UpdateTargetFrameVisibility()
+    self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
     self:UpdateChatMenuButtonVisibility()
@@ -825,7 +834,7 @@ function UITweaks:OnInitialize()
                         "Hide the player unit frame outside combat and restore it after the shared delay.",
                         1,
                         function()
-                            self:UpdatePlayerFrameVisibility(true)
+                            self:UpdatePlayerFrameVisibility()
                             self:ScheduleDelayedVisibilityUpdate()
                         end
                     ),
@@ -835,7 +844,7 @@ function UITweaks:OnInitialize()
                         "Hide the target unit frame outside combat and restore it after the shared delay.",
                         2,
                         function()
-                            self:UpdateTargetFrameVisibility(true)
+                            self:UpdateTargetFrameVisibility()
                             self:ScheduleDelayedVisibilityUpdate()
                         end
                     ),
@@ -943,7 +952,7 @@ function UITweaks:OnEnable()
     self:ApplyChatFontSize()
     self:HookTalentAlertFrames()
     self:ApplyBuffFrameHide()
-    self:ApplyVisibilityState(true)
+    self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -967,7 +976,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:HookTalentAlertFrames()
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameHide()
-        self:ApplyVisibilityState(true)
+        self:ApplyVisibilityState()
         self:ScheduleDelayedVisibilityUpdate()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
@@ -980,9 +989,9 @@ function UITweaks:PLAYER_REGEN_DISABLED()
     if self.db.profile.collapseObjectiveTrackerInCombat then
         self:CollapseTrackerIfNeeded()
     end
-    self:UpdatePlayerFrameVisibility(true)
-    self:UpdateTargetFrameVisibility(true)
-    self:UpdateDamageMeterVisibility(true)
+    self:UpdatePlayerFrameVisibility()
+    self:UpdateTargetFrameVisibility()
+    self:UpdateDamageMeterVisibility()
     if self.db.profile.showTargetTooltipOutOfCombat then
         GameTooltip:Hide()
     end
@@ -998,7 +1007,7 @@ end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameHide()
-    self:ApplyVisibilityState(true)
+    self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate()
 end
 
