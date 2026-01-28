@@ -549,7 +549,7 @@ function UITweaks:OnInitialize()
                     ),
                     chatMessageFadeSeconds = rangeOption(
                         "chatMessageFadeSeconds",
-                        "Fade Seconds",
+                        "Fade After Seconds",
                         "Number of seconds a chat message stays before fading when the override is enabled.",
                         1.1,
                         1,
