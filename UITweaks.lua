@@ -336,15 +336,14 @@ function UITweaks:UpdateTargetFrameVisibility(forceShow)
     end
 
     local inCombat = InCombatLockdown and InCombatLockdown()
+    local hasTarget = UnitExists("target")
 
     if not self.db.profile.hideTargetFrameOutOfCombat then
         return
     end
 
-    if forceShow or inCombat then
-        if UnitExists("target") or forceShow then
-            frame:Show()
-        end
+    if (forceShow or inCombat) and hasTarget then
+        frame:Show()
     else
         frame:Hide()
     end
