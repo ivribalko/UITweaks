@@ -57,32 +57,28 @@ local function getChatFrames()
 end
 
 function UITweaks:CacheDefaultChatWindowTimes()
-    if self.defaultChatWindowTimeVisible then
-        return
-    end
-
-    self.defaultChatWindowTimeVisible = {}
-    for index, frame in ipairs(getChatFrames()) do
-        if frame.GetTimeVisible then
-            self.defaultChatWindowTimeVisible[index] = frame:GetTimeVisible()
+    if not self.defaultChatWindowTimeVisible then
+        self.defaultChatWindowTimeVisible = {}
+        for index, frame in ipairs(getChatFrames()) do
+            if frame.GetTimeVisible then
+                self.defaultChatWindowTimeVisible[index] = frame:GetTimeVisible()
+            end
         end
     end
 end
 
 function UITweaks:CacheDefaultChatFonts()
-    if self.defaultChatFonts then
-        return
-    end
-
-    self.defaultChatFonts = {}
-    for index, frame in ipairs(getChatFrames()) do
-        if frame.GetFont then
-            local font, size, flags = frame:GetFont()
-            self.defaultChatFonts[index] = {
-                font = font,
-                size = size,
-                flags = flags,
-            }
+    if not self.defaultChatFonts then
+        self.defaultChatFonts = {}
+        for index, frame in ipairs(getChatFrames()) do
+            if frame.GetFont then
+                local font, size, flags = frame:GetFont()
+                self.defaultChatFonts[index] = {
+                    font = font,
+                    size = size,
+                    flags = flags,
+                }
+            end
         end
     end
 end
@@ -91,18 +87,16 @@ function UITweaks:ApplyChatFontSize()
     self:CacheDefaultChatFonts()
     local frames = getChatFrames()
 
-    if not self.db.profile.chatFontOverrideEnabled then
-        return
-    end
-
-    local size = sanitizeFontSize(self.db.profile.chatFontSize) or defaultsProfile.chatFontSize
-    for index, frame in ipairs(frames) do
-        if frame.SetFont then
-            local defaultFont = self.defaultChatFonts[index]
-            local font = defaultFont and defaultFont.font or (frame.GetFont and select(1, frame:GetFont()))
-            local flags = defaultFont and defaultFont.flags or (frame.GetFont and select(3, frame:GetFont()))
-            if font then
-                frame:SetFont(font, size, flags)
+    if self.db.profile.chatFontOverrideEnabled then
+        local size = sanitizeFontSize(self.db.profile.chatFontSize) or defaultsProfile.chatFontSize
+        for index, frame in ipairs(frames) do
+            if frame.SetFont then
+                local defaultFont = self.defaultChatFonts[index]
+                local font = defaultFont and defaultFont.font or (frame.GetFont and select(1, frame:GetFont()))
+                local flags = defaultFont and defaultFont.flags or (frame.GetFont and select(3, frame:GetFont()))
+                if font then
+                    frame:SetFont(font, size, flags)
+                end
             end
         end
     end
@@ -110,14 +104,12 @@ end
 
 function UITweaks:ApplyChatLineFade()
     local frames = getChatFrames()
-    if not self.db.profile.chatLineFadeEnabled then
-        return
-    end
-
-    local seconds = sanitizeSeconds(self.db.profile.chatLineFadeSeconds) or defaultsProfile.chatLineFadeSeconds
-    for _, frame in ipairs(frames) do
-        if frame.SetTimeVisible then
-            frame:SetTimeVisible(seconds)
+    if self.db.profile.chatLineFadeEnabled then
+        local seconds = sanitizeSeconds(self.db.profile.chatLineFadeSeconds) or defaultsProfile.chatLineFadeSeconds
+        for _, frame in ipairs(frames) do
+            if frame.SetTimeVisible then
+                frame:SetTimeVisible(seconds)
+            end
         end
     end
 end
@@ -204,59 +196,51 @@ function UITweaks:IsObjectiveTrackerCollapsed()
 end
 
 function UITweaks:CollapseTrackerIfNeeded()
-    if not self.db.profile.collapseObjectiveTrackerInCombat then
-        return
-    end
-
-    if self.db.profile.collapseObjectiveTrackerOnlyInstances then
-        local inInstance, instanceType = IsInInstance()
-        if not (inInstance and (instanceType == "party" or instanceType == "raid")) then
-            return
+    if self.db.profile.collapseObjectiveTrackerInCombat then
+        local shouldCollapse = true
+        if self.db.profile.collapseObjectiveTrackerOnlyInstances then
+            local inInstance, instanceType = IsInInstance()
+            if not (inInstance and (instanceType == "party" or instanceType == "raid")) then
+                shouldCollapse = false
+            end
         end
-    end
 
-    if not self:EnsureObjectiveTrackerLoaded() then
-        return
-    end
-
-    if not self:IsObjectiveTrackerCollapsed() then
-        collapseObjectiveTracker()
-        self.trackerCollapsedByAddon = true
-    else
-        self.trackerCollapsedByAddon = false
+        if shouldCollapse and self:EnsureObjectiveTrackerLoaded() then
+            if not self:IsObjectiveTrackerCollapsed() then
+                collapseObjectiveTracker()
+                self.trackerCollapsedByAddon = true
+            else
+                self.trackerCollapsedByAddon = false
+            end
+        end
     end
 end
 
 function UITweaks:ExpandTrackerIfNeeded(force)
-    if not self:EnsureObjectiveTrackerLoaded() then
-        return
-    end
-
-    if force or self.trackerCollapsedByAddon then
-        expandObjectiveTracker()
-        self.trackerCollapsedByAddon = false
+    if self:EnsureObjectiveTrackerLoaded() then
+        if force or self.trackerCollapsedByAddon then
+            expandObjectiveTracker()
+            self.trackerCollapsedByAddon = false
+        end
     end
 end
 
 function UITweaks:UpdateObjectiveTrackerState()
-    if not self.db.profile.collapseObjectiveTrackerInCombat then
-        return
-    end
-
-    if InCombatLockdown and InCombatLockdown() then
-        self:CollapseTrackerIfNeeded()
-    else
-        self:ExpandTrackerIfNeeded()
+    if self.db.profile.collapseObjectiveTrackerInCombat then
+        if InCombatLockdown and InCombatLockdown() then
+            self:CollapseTrackerIfNeeded()
+        else
+            self:ExpandTrackerIfNeeded()
+        end
     end
 end
 
 local function hideBuffFrame()
-    if not BuffFrame then
-        return
-    end
-    BuffFrame:Hide()
-    if BuffFrame.CollapseAndExpandButton then
-        BuffFrame.CollapseAndExpandButton:Hide()
+    if BuffFrame then
+        BuffFrame:Hide()
+        if BuffFrame.CollapseAndExpandButton then
+            BuffFrame.CollapseAndExpandButton:Hide()
+        end
     end
 end
 
@@ -274,93 +258,79 @@ local function ensureBuffFrameLoaded()
 end
 
 function UITweaks:ApplyBuffFrameHide(retry)
-    if not ensureBuffFrameLoaded() or not BuffFrame then
-        if not retry and C_Timer and C_Timer.After then
-            C_Timer.After(0.5, function()
-                self:ApplyBuffFrameHide(true)
-            end)
+    if ensureBuffFrameLoaded() and BuffFrame then
+        if self.db.profile.hideBuffFrame then
+            if BuffFrame and not BuffFrame.UITweaksHooked then
+                -- Keep the buff frame hidden after UI refreshes.
+                BuffFrame:HookScript("OnShow", function()
+                    if UITweaks.db and UITweaks.db.profile.hideBuffFrame then
+                        hideBuffFrame()
+                    end
+                end)
+                BuffFrame.UITweaksHooked = true
+            end
+            hideBuffFrame()
         end
-        return
-    end
-
-    if self.db.profile.hideBuffFrame then
-        if BuffFrame and not BuffFrame.UITweaksHooked then
-            -- Keep the buff frame hidden after UI refreshes.
-            BuffFrame:HookScript("OnShow", function()
-                if UITweaks.db and UITweaks.db.profile.hideBuffFrame then
-                    hideBuffFrame()
-                end
-            end)
-            BuffFrame.UITweaksHooked = true
-        end
-        hideBuffFrame()
+    elseif not retry and C_Timer and C_Timer.After then
+        C_Timer.After(0.5, function()
+            self:ApplyBuffFrameHide(true)
+        end)
     end
 end
 
-local function UpdateCombatFrameVisibility(frame, profileKey, stateDriver)
-    if not frame then
-        return
-    end
+local function UpdateCombatFrameVisibility(frame, profileKey, stateDriver, delayStateDriver)
+    if frame and UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey] then
+        if not frame.UITweaksHooked then
+            -- Keep frames hidden outside combat when addons try to show them.
+            frame:HookScript("OnShow", function(shownFrame)
+                if UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey] then
+                    if not (InCombatLockdown and InCombatLockdown()) and not UITweaks.visibilityDelayActive then
+                        shownFrame:Hide()
+                    end
+                end
+            end)
+            frame.UITweaksHooked = true
+        end
 
-    if not (UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey]) then
-        return
-    end
-
-    if not frame.UITweaksHooked then
-        -- Keep frames hidden outside combat when addons try to show them.
-        frame:HookScript("OnShow", function(shownFrame)
-            if UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey] then
-                if not (InCombatLockdown and InCombatLockdown()) then
-                    shownFrame:Hide()
+        if RegisterStateDriver then
+            if not (InCombatLockdown and InCombatLockdown()) then
+                local driver = UITweaks.visibilityDelayActive and delayStateDriver or stateDriver
+                if driver then
+                    RegisterStateDriver(frame, "visibility", driver)
                 end
             end
-        end)
-        frame.UITweaksHooked = true
-    end
-
-    if RegisterStateDriver then
-        if not (InCombatLockdown and InCombatLockdown()) then
-            RegisterStateDriver(frame, "visibility", stateDriver)
         end
-    end
 
-    if not (InCombatLockdown and InCombatLockdown()) then
-        frame:Hide()
+        if not (InCombatLockdown and InCombatLockdown()) and not UITweaks.visibilityDelayActive then
+            frame:Hide()
+        end
     end
 end
 
 function UITweaks:UpdatePlayerFrameVisibility()
-    UpdateCombatFrameVisibility(PlayerFrame, "hidePlayerFrameOutOfCombat", "[combat] show; hide")
+    UpdateCombatFrameVisibility(PlayerFrame, "hidePlayerFrameOutOfCombat", "[combat] show; hide", "show")
 end
 
 function UITweaks:UpdateTargetFrameVisibility()
-    UpdateCombatFrameVisibility(_G.TargetFrame, "hideTargetFrameOutOfCombat", "[combat,@target,exists] show; hide")
+    UpdateCombatFrameVisibility(_G.TargetFrame, "hideTargetFrameOutOfCombat", "[combat,@target,exists] show; hide", "[@target,exists] show; hide")
 end
 
 function UITweaks:UpdateBackpackButtonVisibility()
     local bagBar = _G.BagsBar
-    if not bagBar then
-        return
+    if bagBar then
+        if self.db.profile.hideBackpackButton then
+            bagBar:Hide()
+        end
     end
-
-    if not self.db.profile.hideBackpackButton then
-        return
-    end
-
-    bagBar:Hide()
 end
 
 function UITweaks:UpdateDamageMeterVisibility()
     local frame = _G.DamageMeter
-    if not frame then
-        return
+    if frame then
+        if self.db.profile.hideDamageMeter then
+            frame:Hide()
+        end
     end
-
-    if not self.db.profile.hideDamageMeter then
-        return
-    end
-
-    frame:Hide()
 end
 
 function UITweaks:UpdateChatTabsVisibility()
@@ -391,26 +361,20 @@ function UITweaks:UpdateChatTabsVisibility()
 end
 
 function UITweaks:UpdateChatMenuButtonVisibility()
-    if not self.db.profile.hideChatMenuButton then
-        return
-    end
-
     local button = _G.ChatFrameMenuButton
-    if not button then
-        return
-    end
+    if button and self.db.profile.hideChatMenuButton then
+        if not button.UITweaksHooked then
+            -- Keep the menu button hidden even when UI code shows it.
+            button:HookScript("OnShow", function(frame)
+                if UITweaks.db and UITweaks.db.profile.hideChatMenuButton then
+                    frame:Hide()
+                end
+            end)
+            button.UITweaksHooked = true
+        end
 
-    if not button.UITweaksHooked then
-        -- Keep the menu button hidden even when UI code shows it.
-        button:HookScript("OnShow", function(frame)
-            if UITweaks.db and UITweaks.db.profile.hideChatMenuButton then
-                frame:Hide()
-            end
-        end)
-        button.UITweaksHooked = true
+        button:Hide()
     end
-
-    button:Hide()
 end
 
 local function getStanceBars()
@@ -453,53 +417,45 @@ function UITweaks:UpdateStanceButtonsVisibility()
 
     local hide = self.db.profile.hideStanceButtons
 
-    if not hide then
-        return
-    end
-
-    for _, stanceBar in ipairs(getStanceBars()) do
-        if RegisterStateDriver and UnregisterStateDriver then
+    if hide then
+        for _, stanceBar in ipairs(getStanceBars()) do
+            if RegisterStateDriver and UnregisterStateDriver then
+                if hide then
+                    -- Force-hide stance bar to avoid mount/combat refresh flashes.
+                    RegisterStateDriver(stanceBar, "visibility", "hide")
+                else
+                    UnregisterStateDriver(stanceBar, "visibility")
+                end
+            end
             if hide then
-                -- Force-hide stance bar to avoid mount/combat refresh flashes.
-                RegisterStateDriver(stanceBar, "visibility", "hide")
+                stanceBar:Hide()
             else
-                UnregisterStateDriver(stanceBar, "visibility")
+                stanceBar:Show()
             end
         end
-        if hide then
-            stanceBar:Hide()
-        else
-            stanceBar:Show()
-        end
-    end
 
-    local numButtons = NUM_STANCE_SLOTS or NUM_SHAPESHIFT_SLOTS or 10
-    for i = 1, numButtons do
-        local button = _G["StanceButton" .. i] or _G["ShapeshiftButton" .. i]
-        if button then
-            if hide then
-                button:Hide()
-            else
-                button:Show()
+        local numButtons = NUM_STANCE_SLOTS or NUM_SHAPESHIFT_SLOTS or 10
+        for i = 1, numButtons do
+            local button = _G["StanceButton" .. i] or _G["ShapeshiftButton" .. i]
+            if button then
+                if hide then
+                    button:Hide()
+                else
+                    button:Show()
+                end
             end
         end
     end
 end
 
 function UITweaks:UpdateTargetTooltip(forceHide)
-    if not GameTooltip then
-        return
-    end
-
-    if not self.db.profile.showTargetTooltipOutOfCombat then
-        return
-    end
-
-    if UnitExists("target") and not (InCombatLockdown and InCombatLockdown()) then
-        GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-        GameTooltip:SetUnit("target")
-    elseif forceHide or not UnitExists("target") then
-        GameTooltip:Hide()
+    if GameTooltip and self.db.profile.showTargetTooltipOutOfCombat then
+        if UnitExists("target") and not (InCombatLockdown and InCombatLockdown()) then
+            GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+            GameTooltip:SetUnit("target")
+        elseif forceHide or not UnitExists("target") then
+            GameTooltip:Hide()
+        end
     end
 end
 
@@ -541,18 +497,28 @@ function UITweaks:ScheduleDelayedVisibilityUpdate()
         self.visibilityTimer:Cancel()
         self.visibilityTimer = nil
     end
+    self.visibilityDelayActive = false
 
-    if not self:HasDelayedVisibilityFeatures() then
-        return
-    end
-
-    if C_Timer and C_Timer.NewTimer then
-        local delay = self.db.profile.visibilityDelaySeconds or defaultsProfile.visibilityDelaySeconds
-        self.visibilityTimer = C_Timer.NewTimer(delay, function()
-            if not InCombatLockdown or not InCombatLockdown() then
-                self:ApplyDelayedVisibility()
+    if self:HasDelayedVisibilityFeatures() then
+        if C_Timer and C_Timer.NewTimer then
+            local delay = tonumber(self.db.profile.visibilityDelaySeconds)
+            if not delay or delay < 0 then
+                delay = defaultsProfile.visibilityDelaySeconds
             end
-        end)
+            if delay <= 0 then
+                self:ApplyDelayedVisibility()
+            else
+                self.visibilityDelayActive = true
+                self:UpdatePlayerFrameVisibility()
+                self:UpdateTargetFrameVisibility()
+                self.visibilityTimer = C_Timer.NewTimer(delay, function()
+                    if not InCombatLockdown or not InCombatLockdown() then
+                        self.visibilityDelayActive = false
+                        self:ApplyDelayedVisibility()
+                    end
+                end)
+            end
+        end
     end
 end
 
@@ -560,10 +526,7 @@ function UITweaks:OpenOptionsPanel()
     if InterfaceOptionsFrame_OpenToCategory and self.optionsFrame then
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
-        return
-    end
-
-    if AceConfigDialog then
+    elseif AceConfigDialog then
         AceConfigDialog:Open(addonName)
     end
 end
@@ -582,11 +545,10 @@ end
 function UITweaks:EnsureTalentAlertHooks()
     if not self.microButtonAlertHooked and MainMenuMicroButton_ShowMicroAlert then
         hooksecurefunc("MainMenuMicroButton_ShowMicroAlert", function(alertFrame)
-            if not (UITweaks.db and UITweaks.db.profile.suppressTalentAlert) then
-                return
-            end
-            if alertFrame and talentAlertFrameLookup[alertFrame:GetName() or ""] then
-                alertFrame:Hide()
+            if UITweaks.db and UITweaks.db.profile.suppressTalentAlert then
+                if alertFrame and talentAlertFrameLookup[alertFrame:GetName() or ""] then
+                    alertFrame:Hide()
+                end
             end
         end)
         self.microButtonAlertHooked = true
@@ -594,17 +556,15 @@ function UITweaks:EnsureTalentAlertHooks()
 
     if HelpTip and not self.helpTipHooked then
         hooksecurefunc(HelpTip, "Show", function(_, owner, info)
-            if not (UITweaks.db and UITweaks.db.profile.suppressTalentAlert) then
-                return
-            end
-            local text = info and info.text
-            if not text then
-                return
-            end
-            for _, matcher in ipairs(suppressedTalentTextMatchers) do
-                if matcher(text) then
-                    HelpTip:Hide(owner, info.text)
-                    break
+            if UITweaks.db and UITweaks.db.profile.suppressTalentAlert then
+                local text = info and info.text
+                if text then
+                    for _, matcher in ipairs(suppressedTalentTextMatchers) do
+                        if matcher(text) then
+                            HelpTip:Hide(owner, info.text)
+                            break
+                        end
+                    end
                 end
             end
         end)
@@ -974,6 +934,7 @@ function UITweaks:PLAYER_REGEN_DISABLED()
         self.visibilityTimer:Cancel()
         self.visibilityTimer = nil
     end
+    self.visibilityDelayActive = false
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
