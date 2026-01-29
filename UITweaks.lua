@@ -25,6 +25,7 @@ local defaults = {
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
         consolePortBarSharing = false,
+        openConsolePortActionBarConfigOnReload = false,
     },
 }
 local defaultsProfile = defaults.profile
@@ -870,9 +871,15 @@ function UITweaks:OnInitialize()
                 args = {
                     showOptionsOnReload = toggleOption(
                         "showOptionsOnReload",
-                        "Open This Settings Menu on Reload",
-                        "Re-open the UI Tweaks options panel after /reload (useful for development).",
+                        "Open This Settings Menu on Reload/Login",
+                        "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
                         1
+                    ),
+                    openConsolePortActionBarConfigOnReload = toggleOption(
+                        "openConsolePortActionBarConfigOnReload",
+                        "Open ConsolePort Action Bar Config on Reload/Login",
+                        "Open the ConsolePort action bar configuration window automatically after reload or login.",
+                        2
                     ),
                     reloadUI = {
                         type = "execute",
@@ -880,7 +887,7 @@ function UITweaks:OnInitialize()
                         desc = "Reload the interface to immediately apply changes.",
                         width = "full",
                         func = function() ReloadUI() end,
-                        order = 2,
+                        order = 3,
                     },
                 },
             },
@@ -905,7 +912,9 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
-    self:OpenConsolePortActionBarConfig()
+    if self.db.profile.openConsolePortActionBarConfigOnReload then
+        self:OpenConsolePortActionBarConfig()
+    end
     if self.db.profile.showOptionsOnReload then
         if C_Timer and C_Timer.After then
             C_Timer.After(1, function() self:OpenOptionsPanel() end)
@@ -952,7 +961,9 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate()
-    self:OpenConsolePortActionBarConfig()
+    if self.db.profile.openConsolePortActionBarConfigOnReload then
+        self:OpenConsolePortActionBarConfig()
+    end
     if self.db.profile.consolePortBarSharing then
         self:RestoreConsolePortActionBarProfile()
     end
