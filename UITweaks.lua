@@ -15,6 +15,7 @@ local defaults = {
         hideDamageMeter = false,
         hideTargetFrameOutOfCombat = false,
         showTargetTooltipOutOfCombat = false,
+        showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideChatMenuButton = false,
         hideStanceButtons = false,
@@ -372,12 +373,24 @@ function UITweaks:UpdateStanceButtonsVisibility()
     end
 end
 
+function UITweaks:GetTargetTooltipUnit()
+    local unit
+    if UnitExists("target") then unit = "target" end
+    if not unit and self.db.profile.showSoftTargetTooltipOutOfCombat then
+        if UnitExists("softenemy") then unit = "softenemy" end
+        if not unit and UnitExists("softfriend") then unit = "softfriend" end
+        if not unit and UnitExists("softinteract") then unit = "softinteract" end
+    end
+    return unit
+end
+
 function UITweaks:UpdateTargetTooltip(forceHide)
     if GameTooltip and self.db.profile.showTargetTooltipOutOfCombat then
-        if UnitExists("target") and not (InCombatLockdown and InCombatLockdown()) then
+        local unit = self:GetTargetTooltipUnit()
+        if unit and not (InCombatLockdown and InCombatLockdown()) then
             GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-            GameTooltip:SetUnit("target")
-        elseif forceHide or not UnitExists("target") then
+            GameTooltip:SetUnit(unit)
+        elseif forceHide or not unit then
             GameTooltip:Hide()
         end
     end
@@ -686,6 +699,17 @@ function UITweaks:OnInitialize()
                             end
                         end
                     ),
+                    showSoftTargetTooltipOutOfCombat = toggleOption(
+                        "showSoftTargetTooltipOutOfCombat",
+                        "Show Tooltip For Soft (Action) Target Out of Combat",
+                        "Also display the ConsolePort soft (action) target's tooltip while out of combat.",
+                        3.2,
+                        function(val)
+                            if not val then
+                                GameTooltip:Hide()
+                            end
+                        end
+                    ),
                     objectiveTrackerVisibility = {
                         type = "group",
                         name = "Objective Tracker",
@@ -775,6 +799,7 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
+    self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
     if self.db.profile.showOptionsOnReload then
         if C_Timer and C_Timer.After then
             C_Timer.After(1, function() self:OpenOptionsPanel() end)
@@ -826,4 +851,8 @@ end
 function UITweaks:PLAYER_TARGET_CHANGED()
     self:UpdateTargetTooltip(true)
     self:UpdateTargetFrameVisibility()
+end
+
+function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()
+    self:UpdateTargetTooltip(true)
 end
