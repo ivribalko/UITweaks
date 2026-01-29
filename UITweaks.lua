@@ -611,7 +611,7 @@ function UITweaks:OnInitialize()
         args = {
             chatSettings = {
                 type = "group",
-                name = "Chat Settings",
+                name = "Chat",
                 inline = true,
                 order = 1,
                 args = {
@@ -689,27 +689,26 @@ function UITweaks:OnInitialize()
                     ),
                 },
             },
-            suppressTalentAlert = toggleOption(
-                "suppressTalentAlert",
-                "Hide Unspent Talent Alert",
-                "Prevent the 'You have unspent talent points' reminder from popping up.",
-                2,
-                function()
-                    self:HookTalentAlertFrames()
-                end
-            ),
-            hideBuffFrame = toggleOption(
-                "hideBuffFrame",
-                "Hide Buff Frame",
-                "Hide the default player buff frame UI.",
-                3,
-                function()
-                    self:ApplyBuffFrameHide()
-                end
-            ),
+            alerts = {
+                type = "group",
+                name = "Alerts",
+                inline = true,
+                order = 8,
+                args = {
+                    suppressTalentAlert = toggleOption(
+                        "suppressTalentAlert",
+                        "Hide Unspent Talent Alert",
+                        "Prevent the 'You have unspent talent points' reminder from popping up.",
+                        1,
+                        function()
+                            self:HookTalentAlertFrames()
+                        end
+                    ),
+                },
+            },
             combatVisibility = {
                 type = "group",
-                name = "Combat Visibility",
+                name = "Combat",
                 inline = true,
                 order = 4,
                 args = {
@@ -814,29 +813,46 @@ function UITweaks:OnInitialize()
                     },
                 },
             },
-            hideStanceButtons = toggleOption(
-                "hideStanceButtons",
-                "Hide Stance Buttons",
-                "Hide the Blizzard stance bar/buttons when you don't need them.",
-                6,
-                function()
-                    self:UpdateStanceButtonsVisibility()
-                end
-            ),
-            hideBackpackButton = toggleOption(
-                "hideBackpackButton",
-                "Hide Bags Bar",
-                "Hide the entire Blizzard Bags Bar next to the action bars.",
-                7,
-                function()
-                    self:UpdateBackpackButtonVisibility()
-                end
-            ),
+            framesVisibility = {
+                type = "group",
+                name = "Frames",
+                inline = true,
+                order = 6,
+                args = {
+                    hideBuffFrame = toggleOption(
+                        "hideBuffFrame",
+                        "Hide Buff Frame",
+                        "Hide the default player buff frame UI.",
+                        1,
+                        function()
+                            self:ApplyBuffFrameHide()
+                        end
+                    ),
+                    hideStanceButtons = toggleOption(
+                        "hideStanceButtons",
+                        "Hide Stance Buttons",
+                        "Hide the Blizzard stance bar/buttons when you don't need them.",
+                        2,
+                        function()
+                            self:UpdateStanceButtonsVisibility()
+                        end
+                    ),
+                    hideBackpackButton = toggleOption(
+                        "hideBackpackButton",
+                        "Hide Bags Bar",
+                        "Hide the entire Blizzard Bags Bar next to the action bars.",
+                        3,
+                        function()
+                            self:UpdateBackpackButtonVisibility()
+                        end
+                    ),
+                },
+            },
             consolePortSettings = {
                 type = "group",
                 name = "ConsolePort",
                 inline = true,
-                order = 7.5,
+                order = 7,
                 args = {
                     consolePortBarSharing = toggleOption(
                         "consolePortBarSharing",
@@ -846,19 +862,27 @@ function UITweaks:OnInitialize()
                     ),
                 },
             },
-            showOptionsOnReload = toggleOption(
-                "showOptionsOnReload",
-                "Open This Settings Menu on Reload",
-                "Re-open the UI Tweaks options panel after /reload (useful for development).",
-                8
-            ),
-            reloadUI = {
-                type = "execute",
-                name = "Reload",
-                desc = "Reload the interface to immediately apply changes.",
-                width = "full",
-                func = function() ReloadUI() end,
+            service = {
+                type = "group",
+                name = "Service",
+                inline = true,
                 order = 9,
+                args = {
+                    showOptionsOnReload = toggleOption(
+                        "showOptionsOnReload",
+                        "Open This Settings Menu on Reload",
+                        "Re-open the UI Tweaks options panel after /reload (useful for development).",
+                        1
+                    ),
+                    reloadUI = {
+                        type = "execute",
+                        name = "Reload",
+                        desc = "Reload the interface to immediately apply changes.",
+                        width = "full",
+                        func = function() ReloadUI() end,
+                        order = 2,
+                    },
+                },
             },
         },
     }
