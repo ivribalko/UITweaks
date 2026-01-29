@@ -24,7 +24,8 @@ local defaults = {
         showOptionsOnReload = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
-    }
+        consolePortBarSharing = false,
+    },
 }
 local defaultsProfile = defaults.profile
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS or 10
@@ -450,6 +451,71 @@ function UITweaks:OpenOptionsPanel()
     end
 end
 
+function UITweaks:GetConsolePortBarEnv()
+    local relaTable = LibStub("RelaTable", true)
+    if not relaTable then return end
+    return relaTable("ConsolePort_Bar")
+end
+
+function UITweaks:GetConsolePortActionBarLoadout()
+    local configFrame = _G.ConsolePortActionBarConfig
+    if not configFrame then
+        self:OpenConsolePortActionBarConfig()
+        configFrame = _G.ConsolePortActionBarConfig
+    end
+    return configFrame
+        and configFrame.SettingsContainer
+        and configFrame.SettingsContainer.ScrollChild
+        and configFrame.SettingsContainer.ScrollChild.Loadout
+end
+
+function UITweaks:SaveConsolePortActionBarProfile()
+    local loadout = self:GetConsolePortActionBarLoadout()
+    if not (loadout and loadout.OnSave) then
+        return
+    end
+    loadout:OnSave({
+        name = "UITweaksProfile",
+        desc = "Saved by UI Tweaks",
+    }, true, true)
+end
+
+function UITweaks:RestoreConsolePortActionBarProfile()
+    local env = self:GetConsolePortBarEnv()
+    if not env then
+        return
+    end
+    local preset = env("Presets/UITweaksProfile")
+    if type(preset) ~= "table" then
+        return
+    end
+    local loadout = self:GetConsolePortActionBarLoadout()
+    if loadout and loadout.OnLoadPreset then
+        loadout:OnLoadPreset(preset)
+    end
+end
+
+function UITweaks:OpenConsolePortActionBarConfig()
+    if self.consolePortActionBarConfigOpened then return end
+    local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
+    if loadAddOn then
+        local isLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort_Bar"))
+            or (IsAddOnLoaded and IsAddOnLoaded("ConsolePort_Bar"))
+        if not isLoaded then
+            loadAddOn("ConsolePort_Bar")
+        end
+    end
+    local relaTable = LibStub("RelaTable", true)
+    if not relaTable then return end
+    local env = relaTable("ConsolePort_Bar")
+    if not env or not env.TriggerEvent then return end
+    env:TriggerEvent("OnConfigToggle")
+    if _G.ConsolePortActionBarConfig then
+        _G.ConsolePortActionBarConfig:Show()
+    end
+    self.consolePortActionBarConfigOpened = true
+end
+
 function UITweaks:ApplyVisibilityState()
     self:UpdatePlayerFrameVisibility()
     self:UpdateTargetFrameVisibility()
@@ -766,6 +832,20 @@ function UITweaks:OnInitialize()
                     self:UpdateBackpackButtonVisibility()
                 end
             ),
+            consolePortSettings = {
+                type = "group",
+                name = "ConsolePort",
+                inline = true,
+                order = 7.5,
+                args = {
+                    consolePortBarSharing = toggleOption(
+                        "consolePortBarSharing",
+                        "Share ConsolePort Action Bar Settings For All Characters",
+                        "Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
+                        1
+                    ),
+                },
+            },
             showOptionsOnReload = toggleOption(
                 "showOptionsOnReload",
                 "Open This Settings Menu on Reload",
@@ -774,7 +854,7 @@ function UITweaks:OnInitialize()
             ),
             reloadUI = {
                 type = "execute",
-                name = "Reload UI",
+                name = "Reload",
                 desc = "Reload the interface to immediately apply changes.",
                 width = "full",
                 func = function() ReloadUI() end,
@@ -796,10 +876,12 @@ function UITweaks:OnEnable()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self:RegisterEvent("PLAYER_LOGOUT")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
+    self:OpenConsolePortActionBarConfig()
     if self.db.profile.showOptionsOnReload then
         if C_Timer and C_Timer.After then
             C_Timer.After(1, function() self:OpenOptionsPanel() end)
@@ -846,6 +928,16 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate()
+    self:OpenConsolePortActionBarConfig()
+    if self.db.profile.consolePortBarSharing then
+        self:RestoreConsolePortActionBarProfile()
+    end
+end
+
+function UITweaks:PLAYER_LOGOUT()
+    if self.db.profile.consolePortBarSharing then
+        self:SaveConsolePortActionBarProfile()
+    end
 end
 
 function UITweaks:PLAYER_TARGET_CHANGED()
