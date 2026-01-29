@@ -591,7 +591,12 @@ function UITweaks:OnInitialize()
             order = order,
             get = getOption(key),
             set = setOption(key, onSet),
-            disabled = function() return disabledKey and not self.db.profile[disabledKey] end,
+            disabled = function()
+                if type(disabledKey) == "function" then
+                    return disabledKey()
+                end
+                return disabledKey and not self.db.profile[disabledKey]
+            end,
         }
         if width ~= "auto" then option.width = width or "full" end
         return option
@@ -870,7 +875,12 @@ function UITweaks:OnInitialize()
                         "consolePortBarSharing",
                         "Share ConsolePort Action Bar Settings For All Characters",
                         "Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
-                        1
+                        1,
+                        nil,
+                        function()
+                            return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
+                                and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
+                        end
                     ),
                 },
             },
@@ -890,7 +900,12 @@ function UITweaks:OnInitialize()
                         "openConsolePortActionBarConfigOnReload",
                         "Open ConsolePort Action Bar Config on Reload/Login",
                         "Open the ConsolePort action bar configuration window automatically after reload or login.",
-                        2
+                        2,
+                        nil,
+                        function()
+                            return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
+                                and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
+                        end
                     ),
                     reloadUI = {
                         type = "execute",
