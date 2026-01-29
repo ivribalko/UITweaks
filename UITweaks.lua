@@ -479,6 +479,7 @@ function UITweaks:SaveConsolePortActionBarProfile()
         name = "UITweaksProfile",
         desc = "Saved by UI Tweaks",
     }, true, true)
+    self:CloseConsolePortActionBarConfigIfNotPinned()
 end
 
 function UITweaks:RestoreConsolePortActionBarProfile()
@@ -494,6 +495,7 @@ function UITweaks:RestoreConsolePortActionBarProfile()
     if loadout and loadout.OnLoadPreset then
         loadout:OnLoadPreset(preset)
     end
+    self:CloseConsolePortActionBarConfigIfNotPinned()
 end
 
 function UITweaks:OpenConsolePortActionBarConfig()
@@ -515,6 +517,15 @@ function UITweaks:OpenConsolePortActionBarConfig()
         _G.ConsolePortActionBarConfig:Show()
     end
     self.consolePortActionBarConfigOpened = true
+end
+
+function UITweaks:CloseConsolePortActionBarConfigIfNotPinned()
+    if self.db.profile.openConsolePortActionBarConfigOnReload then
+        return
+    end
+    if _G.ConsolePortActionBarConfig and _G.ConsolePortActionBarConfig:IsShown() then
+        _G.ConsolePortActionBarConfig:Hide()
+    end
 end
 
 function UITweaks:ApplyVisibilityState()
