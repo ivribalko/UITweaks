@@ -429,11 +429,16 @@ end
 
 function UITweaks:UpdateTargetTooltip(forceHide)
     if GameTooltip and self.db.profile.showTargetTooltipOutOfCombat then
+        if forceHide then
+            GameTooltip:Hide()
+            return
+        end
         local unit = self:GetTargetTooltipUnit()
-        if unit and not (InCombatLockdown and InCombatLockdown()) then
+        local targetFrameShown = _G.TargetFrame and _G.TargetFrame.IsShown and _G.TargetFrame:IsShown()
+        if unit and not targetFrameShown then
             GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
             GameTooltip:SetUnit(unit)
-        elseif forceHide or not unit then
+        elseif forceHide or not unit or targetFrameShown then
             GameTooltip:Hide()
         end
     end
@@ -989,8 +994,11 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_LOGOUT")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
+    self:RegisterEvent("LOOT_OPENED")
+    self:RegisterEvent("LOOT_CLOSED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
+    self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
     if self.db.profile.openConsolePortActionBarConfigOnReload then
         self:OpenConsolePortActionBarConfig()
     end
@@ -1055,10 +1063,22 @@ function UITweaks:PLAYER_LOGOUT()
 end
 
 function UITweaks:PLAYER_TARGET_CHANGED()
-    self:UpdateTargetTooltip(true)
+    self:UpdateTargetTooltip()
     self:UpdateTargetFrameVisibility()
 end
 
 function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()
+    self:UpdateTargetTooltip()
+end
+
+function UITweaks:PLAYER_SOFT_INTERACT_CHANGED()
+    self:UpdateTargetTooltip()
+end
+
+function UITweaks:LOOT_OPENED()
     self:UpdateTargetTooltip(true)
+end
+
+function UITweaks:LOOT_CLOSED()
+    self:UpdateTargetTooltip()
 end
