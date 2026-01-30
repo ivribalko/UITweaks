@@ -793,7 +793,7 @@ function UITweaks:OnInitialize()
                     hidePlayerFrameOutOfCombat = toggleOption(
                         "hidePlayerFrameOutOfCombat",
                         "Hide Player Frame Out of Combat",
-                        "Hide the player unit frame outside combat and restore it after the shared delay.",
+                        "Hide the player unit frame outside combat and restore it after the delay.",
                         1,
                         function()
                             self:UpdatePlayerFrameVisibility()
@@ -803,7 +803,7 @@ function UITweaks:OnInitialize()
                     hideTargetFrameOutOfCombat = toggleOption(
                         "hideTargetFrameOutOfCombat",
                         "Hide Target Frame Out of Combat",
-                        "Hide the target unit frame outside combat and restore it after the shared delay.",
+                        "Hide the target unit frame outside combat and restore it after the delay.",
                         2,
                         function()
                             self:UpdateTargetFrameVisibility()
@@ -813,7 +813,7 @@ function UITweaks:OnInitialize()
                     hideDamageMeter = toggleOption(
                         "hideDamageMeter",
                         "Hide Damage Meter Out of Combat",
-                        "Hide the built-in damage meter frame after you leave combat (shares the delay with the player frame/objective tracker).",
+                        "Hide the built-in damage meter frame after you leave combat.",
                         3,
                         function()
                             self:UpdateDamageMeterVisibility()
@@ -850,7 +850,7 @@ function UITweaks:OnInitialize()
                             collapseObjectiveTrackerInCombat = toggleOption(
                                 "collapseObjectiveTrackerInCombat",
                                 "Collapse In Combat",
-                                "Collapse the quest/objective tracker during combat and re-expand it after combat ends (shares the delay with the damage meter/player frame).",
+                                "Collapse the quest/objective tracker during combat and re-expand it after combat ends.",
                                 0,
                                 function()
                                     self:UpdateObjectiveTrackerState()
