@@ -416,7 +416,7 @@ function UITweaks:ApplyDelayedVisibility()
     if self.db.profile.showTargetTooltipOutOfCombat then self:UpdateTargetTooltip() end
 end
 
-function UITweaks:ScheduleDelayedVisibilityUpdate()
+function UITweaks:ScheduleDelayedVisibilityUpdate(skipDelay)
     if self.visibilityTimer then
         self.visibilityTimer:Cancel()
         self.visibilityTimer = nil
@@ -426,7 +426,9 @@ function UITweaks:ScheduleDelayedVisibilityUpdate()
         if C_Timer and C_Timer.NewTimer then
             local delay = tonumber(self.db.profile.combatVisibilityDelaySeconds)
             if not delay or delay < 0 then delay = defaultsProfile.combatVisibilityDelaySeconds end
-            if delay <= 0 then
+            if skipDelay and not (InCombatLockdown and InCombatLockdown()) then
+                self:ApplyDelayedVisibility()
+            elseif delay <= 0 then
                 self:ApplyDelayedVisibility()
             else
                 self.visibilityDelayActive = true
@@ -956,7 +958,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameHide()
         self:ApplyVisibilityState()
-        self:ScheduleDelayedVisibilityUpdate()
+        self:ScheduleDelayedVisibilityUpdate(true)
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
     elseif addonName == "Blizzard_ObjectiveTracker" then
@@ -986,7 +988,7 @@ end
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
-    self:ScheduleDelayedVisibilityUpdate()
+    self:ScheduleDelayedVisibilityUpdate(true)
     if self.db.profile.openConsolePortActionBarConfigOnReload then
         self:OpenConsolePortActionBarConfig()
     end
