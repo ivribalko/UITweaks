@@ -78,6 +78,7 @@ This section must be kept in sync with `UITweaks.lua`. Every setting listed here
 - Hide Buff Frame — Hide the default player buff frame UI.
 - Hide Stance Buttons — Hide the Blizzard stance bar/buttons when you don't need them.
 - Hide Bags Bar — Hide the entire Blizzard Bags Bar next to the action bars.
+- Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
 
 ### ConsolePort
 

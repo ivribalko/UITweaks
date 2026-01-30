@@ -19,6 +19,7 @@ local defaults = {
         hideChatTabs = false,
         hideChatMenuButton = false,
         hideStanceButtons = false,
+        hideMicroMenuButtons = false,
         collapseObjectiveTrackerOnlyInstances = false,
         combatVisibilityDelaySeconds = 5,
         showOptionsOnReload = false,
@@ -326,6 +327,46 @@ function UITweaks:UpdateChatMenuButtonVisibility()
     end
 end
 
+local function getMicroMenuButtons()
+    local buttons = {}
+    local function addButtonsFromParent(parent)
+        if not (parent and parent.GetChildren) then return end
+        local children = { parent:GetChildren() }
+        for _, child in ipairs(children) do
+            if child and child.IsObjectType and child:IsObjectType("Button") then
+                buttons[#buttons + 1] = child
+            elseif child and child.GetChildren then
+                addButtonsFromParent(child)
+            end
+        end
+    end
+    local parent = _G.MicroMenuContainer or _G.MicroButtonAndBagsBar or _G.MicroMenu
+    addButtonsFromParent(parent)
+    return buttons
+end
+
+function UITweaks:UpdateMicroMenuVisibility()
+    if self.db.profile.hideMicroMenuButtons then
+        for _, button in ipairs(getMicroMenuButtons()) do
+            local name = button and button.GetName and button:GetName() or ""
+            if name ~= "QueueStatusButton" then
+                if not button.UITweaksHooked then
+                    button:HookScript("OnShow", function(btn)
+                        if UITweaks.db and UITweaks.db.profile.hideMicroMenuButtons then
+                            local btnName = btn and btn.GetName and btn:GetName() or ""
+                            if btnName ~= "QueueStatusButton" then
+                                btn:Hide()
+                            end
+                        end
+                    end)
+                    button.UITweaksHooked = true
+                end
+                button:Hide()
+            end
+        end
+    end
+end
+
 local function getStanceBars()
     local bars = {}
     if _G.StanceBar then bars[#bars + 1] = _G.StanceBar end
@@ -537,6 +578,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
     self:UpdateChatMenuButtonVisibility()
+    self:UpdateMicroMenuVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateBackpackButtonVisibility()
 end
@@ -863,6 +905,15 @@ function UITweaks:OnInitialize()
                         3,
                         function()
                             self:UpdateBackpackButtonVisibility()
+                        end
+                    ),
+                    hideMicroMenuButtons = toggleOption(
+                        "hideMicroMenuButtons",
+                        "Hide Micro Menu Buttons",
+                        "Hide all micro menu buttons except the Dungeon Finder eye.",
+                        4,
+                        function()
+                            self:UpdateMicroMenuVisibility()
                         end
                     ),
                 },
