@@ -14,7 +14,7 @@ local defaults = {
         hideBackpackButton = false,
         hideDamageMeter = false,
         hideTargetFrameOutOfCombat = false,
-        showTargetTooltipOutOfCombat = false,
+        replaceTargetFrameWithTooltip = false,
         showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideChatMenuButton = false,
@@ -428,7 +428,7 @@ function UITweaks:GetTargetTooltipUnit()
 end
 
 function UITweaks:UpdateTargetTooltip(forceHide)
-    if GameTooltip and self.db.profile.showTargetTooltipOutOfCombat then
+    if GameTooltip and self.db.profile.replaceTargetFrameWithTooltip then
         if forceHide then
             GameTooltip:Hide()
             return
@@ -449,7 +449,7 @@ function UITweaks:HasDelayedVisibilityFeatures()
         or self.db.profile.hidePlayerFrameOutOfCombat
         or self.db.profile.hideTargetFrameOutOfCombat
         or self.db.profile.collapseObjectiveTrackerInCombat
-        or self.db.profile.showTargetTooltipOutOfCombat
+        or self.db.profile.replaceTargetFrameWithTooltip
 end
 
 function UITweaks:ApplyDelayedVisibility()
@@ -459,7 +459,7 @@ function UITweaks:ApplyDelayedVisibility()
     if self.db.profile.hidePlayerFrameOutOfCombat then self:UpdatePlayerFrameVisibility() end
     if self.db.profile.hideTargetFrameOutOfCombat then self:UpdateTargetFrameVisibility() end
     if self.db.profile.collapseObjectiveTrackerInCombat then self:ExpandTrackerIfNeeded(true) end
-    if self.db.profile.showTargetTooltipOutOfCombat then self:UpdateTargetTooltip() end
+    if self.db.profile.replaceTargetFrameWithTooltip then self:UpdateTargetTooltip() end
 end
 
 function UITweaks:ScheduleDelayedVisibilityUpdate(skipDelay)
@@ -819,10 +819,10 @@ function UITweaks:OnInitialize()
                             self:UpdateDamageMeterVisibility()
                         end
                     ),
-                    showTargetTooltipOutOfCombat = toggleOption(
-                        "showTargetTooltipOutOfCombat",
-                        "Show Tooltip For Selected Target Out of Combat",
-                        "Automatically display the currently selected target's tooltip while out of combat.",
+                    replaceTargetFrameWithTooltip = toggleOption(
+                        "replaceTargetFrameWithTooltip",
+                        "Replace Target Frame With Tooltip Out of Combat",
+                        "Show the target tooltip when the target frame is not shown out of combat (useful for quest info like how many to kill).",
                         3.1,
                         function(val)
                             if not val then
@@ -1032,7 +1032,7 @@ function UITweaks:PLAYER_REGEN_DISABLED()
     self:UpdatePlayerFrameVisibility()
     self:UpdateTargetFrameVisibility()
     self:UpdateDamageMeterVisibility()
-    if self.db.profile.showTargetTooltipOutOfCombat then GameTooltip:Hide() end
+    if self.db.profile.replaceTargetFrameWithTooltip then GameTooltip:Hide() end
     if self.visibilityTimer then
         self.visibilityTimer:Cancel()
         self.visibilityTimer = nil
