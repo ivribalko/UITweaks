@@ -68,7 +68,7 @@ This section must be kept in sync with `UITweaks.lua`. Every setting listed here
 - Delay Seconds — Delay before restoring frames after combat ends.
 - Hide Player Frame Out of Combat — Hide the player unit frame outside combat and restore it after the delay.
 - Hide Target Frame Out of Combat — Hide the target unit frame outside combat and restore it after the delay.
-- Hide Damage Meter Out of Combat — Hide the built-in damage meter frame after you leave combat.
+- Hide Damage Meter Out of Combat — Fade the built-in damage meter frame after combat until you mouse over it.
 - Replace Target Frame With Tooltip Out of Combat — Show the target tooltip when the target frame is not shown out of combat (useful for quest info like how many to kill).
 - Show Tooltip For Soft (Action) Target Out of Combat — Also display the ConsolePort soft (action) target's tooltip while out of combat.
 - Collapse In Combat — Collapse the quest/objective tracker during combat and re-expand it after combat ends.

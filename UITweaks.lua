@@ -354,8 +354,61 @@ function UITweaks:UpdateBackpackButtonVisibility()
     end
 end
 
-function UITweaks:UpdateDamageMeterVisibility()
-    if _G.DamageMeter and self.db.profile.hideDamageMeter then _G.DamageMeter:Hide() end
+function UITweaks:UpdateDamageMeterVisibility(retry)
+    if self.damageMeterHoverTicker then
+        self.damageMeterHoverTicker:Cancel()
+        self.damageMeterHoverTicker = nil
+    end
+    if not _G.DamageMeter then
+        if not retry and C_Timer and C_Timer.After then
+            C_Timer.After(0.5, function() self:UpdateDamageMeterVisibility(true) end)
+        end
+        return
+    end
+    if InCombatLockdown and InCombatLockdown() then
+        _G.DamageMeter:SetAlpha(1)
+        _G.DamageMeter:Show()
+        return
+    end
+    if self.visibilityDelayActive then
+        _G.DamageMeter:SetAlpha(1)
+        _G.DamageMeter:Show()
+        return
+    end
+    if not self.db.profile.hideDamageMeter then
+        _G.DamageMeter:SetAlpha(1)
+        _G.DamageMeter:Show()
+        return
+    end
+    if not _G.DamageMeter.UITweaksHooked then
+        _G.DamageMeter:HookScript("OnShow", function(frame)
+            if UITweaks.db and UITweaks.db.profile.hideDamageMeter
+                and not (InCombatLockdown and InCombatLockdown()) then
+                frame:SetAlpha(0)
+            end
+        end)
+        _G.DamageMeter.UITweaksHooked = true
+    end
+    _G.DamageMeter:SetAlpha(0)
+    _G.DamageMeter:Show()
+    if _G.DamageMeter and C_Timer and C_Timer.NewTicker then
+        self.damageMeterHoverTicker = C_Timer.NewTicker(0.1, function()
+            if not (UITweaks.db and UITweaks.db.profile.hideDamageMeter and _G.DamageMeter) then return end
+            if InCombatLockdown and InCombatLockdown() then
+                _G.DamageMeter:SetAlpha(1)
+                return
+            end
+            if UITweaks.visibilityDelayActive then
+                _G.DamageMeter:SetAlpha(1)
+                return
+            end
+            if _G.DamageMeter:IsMouseOver() then
+                _G.DamageMeter:SetAlpha(1)
+            else
+                _G.DamageMeter:SetAlpha(0)
+            end
+        end)
+    end
 end
 
 function UITweaks:UpdateChatTabsVisibility()
@@ -630,7 +683,7 @@ end
 
 function UITweaks:ApplyDelayedVisibility()
     if self.db.profile.hideDamageMeter then
-        if _G.DamageMeter then _G.DamageMeter:Hide() end
+        self:UpdateDamageMeterVisibility()
     end
     if self.db.profile.hidePlayerFrameOutOfCombat then self:UpdatePlayerFrameVisibility() end
     if self.db.profile.hideTargetFrameOutOfCombat then self:UpdateTargetFrameVisibility() end
@@ -999,7 +1052,7 @@ function UITweaks:OnInitialize()
                     hideDamageMeter = toggleOption(
                         "hideDamageMeter",
                         "Hide Damage Meter Out of Combat",
-                        "Hide the built-in damage meter frame after you leave combat.",
+                        "Fade the built-in damage meter frame after combat until you mouse over it.",
                         3,
                         function()
                             self:UpdateDamageMeterVisibility()
