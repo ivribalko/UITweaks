@@ -71,8 +71,9 @@ This section must be kept in sync with `UITweaks.lua`. Every setting listed here
 - Hide Damage Meter Out of Combat — Fade the built-in damage meter frame after combat until you mouse over it.
 - Replace Target Frame With Tooltip Out of Combat — Show the target tooltip when the target frame is not shown out of combat (useful for quest info like how many to kill).
 - Show Tooltip For Soft (Action) Target Out of Combat — Also display the ConsolePort soft (action) target's tooltip while out of combat.
-- Collapse In Combat — Collapse the quest/objective tracker during combat and re-expand it after combat ends.
-- Only In Dungeons/Raids — Only collapse the objective tracker while in dungeon or raid instances.
+- In Raids — Collapse the objective tracker in combat while in raid instances.
+- In Dungeons — Collapse the objective tracker in combat while in dungeon instances.
+- Everywhere Else — Collapse the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).
 
 ### Frames
 

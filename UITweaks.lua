@@ -8,7 +8,6 @@ local defaults = {
         chatMessageFadeAfterOverride = false,
         chatMessageFadeAfterSeconds = 5,
         suppressTalentAlert = false,
-        collapseObjectiveTrackerInCombat = false,
         hideBuffFrame = false,
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
@@ -22,7 +21,9 @@ local defaults = {
         hideGroupLootHistoryFrame = false,
         hideStanceButtons = false,
         hideMicroMenuButtons = false,
-        collapseObjectiveTrackerOnlyInstances = false,
+        collapseObjectiveTrackerInRaids = false,
+        collapseObjectiveTrackerInDungeons = false,
+        collapseObjectiveTrackerEverywhereElse = false,
         combatVisibilityDelaySeconds = 5,
         showOptionsOnReload = false,
         chatFontOverrideEnabled = false,
@@ -190,14 +191,22 @@ function UITweaks:IsObjectiveTrackerCollapsed()
     end
 end
 
+function UITweaks:ShouldCollapseObjectiveTracker()
+    return self.db.profile.collapseObjectiveTrackerInRaids
+        or self.db.profile.collapseObjectiveTrackerInDungeons
+        or self.db.profile.collapseObjectiveTrackerEverywhereElse
+end
+
 function UITweaks:CollapseTrackerIfNeeded()
-    if self.db.profile.collapseObjectiveTrackerInCombat then
+    if self:ShouldCollapseObjectiveTracker() then
         local shouldCollapse = true
-        if self.db.profile.collapseObjectiveTrackerOnlyInstances then
-            local inInstance, instanceType = IsInInstance()
-            if not (inInstance and (instanceType == "party" or instanceType == "raid")) then
-                shouldCollapse = false
-            end
+        local inInstance, instanceType = IsInInstance()
+        if inInstance and instanceType == "raid" then
+            shouldCollapse = self.db.profile.collapseObjectiveTrackerInRaids
+        elseif inInstance and instanceType == "party" then
+            shouldCollapse = self.db.profile.collapseObjectiveTrackerInDungeons
+        else
+            shouldCollapse = self.db.profile.collapseObjectiveTrackerEverywhereElse
         end
         if shouldCollapse and self:EnsureObjectiveTrackerLoaded() then
             if not self:IsObjectiveTrackerCollapsed() then
@@ -220,7 +229,7 @@ function UITweaks:ExpandTrackerIfNeeded(force)
 end
 
 function UITweaks:UpdateObjectiveTrackerState()
-    if self.db.profile.collapseObjectiveTrackerInCombat then
+    if self:ShouldCollapseObjectiveTracker() then
         if InCombatLockdown and InCombatLockdown() then
             self:CollapseTrackerIfNeeded()
         else
@@ -677,7 +686,7 @@ function UITweaks:HasDelayedVisibilityFeatures()
     return self.db.profile.hideDamageMeter
         or self.db.profile.hidePlayerFrameOutOfCombat
         or self.db.profile.hideTargetFrameOutOfCombat
-        or self.db.profile.collapseObjectiveTrackerInCombat
+        or self:ShouldCollapseObjectiveTracker()
         or self.db.profile.replaceTargetFrameWithTooltip
 end
 
@@ -687,7 +696,7 @@ function UITweaks:ApplyDelayedVisibility()
     end
     if self.db.profile.hidePlayerFrameOutOfCombat then self:UpdatePlayerFrameVisibility() end
     if self.db.profile.hideTargetFrameOutOfCombat then self:UpdateTargetFrameVisibility() end
-    if self.db.profile.collapseObjectiveTrackerInCombat then self:ExpandTrackerIfNeeded(true) end
+    if self:ShouldCollapseObjectiveTracker() then self:ExpandTrackerIfNeeded(true) end
     if self.db.profile.replaceTargetFrameWithTooltip then self:UpdateTargetTooltip() end
 end
 
@@ -1082,36 +1091,50 @@ function UITweaks:OnInitialize()
                     ),
                     objectiveTrackerVisibility = {
                         type = "group",
-                        name = "Objective Tracker",
+                        name = "Collapse Objective Tracker",
                         inline = true,
                         order = 4,
                         args = {
-                            collapseObjectiveTrackerInCombat = toggleOption(
-                                "collapseObjectiveTrackerInCombat",
-                                "Collapse In Combat",
-                                "Collapse the quest/objective tracker during combat and re-expand it after combat ends.",
-                                0,
-                                function()
-                                    self:UpdateObjectiveTrackerState()
-                                end,
-                                nil,
-                                "auto"
-                            ),
-                            collapseObjectiveTrackerOnlyInstances = {
+                            collapseObjectiveTrackerInRaids = {
                                 type = "toggle",
-                                name = "Only In Dungeons/Raids",
-                                desc = "Only collapse the objective tracker while in dungeon or raid instances.",
+                                name = "In Raids",
+                                desc = "Collapse the objective tracker in combat while in raid instances.",
                                 width = "auto",
                                 order = 1,
                                 get = function()
-                                    return self.db.profile.collapseObjectiveTrackerOnlyInstances
+                                    return self.db.profile.collapseObjectiveTrackerInRaids
                                 end,
                                 set = function(_, val)
-                                    self.db.profile.collapseObjectiveTrackerOnlyInstances = val
+                                    self.db.profile.collapseObjectiveTrackerInRaids = val
                                     self:UpdateObjectiveTrackerState()
                                 end,
-                                disabled = function()
-                                    return not self.db.profile.collapseObjectiveTrackerInCombat
+                            },
+                            collapseObjectiveTrackerInDungeons = {
+                                type = "toggle",
+                                name = "In Dungeons",
+                                desc = "Collapse the objective tracker in combat while in dungeon instances.",
+                                width = "auto",
+                                order = 2,
+                                get = function()
+                                    return self.db.profile.collapseObjectiveTrackerInDungeons
+                                end,
+                                set = function(_, val)
+                                    self.db.profile.collapseObjectiveTrackerInDungeons = val
+                                    self:UpdateObjectiveTrackerState()
+                                end,
+                            },
+                            collapseObjectiveTrackerEverywhereElse = {
+                                type = "toggle",
+                                name = "Everywhere Else",
+                                desc = "Collapse the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).",
+                                width = "auto",
+                                order = 3,
+                                get = function()
+                                    return self.db.profile.collapseObjectiveTrackerEverywhereElse
+                                end,
+                                set = function(_, val)
+                                    self.db.profile.collapseObjectiveTrackerEverywhereElse = val
+                                    self:UpdateObjectiveTrackerState()
                                 end,
                             },
                         },
@@ -1277,7 +1300,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
 end
 
 function UITweaks:PLAYER_REGEN_DISABLED()
-    if self.db.profile.collapseObjectiveTrackerInCombat then
+    if self:ShouldCollapseObjectiveTracker() then
         self:CollapseTrackerIfNeeded()
     end
     self:UpdatePlayerFrameVisibility()
