@@ -19,6 +19,7 @@ local defaults = {
         hideChatTabs = false,
         hideChatMenuButton = false,
         transparentChatBackground = false,
+        hideGroupLootHistoryFrame = false,
         hideStanceButtons = false,
         hideMicroMenuButtons = false,
         collapseObjectiveTrackerOnlyInstances = false,
@@ -404,6 +405,36 @@ function UITweaks:UpdateChatMenuButtonVisibility()
     end
 end
 
+local function ensureGroupLootHistoryLoaded()
+    if _G.GroupLootHistoryFrame then return true end
+    local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
+    if loadAddOn then
+        local isLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Blizzard_GroupLootHistory"))
+            or (IsAddOnLoaded and IsAddOnLoaded("Blizzard_GroupLootHistory"))
+        if not isLoaded then
+            loadAddOn("Blizzard_GroupLootHistory")
+        end
+    end
+    return _G.GroupLootHistoryFrame ~= nil
+end
+
+function UITweaks:UpdateGroupLootHistoryVisibility()
+    if self.db.profile.hideGroupLootHistoryFrame and ensureGroupLootHistoryLoaded() then
+        local frame = _G.GroupLootHistoryFrame
+        if frame then
+            if not frame.UITweaksHooked then
+                frame:HookScript("OnShow", function(shownFrame)
+                    if UITweaks.db and UITweaks.db.profile.hideGroupLootHistoryFrame then
+                        shownFrame:Hide()
+                    end
+                end)
+                frame.UITweaksHooked = true
+            end
+            frame:Hide()
+        end
+    end
+end
+
 local function getMicroMenuButtons()
     local buttons = {}
     local function addButtonsFromParent(parent)
@@ -660,6 +691,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
     self:UpdateChatMenuButtonVisibility()
+    self:UpdateGroupLootHistoryVisibility()
     self:UpdateMicroMenuVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateBackpackButtonVisibility()
@@ -980,6 +1012,15 @@ function UITweaks:OnInitialize()
                             self:ApplyBuffFrameHide()
                         end
                     ),
+                    hideGroupLootHistoryFrame = toggleOption(
+                        "hideGroupLootHistoryFrame",
+                        "Hide Group Loot History",
+                        "Hide the group loot history frame.",
+                        1.1,
+                        function()
+                            self:UpdateGroupLootHistoryVisibility()
+                        end
+                    ),
                     hideStanceButtons = toggleOption(
                         "hideStanceButtons",
                         "Hide Stance Buttons",
@@ -1105,6 +1146,8 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:ApplyBuffFrameHide()
         self:ApplyVisibilityState()
         self:ScheduleDelayedVisibilityUpdate(true)
+    elseif addonName == "Blizzard_GroupLootHistory" then
+        self:UpdateGroupLootHistoryVisibility()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
     elseif addonName == "Blizzard_ObjectiveTracker" then
