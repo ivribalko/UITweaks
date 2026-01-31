@@ -57,6 +57,7 @@ This section must be kept in sync with `UITweaks.lua`. Every setting listed here
 - Font Size — Font size to use when the override is enabled.
 - Hide Chat Tabs — Hide chat tab titles while leaving the windows visible.
 - Hide Chat Bubble Button — Hide the chat button with the speech bubble icon.
+- Transparent Chat Background — Set the chat background alpha to zero.
 
 ### Alerts
 

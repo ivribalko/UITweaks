@@ -18,6 +18,7 @@ local defaults = {
         showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideChatMenuButton = false,
+        transparentChatBackground = false,
         hideStanceButtons = false,
         hideMicroMenuButtons = false,
         collapseObjectiveTrackerOnlyInstances = false,
@@ -87,6 +88,22 @@ function UITweaks:ApplyChatFontSize()
                 local font = defaultFont and defaultFont.font or (frame.GetFont and select(1, frame:GetFont()))
                 local flags = defaultFont and defaultFont.flags or (frame.GetFont and select(3, frame:GetFont()))
                 if font then frame:SetFont(font, size, flags) end
+            end
+        end
+    end
+end
+
+function UITweaks:ApplyChatBackgroundAlpha()
+    if not SetChatWindowAlpha then return end
+    if self.db.profile.transparentChatBackground then
+        for i = 1, NUM_CHAT_WINDOWS do
+            SetChatWindowAlpha(i, 0)
+        end
+    elseif GetChatWindowInfo then
+        for i = 1, NUM_CHAT_WINDOWS do
+            local _, _, _, _, _, alpha = GetChatWindowInfo(i)
+            if alpha ~= nil then
+                SetChatWindowAlpha(i, alpha <= 1 and alpha * 100 or alpha)
             end
         end
     end
@@ -753,6 +770,15 @@ function UITweaks:OnInitialize()
                             self:UpdateChatMenuButtonVisibility()
                         end
                     ),
+                    transparentChatBackground = toggleOption(
+                        "transparentChatBackground",
+                        "Transparent Chat Background",
+                        "Set the chat background alpha to zero.",
+                        3.2,
+                        function()
+                            self:ApplyChatBackgroundAlpha()
+                        end
+                    ),
                 },
             },
             alerts = {
@@ -985,6 +1011,7 @@ function UITweaks:OnEnable()
     self:CacheDefaultChatWindowTimes()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
+    self:ApplyChatBackgroundAlpha()
     self:HookTalentAlertFrames()
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
