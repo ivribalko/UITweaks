@@ -228,13 +228,35 @@ function UITweaks:UpdateObjectiveTrackerState()
     end
 end
 
-local function hideBuffFrame()
+local function setBuffFrameAlpha(alpha)
     if BuffFrame then
-        BuffFrame:Hide()
+        BuffFrame:SetAlpha(alpha)
+        BuffFrame:Show()
         if BuffFrame.CollapseAndExpandButton then
-            BuffFrame.CollapseAndExpandButton:Hide()
+            BuffFrame.CollapseAndExpandButton:SetAlpha(alpha)
+            BuffFrame.CollapseAndExpandButton:Show()
         end
     end
+end
+
+local function setBuffFrameHoverPolling(enabled)
+    if not (BuffFrame and C_Timer and C_Timer.NewTicker) then return end
+    if BuffFrame.UITweaksHoverTicker then
+        BuffFrame.UITweaksHoverTicker:Cancel()
+        BuffFrame.UITweaksHoverTicker = nil
+    end
+    if not enabled then return end
+
+    BuffFrame.UITweaksHoverTicker = C_Timer.NewTicker(0.1, function()
+        if not (UITweaks.db and UITweaks.db.profile.hideBuffFrame and BuffFrame) then return end
+        local overBuffs = BuffFrame:IsMouseOver()
+        local overButton = BuffFrame.CollapseAndExpandButton and BuffFrame.CollapseAndExpandButton:IsMouseOver()
+        if overBuffs or overButton then
+            setBuffFrameAlpha(1)
+        else
+            setBuffFrameAlpha(0)
+        end
+    end)
 end
 
 local function ensureBuffFrameLoaded()
@@ -246,15 +268,23 @@ local function ensureBuffFrameLoaded()
 end
 
 function UITweaks:ApplyBuffFrameHide(retry)
-    if ensureBuffFrameLoaded() and BuffFrame and self.db.profile.hideBuffFrame then
-        if not BuffFrame.UITweaksHooked then
-            -- Keep the buff frame hidden after UI refreshes.
-            BuffFrame:HookScript("OnShow", function()
-                if UITweaks.db and UITweaks.db.profile.hideBuffFrame then hideBuffFrame() end
-            end)
-            BuffFrame.UITweaksHooked = true
+    if ensureBuffFrameLoaded() and BuffFrame then
+        if self.db.profile.hideBuffFrame then
+            if not BuffFrame.UITweaksHooked then
+                -- Keep the buff frame faded out after UI refreshes.
+                BuffFrame:HookScript("OnShow", function()
+                    if UITweaks.db and UITweaks.db.profile.hideBuffFrame then
+                        setBuffFrameAlpha(0)
+                    end
+                end)
+                BuffFrame.UITweaksHooked = true
+            end
+            setBuffFrameHoverPolling(true)
+            setBuffFrameAlpha(0)
+        else
+            setBuffFrameHoverPolling(false)
+            setBuffFrameAlpha(1)
         end
-        hideBuffFrame()
     elseif not retry and C_Timer and C_Timer.After then
         C_Timer.After(0.5, function() self:ApplyBuffFrameHide(true) end)
     end
@@ -305,27 +335,57 @@ end
 
 function UITweaks:UpdateChatTabsVisibility()
     self.hiddenChatTabs = self.hiddenChatTabs or {}
+    if self.chatTabsHoverTicker then
+        self.chatTabsHoverTicker:Cancel()
+        self.chatTabsHoverTicker = nil
+    end
+    local function isChatWindowActive(index, tab)
+        if FCF_IsChatWindowIndexActive then
+            return FCF_IsChatWindowIndexActive(index)
+        end
+        if tab and tab.IsShown then
+            return tab:IsShown()
+        end
+        return false
+    end
     for i = 1, NUM_CHAT_WINDOWS do
         local tabName = "ChatFrame" .. i .. "Tab"
         local tab = _G[tabName]
         if tab and not tab.UITweaksHooked then
-            -- Keep tabs hidden even when hover/OnShow tries to reveal them.
+            -- Keep tabs faded out even when hover/OnShow tries to reveal them.
             tab:HookScript("OnShow", function(frame)
                 if UITweaks.db and UITweaks.db.profile.hideChatTabs then
-                    frame:Hide()
-                end
-            end)
-            tab:HookScript("OnEnter", function(frame)
-                if UITweaks.db and UITweaks.db.profile.hideChatTabs then
-                    frame:Hide()
+                    frame:SetAlpha(0)
                 end
             end)
             tab.UITweaksHooked = true
         end
-        if tab and tab:IsShown() and self.db.profile.hideChatTabs then
-            tab:Hide()
-            self.hiddenChatTabs[tabName] = true
+        if tab then
+            if self.db.profile.hideChatTabs then
+                if isChatWindowActive(i, tab) then
+                    tab:SetAlpha(0)
+                    self.hiddenChatTabs[tabName] = true
+                end
+            else
+                tab:SetAlpha(1)
+                self.hiddenChatTabs[tabName] = nil
+            end
         end
+    end
+    if self.db.profile.hideChatTabs and C_Timer and C_Timer.NewTicker then
+        self.chatTabsHoverTicker = C_Timer.NewTicker(0.1, function()
+            if not (UITweaks.db and UITweaks.db.profile.hideChatTabs) then return end
+            for i = 1, NUM_CHAT_WINDOWS do
+                local tab = _G["ChatFrame" .. i .. "Tab"]
+                if tab and isChatWindowActive(i, tab) then
+                    if tab:IsMouseOver() then
+                        tab:SetAlpha(1)
+                    else
+                        tab:SetAlpha(0)
+                    end
+                end
+            end
+        end)
     end
 end
 
@@ -755,7 +815,7 @@ function UITweaks:OnInitialize()
                     hideChatTabs = toggleOption(
                         "hideChatTabs",
                         "Hide Chat Tabs",
-                        "Hide chat tab titles while leaving the windows visible.",
+                        "Fade chat tab titles until you mouse over them.",
                         3,
                         function()
                             self:UpdateChatTabsVisibility()
@@ -914,7 +974,7 @@ function UITweaks:OnInitialize()
                     hideBuffFrame = toggleOption(
                         "hideBuffFrame",
                         "Hide Buff Frame",
-                        "Hide the default player buff frame UI.",
+                        "Fade the default player buff frame until you mouse over it.",
                         1,
                         function()
                             self:ApplyBuffFrameHide()

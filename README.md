@@ -55,7 +55,7 @@ This section must be kept in sync with `UITweaks.lua`. Every setting listed here
 - Fade After Seconds — Number of seconds a chat message stays before fading when the override is enabled.
 - Chat Font Size Override — Enable a custom chat window font size for all tabs.
 - Font Size — Font size to use when the override is enabled.
-- Hide Chat Tabs — Hide chat tab titles while leaving the windows visible.
+- Hide Chat Tabs — Fade chat tab titles until you mouse over them.
 - Hide Chat Bubble Button — Hide the chat button with the speech bubble icon.
 - Transparent Chat Background — Set the chat background alpha to zero.
 
@@ -76,7 +76,7 @@ This section must be kept in sync with `UITweaks.lua`. Every setting listed here
 
 ### Frames
 
-- Hide Buff Frame — Hide the default player buff frame UI.
+- Hide Buff Frame — Fade the default player buff frame until you mouse over it.
 - Hide Stance Buttons — Hide the Blizzard stance bar/buttons when you don't need them.
 - Hide Bags Bar — Hide the entire Blizzard Bags Bar next to the action bars.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
