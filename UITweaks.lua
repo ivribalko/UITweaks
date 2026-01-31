@@ -327,7 +327,31 @@ function UITweaks:UpdateTargetFrameVisibility()
 end
 
 function UITweaks:UpdateBackpackButtonVisibility()
-    if _G.BagsBar and self.db.profile.hideBackpackButton then _G.BagsBar:Hide() end
+    if self.bagsBarHoverTicker then
+        self.bagsBarHoverTicker:Cancel()
+        self.bagsBarHoverTicker = nil
+    end
+    if not self.db.profile.hideBackpackButton then
+        if _G.BagsBar then
+            _G.BagsBar:SetAlpha(1)
+            _G.BagsBar:Show()
+        end
+        return
+    end
+    if _G.BagsBar then
+        _G.BagsBar:SetAlpha(0)
+        _G.BagsBar:Show()
+    end
+    if _G.BagsBar and C_Timer and C_Timer.NewTicker then
+        self.bagsBarHoverTicker = C_Timer.NewTicker(0.1, function()
+            if not (UITweaks.db and UITweaks.db.profile.hideBackpackButton and _G.BagsBar) then return end
+            if _G.BagsBar:IsMouseOver() then
+                _G.BagsBar:SetAlpha(1)
+            else
+                _G.BagsBar:SetAlpha(0)
+            end
+        end)
+    end
 end
 
 function UITweaks:UpdateDamageMeterVisibility()
@@ -484,6 +508,31 @@ local function getStanceBars()
     return bars
 end
 
+local function getStanceButtons()
+    local buttons = {}
+    local numButtons = NUM_STANCE_SLOTS or NUM_SHAPESHIFT_SLOTS or 10
+    for i = 1, numButtons do
+        local button = _G["StanceButton" .. i] or _G["ShapeshiftButton" .. i]
+        if button then buttons[#buttons + 1] = button end
+    end
+    return buttons
+end
+
+local function setStanceAlpha(alpha)
+    for _, stanceBar in ipairs(getStanceBars()) do
+        if stanceBar then
+            stanceBar:SetAlpha(alpha)
+            stanceBar:Show()
+        end
+    end
+    for _, button in ipairs(getStanceButtons()) do
+        if button then
+            button:SetAlpha(alpha)
+            button:Show()
+        end
+    end
+end
+
 local function hookStanceButtons()
     for _, stanceBar in ipairs(getStanceBars()) do
         if stanceBar and not stanceBar.UITweaksHooked then
@@ -497,7 +546,7 @@ local function hookStanceButtons()
         if button and not button.UITweaksHooked then
             button:HookScript("OnShow", function(btn)
                 if UITweaks.db and UITweaks.db.profile.hideStanceButtons then
-                    btn:Hide()
+                    btn:SetAlpha(0)
                 end
             end)
             button.UITweaksHooked = true
@@ -507,20 +556,39 @@ end
 
 function UITweaks:UpdateStanceButtonsVisibility()
     hookStanceButtons()
-    local hide = self.db.profile.hideStanceButtons
-    if hide then
-        for _, stanceBar in ipairs(getStanceBars()) do
-            if RegisterStateDriver and UnregisterStateDriver then
-                -- Force-hide stance bar to avoid mount/combat refresh flashes.
-                RegisterStateDriver(stanceBar, "visibility", "hide")
+    if self.stanceBarHoverTicker then
+        self.stanceBarHoverTicker:Cancel()
+        self.stanceBarHoverTicker = nil
+    end
+    if not self.db.profile.hideStanceButtons then
+        setStanceAlpha(1)
+        return
+    end
+    setStanceAlpha(0)
+    if C_Timer and C_Timer.NewTicker then
+        self.stanceBarHoverTicker = C_Timer.NewTicker(0.1, function()
+            if not (UITweaks.db and UITweaks.db.profile.hideStanceButtons) then return end
+            local hovered = false
+            for _, stanceBar in ipairs(getStanceBars()) do
+                if stanceBar and stanceBar:IsMouseOver() then
+                    hovered = true
+                    break
+                end
             end
-            stanceBar:Hide()
-        end
-        local numButtons = NUM_STANCE_SLOTS or NUM_SHAPESHIFT_SLOTS or 10
-        for i = 1, numButtons do
-            local button = _G["StanceButton" .. i] or _G["ShapeshiftButton" .. i]
-            if button then button:Hide() end
-        end
+            if not hovered then
+                for _, button in ipairs(getStanceButtons()) do
+                    if button and button:IsMouseOver() then
+                        hovered = true
+                        break
+                    end
+                end
+            end
+            if hovered then
+                setStanceAlpha(1)
+            else
+                setStanceAlpha(0)
+            end
+        end)
     end
 end
 
@@ -1024,7 +1092,7 @@ function UITweaks:OnInitialize()
                     hideStanceButtons = toggleOption(
                         "hideStanceButtons",
                         "Hide Stance Buttons",
-                        "Hide the Blizzard stance bar/buttons when you don't need them.",
+                        "Fade the Blizzard stance bar/buttons until you mouse over them.",
                         2,
                         function()
                             self:UpdateStanceButtonsVisibility()
@@ -1033,7 +1101,7 @@ function UITweaks:OnInitialize()
                     hideBackpackButton = toggleOption(
                         "hideBackpackButton",
                         "Hide Bags Bar",
-                        "Hide the entire Blizzard Bags Bar next to the action bars.",
+                        "Fade the Blizzard Bags Bar until you mouse over it.",
                         3,
                         function()
                             self:UpdateBackpackButtonVisibility()

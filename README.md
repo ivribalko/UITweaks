@@ -78,8 +78,8 @@ This section must be kept in sync with `UITweaks.lua`. Every setting listed here
 
 - Hide Buff Frame — Fade the default player buff frame until you mouse over it.
 - Hide Group Loot History — Hide the group loot history frame.
-- Hide Stance Buttons — Hide the Blizzard stance bar/buttons when you don't need them.
-- Hide Bags Bar — Hide the entire Blizzard Bags Bar next to the action bars.
+- Hide Stance Buttons — Fade the Blizzard stance bar/buttons until you mouse over them.
+- Hide Bags Bar — Fade the Blizzard Bags Bar until you mouse over it.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
 
 ### ConsolePort
