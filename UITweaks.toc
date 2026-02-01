@@ -3,6 +3,7 @@
 ## Notes: Various UI Tweaks
 ## Author: Me
 ## Version: 1.2
+## IconTexture: Interface\AddOns\UITweaks\icon64.tga
 ## SavedVariables: UITweaksDB
 
 # Libs
