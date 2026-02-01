@@ -6,7 +6,7 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local defaults = {
     profile = {
         chatMessageFadeAfterOverride = false,
-        chatMessageFadeAfterSeconds = 5,
+        chatMessageFadeAfterSeconds = 10,
         suppressTalentAlert = false,
         hideBuffFrame = false,
         hidePlayerFrameOutOfCombat = false,
@@ -941,8 +941,8 @@ function UITweaks:OnInitialize()
                 args = {
                     chatMessageFadeAfterOverride = toggleOption(
                         "chatMessageFadeAfterOverride",
-                        "Chat Message Fade Override",
-                        "Enable a custom duration for how long chat messages remain visible before fading.",
+                        "Auto-Hide Chat Messages",
+                        "Auto-Hide chat messages after a custom duration and reveal them on mouse over.",
                         1,
                         function()
                             self:ApplyChatLineFade()
@@ -968,7 +968,7 @@ function UITweaks:OnInitialize()
                     ),
                     chatFontOverrideEnabled = toggleOption(
                         "chatFontOverrideEnabled",
-                        "Chat Font Size Override",
+                        "Chat Font Size",
                         "Enable a custom chat window font size for all tabs.",
                         2,
                         function()
@@ -995,8 +995,8 @@ function UITweaks:OnInitialize()
                     ),
                     hideChatTabs = toggleOption(
                         "hideChatTabs",
-                        "Hide Chat Tabs",
-                        "Fade chat tab titles until you mouse over them.",
+                        "Auto-Hide Chat Tabs",
+                        "Auto-Hide chat tab titles until you mouse over them.",
                         3,
                         function()
                             self:UpdateChatTabsVisibility()
@@ -1047,8 +1047,8 @@ function UITweaks:OnInitialize()
                 args = {
                     combatVisibilityDelaySeconds = rangeOption(
                         "combatVisibilityDelaySeconds",
-                        "Delay Seconds",
-                        "Delay before restoring frames after combat ends.",
+                        "Delay After Combat Seconds",
+                        "Delay after combat seconds before restoring frames.",
                         0,
                         0,
                         20,
@@ -1079,8 +1079,8 @@ function UITweaks:OnInitialize()
                     ),
                     hideDamageMeter = toggleOption(
                         "hideDamageMeter",
-                        "Hide Damage Meter Out of Combat",
-                        "Fade the built-in damage meter frame after combat until you mouse over it.",
+                        "Auto-Hide Damage Meter Out of Combat",
+                        "Auto-Hide the built-in damage meter frame after combat until you mouse over it.",
                         3,
                         function()
                             self:UpdateDamageMeterVisibility()
@@ -1168,8 +1168,8 @@ function UITweaks:OnInitialize()
                 args = {
                     hideBuffFrame = toggleOption(
                         "hideBuffFrame",
-                        "Hide Buff Frame",
-                        "Fade the default player buff frame until you mouse over it.",
+                        "Auto-Hide Buff Frame",
+                        "Auto-Hide the default player buff frame until you mouse over it.",
                         1,
                         function()
                             self:ApplyBuffFrameHide()
@@ -1186,8 +1186,8 @@ function UITweaks:OnInitialize()
                     ),
                     hideStanceButtons = toggleOption(
                         "hideStanceButtons",
-                        "Hide Stance Buttons",
-                        "Fade the Blizzard stance bar/buttons until you mouse over them.",
+                        "Auto-Hide Stance Buttons",
+                        "Auto-Hide the Blizzard stance bar/buttons until you mouse over them.",
                         2,
                         function()
                             self:UpdateStanceButtonsVisibility()
@@ -1195,8 +1195,8 @@ function UITweaks:OnInitialize()
                     ),
                     hideBackpackButton = toggleOption(
                         "hideBackpackButton",
-                        "Hide Bags Bar",
-                        "Fade the Blizzard Bags Bar until you mouse over it.",
+                        "Auto-Hide Bags Bar",
+                        "Auto-Hide the Blizzard Bags Bar until you mouse over it.",
                         3,
                         function()
                             self:UpdateBackpackButtonVisibility()
