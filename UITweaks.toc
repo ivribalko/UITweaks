@@ -2,7 +2,7 @@
 ## Title: UI Tweaks
 ## Notes: Various UI Tweaks
 ## Author: Me
-## Version: 1.0
+## Version: 1.2
 ## SavedVariables: UITweaksDB
 
 # Libs
