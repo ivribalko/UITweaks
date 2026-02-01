@@ -54,6 +54,23 @@ local function getChatFrames()
     return frames
 end
 
+local function hookChatFrameHover(frame)
+    if frame.UITweaksHoverHooked then return end
+    frame:HookScript("OnEnter", function(chatFrame)
+        if UITweaks.db and UITweaks.db.profile.chatMessageFadeAfterOverride then
+            if chatFrame.SetFading then chatFrame:SetFading(false) end
+            if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
+        end
+    end)
+    frame:HookScript("OnLeave", function(chatFrame)
+        if UITweaks.db and UITweaks.db.profile.chatMessageFadeAfterOverride then
+            if chatFrame.SetFading then chatFrame:SetFading(true) end
+            if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
+        end
+    end)
+    frame.UITweaksHoverHooked = true
+end
+
 function UITweaks:CacheDefaultChatWindowTimes()
     if not self.defaultChatWindowTimeVisible then
         self.defaultChatWindowTimeVisible = {}
@@ -117,6 +134,8 @@ function UITweaks:ApplyChatLineFade()
         local seconds = sanitizeSeconds(self.db.profile.chatMessageFadeAfterSeconds) or defaultsProfile.chatMessageFadeAfterSeconds
         for _, frame in ipairs(frames) do
             if frame.SetTimeVisible then frame:SetTimeVisible(seconds) end
+            if frame.SetFading then frame:SetFading(true) end
+            hookChatFrameHover(frame)
         end
     end
 end
