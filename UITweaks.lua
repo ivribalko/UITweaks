@@ -933,11 +933,28 @@ function UITweaks:OnInitialize()
         name = "UI Tweaks",
         type = "group",
         args = {
+            alerts = {
+                type = "group",
+                name = "Alerts",
+                inline = true,
+                order = 1,
+                args = {
+                    suppressTalentAlert = toggleOption(
+                        "suppressTalentAlert",
+                        "Hide Unspent Talent Alert",
+                        "Prevent the 'You have unspent talent points' reminder from popping up.",
+                        1,
+                        function()
+                            self:HookTalentAlertFrames()
+                        end
+                    ),
+                },
+            },
             chatSettings = {
                 type = "group",
                 name = "Chat",
                 inline = true,
-                order = 1,
+                order = 2,
                 args = {
                     chatMessageFadeAfterOverride = toggleOption(
                         "chatMessageFadeAfterOverride",
@@ -954,7 +971,7 @@ function UITweaks:OnInitialize()
                         "chatMessageFadeAfterSeconds",
                         "Fade After Seconds",
                         "Number of seconds a chat message stays before fading when the override is enabled.",
-                        1.1,
+                        2,
                         1,
                         60,
                         1,
@@ -963,33 +980,6 @@ function UITweaks:OnInitialize()
                         end,
                         function()
                             return not self.db.profile.chatMessageFadeAfterOverride
-                        end,
-                        1.8
-                    ),
-                    chatFontOverrideEnabled = toggleOption(
-                        "chatFontOverrideEnabled",
-                        "Chat Font Size",
-                        "Enable a custom chat window font size for all tabs.",
-                        2,
-                        function()
-                            self:ApplyChatFontSize()
-                        end,
-                        nil,
-                        1.2
-                    ),
-                    chatFontSize = rangeOption(
-                        "chatFontSize",
-                        "Font Size",
-                        "Font size to use when the override is enabled.",
-                        2.1,
-                        8,
-                        48,
-                        1,
-                        function()
-                            self:ApplyChatFontSize()
-                        end,
-                        function()
-                            return not self.db.profile.chatFontOverrideEnabled
                         end,
                         1.8
                     ),
@@ -1002,11 +992,38 @@ function UITweaks:OnInitialize()
                             self:UpdateChatTabsVisibility()
                         end
                     ),
+                    chatFontOverrideEnabled = toggleOption(
+                        "chatFontOverrideEnabled",
+                        "Set Chat Font Size",
+                        "Enable a custom chat window font size for all tabs.",
+                        4,
+                        function()
+                            self:ApplyChatFontSize()
+                        end,
+                        nil,
+                        1.2
+                    ),
+                    chatFontSize = rangeOption(
+                        "chatFontSize",
+                        "Font Size",
+                        "Font size to use when the override is enabled.",
+                        5,
+                        8,
+                        48,
+                        1,
+                        function()
+                            self:ApplyChatFontSize()
+                        end,
+                        function()
+                            return not self.db.profile.chatFontOverrideEnabled
+                        end,
+                        1.8
+                    ),
                     hideChatMenuButton = toggleOption(
                         "hideChatMenuButton",
                         "Hide Chat Bubble Button",
                         "Hide the chat button with the speech bubble icon.",
-                        3.1,
+                        6,
                         function()
                             self:UpdateChatMenuButtonVisibility()
                         end
@@ -1015,26 +1032,9 @@ function UITweaks:OnInitialize()
                         "transparentChatBackground",
                         "Transparent Chat Background",
                         "Set the chat background alpha to zero.",
-                        3.2,
+                        7,
                         function()
                             self:ApplyChatBackgroundAlpha()
-                        end
-                    ),
-                },
-            },
-            alerts = {
-                type = "group",
-                name = "Alerts",
-                inline = true,
-                order = 8,
-                args = {
-                    suppressTalentAlert = toggleOption(
-                        "suppressTalentAlert",
-                        "Hide Unspent Talent Alert",
-                        "Prevent the 'You have unspent talent points' reminder from popping up.",
-                        1,
-                        function()
-                            self:HookTalentAlertFrames()
                         end
                     ),
                 },
@@ -1043,13 +1043,13 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "Combat",
                 inline = true,
-                order = 4,
+                order = 3,
                 args = {
                     combatVisibilityDelaySeconds = rangeOption(
                         "combatVisibilityDelaySeconds",
                         "Delay After Combat Seconds",
                         "Delay after combat seconds before restoring frames.",
-                        0,
+                        1,
                         0,
                         20,
                         1,
@@ -1057,62 +1057,20 @@ function UITweaks:OnInitialize()
                             self:ScheduleDelayedVisibilityUpdate()
                         end
                     ),
-                    hidePlayerFrameOutOfCombat = toggleOption(
-                        "hidePlayerFrameOutOfCombat",
-                        "Hide Player Frame Out of Combat",
-                        "Hide the player unit frame outside combat and restore it after the delay.",
-                        1,
-                        function()
-                            self:UpdatePlayerFrameVisibility()
-                            self:ScheduleDelayedVisibilityUpdate()
-                        end
-                    ),
-                    hideTargetFrameOutOfCombat = toggleOption(
-                        "hideTargetFrameOutOfCombat",
-                        "Hide Target Frame Out of Combat",
-                        "Hide the target unit frame outside combat and restore it after the delay.",
-                        2,
-                        function()
-                            self:UpdateTargetFrameVisibility()
-                            self:ScheduleDelayedVisibilityUpdate()
-                        end
-                    ),
                     hideDamageMeter = toggleOption(
                         "hideDamageMeter",
                         "Auto-Hide Damage Meter Out of Combat",
                         "Auto-Hide the built-in damage meter frame after combat until you mouse over it.",
-                        3,
+                        2,
                         function()
                             self:UpdateDamageMeterVisibility()
-                        end
-                    ),
-                    replaceTargetFrameWithTooltip = toggleOption(
-                        "replaceTargetFrameWithTooltip",
-                        "Replace Target Frame With Tooltip Out of Combat",
-                        "Show the target tooltip when the target frame is not shown out of combat (useful for quest info like how many to kill).",
-                        3.1,
-                        function(val)
-                            if not val then
-                                GameTooltip:Hide()
-                            end
-                        end
-                    ),
-                    showSoftTargetTooltipOutOfCombat = toggleOption(
-                        "showSoftTargetTooltipOutOfCombat",
-                        "Show Tooltip For Soft (Action) Target Out of Combat",
-                        "Also display the ConsolePort soft (action) target's tooltip while out of combat.",
-                        3.2,
-                        function(val)
-                            if not val then
-                                GameTooltip:Hide()
-                            end
                         end
                     ),
                     objectiveTrackerVisibility = {
                         type = "group",
                         name = "Collapse Objective Tracker",
                         inline = true,
-                        order = 4,
+                        order = 3,
                         args = {
                             collapseObjectiveTrackerInRaids = {
                                 type = "toggle",
@@ -1158,55 +1116,97 @@ function UITweaks:OnInitialize()
                             },
                         },
                     },
+                    hidePlayerFrameOutOfCombat = toggleOption(
+                        "hidePlayerFrameOutOfCombat",
+                        "Hide Player Frame Out of Combat",
+                        "Hide the player unit frame outside combat and restore it after the delay.",
+                        4,
+                        function()
+                            self:UpdatePlayerFrameVisibility()
+                            self:ScheduleDelayedVisibilityUpdate()
+                        end
+                    ),
+                    hideTargetFrameOutOfCombat = toggleOption(
+                        "hideTargetFrameOutOfCombat",
+                        "Hide Target Frame Out of Combat",
+                        "Hide the target unit frame outside combat and restore it after the delay.",
+                        5,
+                        function()
+                            self:UpdateTargetFrameVisibility()
+                            self:ScheduleDelayedVisibilityUpdate()
+                        end
+                    ),
+                    replaceTargetFrameWithTooltip = toggleOption(
+                        "replaceTargetFrameWithTooltip",
+                        "Replace Target Frame With Tooltip Out of Combat",
+                        "Show the target tooltip when the target frame is not shown out of combat (useful for quest info like how many to kill).",
+                        6,
+                        function(val)
+                            if not val then
+                                GameTooltip:Hide()
+                            end
+                        end
+                    ),
+                    showSoftTargetTooltipOutOfCombat = toggleOption(
+                        "showSoftTargetTooltipOutOfCombat",
+                        "Show Tooltip For Soft (Action) Target Out of Combat",
+                        "Also display the ConsolePort soft (action) target's tooltip while out of combat.",
+                        7,
+                        function(val)
+                            if not val then
+                                GameTooltip:Hide()
+                            end
+                        end
+                    ),
                 },
             },
             framesVisibility = {
                 type = "group",
                 name = "Frames",
                 inline = true,
-                order = 6,
+                order = 5,
                 args = {
+                    hideBackpackButton = toggleOption(
+                        "hideBackpackButton",
+                        "Auto-Hide Bags Bar",
+                        "Auto-Hide the Blizzard Bags Bar until you mouse over it.",
+                        1,
+                        function()
+                            self:UpdateBackpackButtonVisibility()
+                        end
+                    ),
                     hideBuffFrame = toggleOption(
                         "hideBuffFrame",
                         "Auto-Hide Buff Frame",
                         "Auto-Hide the default player buff frame until you mouse over it.",
-                        1,
+                        2,
                         function()
                             self:ApplyBuffFrameHide()
-                        end
-                    ),
-                    hideGroupLootHistoryFrame = toggleOption(
-                        "hideGroupLootHistoryFrame",
-                        "Hide Group Loot History",
-                        "Hide the group loot history frame.",
-                        1.1,
-                        function()
-                            self:UpdateGroupLootHistoryVisibility()
                         end
                     ),
                     hideStanceButtons = toggleOption(
                         "hideStanceButtons",
                         "Auto-Hide Stance Buttons",
                         "Auto-Hide the Blizzard stance bar/buttons until you mouse over them.",
-                        2,
+                        3,
                         function()
                             self:UpdateStanceButtonsVisibility()
                         end
                     ),
-                    hideBackpackButton = toggleOption(
-                        "hideBackpackButton",
-                        "Auto-Hide Bags Bar",
-                        "Auto-Hide the Blizzard Bags Bar until you mouse over it.",
-                        3,
+                    hideGroupLootHistoryFrame = toggleOption(
+                        "hideGroupLootHistoryFrame",
+                        "Hide Group Loot History",
+                        "Hide the group loot history frame.",
+                        4,
                         function()
-                            self:UpdateBackpackButtonVisibility()
+                            self:UpdateGroupLootHistoryVisibility()
                         end
                     ),
                     hideMicroMenuButtons = toggleOption(
                         "hideMicroMenuButtons",
                         "Hide Micro Menu Buttons",
                         "Hide all micro menu buttons except the Dungeon Finder eye.",
-                        4,
+                        5,
                         function()
                             self:UpdateMicroMenuVisibility()
                         end
@@ -1217,7 +1217,7 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "ConsolePort",
                 inline = true,
-                order = 7,
+                order = 4,
                 args = {
                     consolePortBarSharing = toggleOption(
                         "consolePortBarSharing",
@@ -1236,24 +1236,24 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "Service",
                 inline = true,
-                order = 9,
+                order = 6,
                 args = {
-                    showOptionsOnReload = toggleOption(
-                        "showOptionsOnReload",
-                        "Open This Settings Menu on Reload/Login",
-                        "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
-                        1
-                    ),
                     openConsolePortActionBarConfigOnReload = toggleOption(
                         "openConsolePortActionBarConfigOnReload",
                         "Open ConsolePort Action Bar Config on Reload/Login",
                         "Open the ConsolePort action bar configuration window automatically after reload or login.",
-                        2,
+                        1,
                         nil,
                         function()
                             return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
                         end
+                    ),
+                    showOptionsOnReload = toggleOption(
+                        "showOptionsOnReload",
+                        "Open This Settings Menu on Reload/Login",
+                        "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
+                        2
                     ),
                     reloadUI = {
                         type = "execute",
