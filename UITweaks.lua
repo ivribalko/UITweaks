@@ -12,6 +12,7 @@ local defaults = {
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
         hideDamageMeter = false,
+        hidePetFrame = false,
         hideTargetFrameOutOfCombat = false,
         replaceTargetFrameWithTooltip = false,
         showSoftTargetTooltipOutOfCombat = false,
@@ -540,6 +541,21 @@ function UITweaks:UpdateGroupLootHistoryVisibility()
     end
 end
 
+function UITweaks:UpdatePetFrameVisibility()
+    if self.db.profile.hidePetFrame and _G.PetFrame then
+        local frame = _G.PetFrame
+        if not frame.UITweaksHooked then
+            frame:HookScript("OnShow", function(shownFrame)
+                if UITweaks.db and UITweaks.db.profile.hidePetFrame then
+                    shownFrame:Hide()
+                end
+            end)
+            frame.UITweaksHooked = true
+        end
+        frame:Hide()
+    end
+end
+
 local function getMicroMenuButtons()
     local buttons = {}
     local function addButtonsFromParent(parent)
@@ -841,6 +857,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateChatTabsVisibility()
     self:UpdateChatMenuButtonVisibility()
     self:UpdateGroupLootHistoryVisibility()
+    self:UpdatePetFrameVisibility()
     self:UpdateMicroMenuVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateBackpackButtonVisibility()
@@ -1209,6 +1226,15 @@ function UITweaks:OnInitialize()
                         5,
                         function()
                             self:UpdateMicroMenuVisibility()
+                        end
+                    ),
+                    hidePetFrame = toggleOption(
+                        "hidePetFrame",
+                        "Hide Pet Frame",
+                        "Hide the pet unit frame.",
+                        6,
+                        function()
+                            self:UpdatePetFrameVisibility()
                         end
                     ),
                 },

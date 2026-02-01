@@ -87,6 +87,7 @@ Memo: Keep panels and items sorted alphabetically (by display name) in both `UIT
 - Auto-Hide Stance Buttons — Auto-Hide the Blizzard stance bar/buttons until you mouse over them.
 - Hide Group Loot History — Hide the group loot history frame.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
+- Hide Pet Frame — Hide the pet unit frame.
 
 ### Service
 
