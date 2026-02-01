@@ -48,7 +48,7 @@ Never commit WTF/SavedVariables or account data. Treat `Libs/` as vendored: upda
 ## Settings Reference
 
 This section must be kept in sync with `UITweaks.lua`. Every setting listed here must use the exact in-code description string. Updating settings in code without updating this section is not allowed.
-Memo: Keep panels and items sorted alphabetically (by display name) in both `UITweaks.lua` and this Settings Reference. Objective tracker toggles should remain ordered: In Raids, In Dungeons, Everywhere Else. Combat panel exception: "Delay After Combat Seconds" must be listed first. Chat panel exception: keep the checkbox and its range together for Auto-Hide Chat Messages and Fade After Seconds.
+Memo: Keep panels and items sorted alphabetically (by display name) in both `UITweaks.lua` and this Settings Reference. Objective tracker toggles should remain ordered: In Raids, In Dungeons, Everywhere Else. Combat panel exception: "Delay After Combat Seconds" must be listed first. Chat panel exception: keep the checkbox and its range together for Auto-Hide Chat Messages and Fade After Seconds. Service panel should always be listed last.
 
 ### Alerts
 
