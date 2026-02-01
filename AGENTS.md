@@ -1,12 +1,12 @@
-# Description
+# UI Tweaks
 
-UI Tweaks is a lightweight collection of options for WoW’s stock UI, aimed at reducing the number of on-screen elements.
+UI Tweaks is a lightweight set of options for WoW's stock UI.
 
-By default, nothing is enabled, so installing this addon will not change your UI apart from adding a new settings menu.
+By default, nothing is enabled, so installing the addon only adds the settings menu.
 
-In game, go to Options -> AddOns -> UI Tweaks to enable any of the available settings.
+In game, go to `Options -> AddOns -> UI Tweaks` to enable features.
 
-Use the "Reload" button at the end of the menu to apply changes.
+After changing any setting, use the **Reload** button (or run `/reload`).
 
 ## Available Settings
 
@@ -55,51 +55,25 @@ Use the "Reload" button at the end of the menu to apply changes.
 - Open This Settings Menu on Reload/Login — Re-open the UI Tweaks options panel after /reload or login (useful for development).
 - Reload — Reload the interface to immediately apply changes.
 
-## Available Settings Rules
+## Settings Rules
 
-The Available Settings section above be kept in sync with `UITweaks.lua`. Every setting listed here must use the exact in-code description string. Updating settings in code without updating this section is not allowed.
-Memo: Keep panels and items sorted alphabetically (by display name) in both `UITweaks.lua` and this Settings Reference. Objective tracker toggles should remain ordered: In Raids, In Dungeons, Everywhere Else. Combat panel exception: "Delay After Combat Seconds" must be listed first. Chat panel exception: keep the checkbox and its range together for Auto-Hide Chat Messages and Fade After Seconds. Service panel should always be listed last.
+Keep the Available Settings section above in sync with `UITweaks.lua`.
+Each setting must use the exact in-code description string.
 
-## Project Structure & Module Organization
+Keep panels and items sorted alphabetically (by display name) in both `UITweaks.lua` and this README.
 
-The playable addon lives in the repository root. `UITweaks.toc` specifies load order, `UITweaks.lua` defines the AceAddon entry point and option tables, and `Libs/` vendors the full Ace3 bundle. High-level layout:
+Exceptions:
 
-```text
-UITweaks.toc
-UITweaks.lua
-Libs/ (Ace3 + dependencies)
-```
+- Objective tracker toggles stay in this order: In Raids, In Dungeons, Everywhere Else.
+- Combat: Delay After Combat Seconds stays first.
+- Chat: keep checkboxes together with their respective ranges for Auto-Hide Chat Messages, Fade After Seconds and such.
+- Service panel stays last.
 
-Add new Lua modules in the repository root, list them in the `.toc`, and keep tooling scripts outside the addon folder so they are not shipped to players.
+## Dev Notes
 
-## Addon Stack & References
-
-This repository targets World of Warcraft retail clients and relies on Ace3 for console commands, events, configuration dialogs, and saved variables. Context7 MCP hosts the authoritative docs at `wowuidev/ace3`; contributors must consult that set whenever they touch Ace libraries, widgets, or mixins so implementations match upstream expectations. Core gameplay tweaks (chat fade/font overrides, buff-frame collapse, damage-meter delay hiding, bag-bar and stance-button toggles, hide-chat-tabs option, optional target tooltip, and the "show options on reload" debug helper) all live in `UITweaks.lua`, so changes to those systems start by editing that file.
-
-## Build, Test, and Development Commands
-
-There is no build step. Copy or symlink this repo folder into your WoW AddOns directory (macOS example: `cp -R UITweaks /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`). Reload the UI with `/reload` or relaunch the client to pick up Lua changes. Use `/eventtrace` and `/fstack` (frame stack inspector) plus temporary prints when debugging hooks like `BuffFrame.CollapseAndExpandButton` or `DamageMeter`, then package releases with `zip -r UITweaks.zip UITweaks` to preserve directory structure.
-
-## Coding Style & Naming Conventions
-
-Use four-space indentation, `local` scoping, and double-quoted strings. Keep Ace3 option tables declarative, grouped by feature, and hold defaults in the shared `defaults.profile` table. Prefix frames, slash commands, and SavedVariables with `UITweaks` to avoid collisions. Do not modify vendored libraries; extend or override behavior in addon files instead.
-
-## UI Option Behavior
-
-When implementing option toggles, use only `if enabled then ... end` flows. Avoid `else` branches that restore or change behavior when the option is disabled.
-
-## Debugging Tip
-
-Use `/console scriptErrors 1` to surface Lua errors while testing.
-
-## Testing Guidelines
-
-Automated tests are not configured, so rely on in-game manual verification. Toggle options under Interface → AddOns → UI Tweaks, then use `/reload` after changing any settings and observe chat output. Document scenarios, client build, and observed results in the PR description. Temporary debug prints are acceptable if gated and removed before release.
-
-## Commit & Pull Request Guidelines
-
-Write imperative commit subjects (e.g., "Add chat fade override") and keep each commit focused. Pull requests should include the motivation or linked issue, summary of user-facing changes, manual test notes, screenshots/GIFs for UI tweaks, and callouts for SavedVariables or dependency updates.
-
-## Security & Configuration Tips
-
-Never commit WTF/SavedVariables or account data. Treat `Libs/` as vendored: update from upstream Ace3 releases and cite the source version in the PR. When adding options, seed sane defaults in AceDB before reading them to prevent nil access during login.
+- Addon files live in repo root: `UITweaks.toc`, `UITweaks.lua`, `Libs/`.
+- Add new Lua files in repo root and list them in `UITweaks.toc`.
+- No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
+- Example install (macOS): `cp -R UITweaks /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
+- Use `/reload` after code or setting changes.
+- Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.
