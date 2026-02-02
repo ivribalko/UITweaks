@@ -1,6 +1,8 @@
 # UI Tweaks
 
-UI Tweaks is a lightweight set of options for WoW's stock UI.
+Options for WoW's stock UI to reduce on-screen elements.
+
+Aimed at ConsolePort addon users, but fully usable without it.
 
 By default, nothing is enabled, so installing the addon only adds the settings menu.
 
