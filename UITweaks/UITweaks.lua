@@ -147,9 +147,9 @@ end
 function UITweaks:EnsureActionButtonAuraTimersLoaded()
     if self.ApplyActionButtonAuraTimers then return true end
     if C_AddOns and C_AddOns.LoadAddOn then
-        C_AddOns.LoadAddOn("UITweaks_Timers")
+        C_AddOns.LoadAddOn("UITweaks_Auras")
     elseif LoadAddOn then
-        LoadAddOn("UITweaks_Timers")
+        LoadAddOn("UITweaks_Auras")
     end
     return self.ApplyActionButtonAuraTimers ~= nil
 end
@@ -1089,11 +1089,28 @@ function UITweaks:OnInitialize()
         name = "UI Tweaks",
         type = "group",
         args = {
-            actionTimers = {
+            alerts = {
                 type = "group",
-                name = "Action Timers",
+                name = "Alerts",
                 inline = true,
                 order = 1,
+                args = {
+                    suppressTalentAlert = toggleOption(
+                        "suppressTalentAlert",
+                        "Hide Unspent Talent Alert",
+                        "Prevent the 'You have unspent talent points' reminder from popping up.",
+                        1,
+                        function()
+                            self:HookTalentAlertFrames()
+                        end
+                    ),
+                },
+            },
+            actionTimers = {
+                type = "group",
+                name = "Button Auras",
+                inline = true,
+                order = 2,
                 args = {
                     hideBlizzardCooldownViewer = toggleOption(
                         "hideBlizzardCooldownViewer",
@@ -1116,23 +1133,6 @@ function UITweaks:OnInitialize()
                             if self:EnsureActionButtonAuraTimersLoaded() then
                                 self:ApplyActionButtonAuraTimers()
                             end
-                        end
-                    ),
-                },
-            },
-            alerts = {
-                type = "group",
-                name = "Alerts",
-                inline = true,
-                order = 2,
-                args = {
-                    suppressTalentAlert = toggleOption(
-                        "suppressTalentAlert",
-                        "Hide Unspent Talent Alert",
-                        "Prevent the 'You have unspent talent points' reminder from popping up.",
-                        1,
-                        function()
-                            self:HookTalentAlertFrames()
                         end
                     ),
                 },

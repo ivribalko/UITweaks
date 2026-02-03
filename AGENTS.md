@@ -12,14 +12,14 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ## Available Settings
 
-### Action Timers
-
-- Hide Blizzard Cooldown Viewers — Set the Buff Bar, Buff Icon, Essential, and Utility cooldown viewer alpha to zero.
-- Show Action Button Aura Timers — Show buffs and debuffs timer (how long it will last) on action buttons.
-
 ### Alerts
 
 - Hide Unspent Talent Alert — Prevent the 'You have unspent talent points' reminder from popping up.
+
+### Button Auras
+
+- Hide Blizzard Cooldown Viewers — Set the Buff Bar, Buff Icon, Essential, and Utility cooldown viewer alpha to zero.
+- Show Action Button Aura Timers — Show buffs and debuffs timer (how long it will last) on action buttons.
 
 ### Chat
 
@@ -79,11 +79,11 @@ Exceptions:
 
 ## Dev Notes
 
-- Addon files live in `UITweaks/` and `UITweaks_Timers/`.
+- Addon files live in `UITweaks/` and `UITweaks_Auras/`.
 - Add new Lua files in `UITweaks/` and list them in `UITweaks/UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
-- The `UITweaks_Timers` sub-addon is optional and load-on-demand; copy it as a sibling folder to `UITweaks`.
-- Example install (macOS): `ln -s "$PWD/UITweaks" "$PWD/UITweaks_Timers" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
+- The `UITweaks_Auras` sub-addon is optional and load-on-demand; copy it as a sibling folder to `UITweaks`.
+- Example install (macOS): `ln -s "$PWD/UITweaks" "$PWD/UITweaks_Auras" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
 - `refs/` contains addons and other files used strictly as references. Do not use or read anything in `refs/` unless explicitly instructed.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.

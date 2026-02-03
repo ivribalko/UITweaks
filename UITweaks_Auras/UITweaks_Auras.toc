@@ -1,0 +1,10 @@
+## Interface: 120000
+## Title: UI Tweaks: Auras
+## Notes: Optional action button auras for UI Tweaks
+## Author: Me
+## Version: 1.2
+## IconTexture: Interface\AddOns\UITweaks\icon64.tga
+## LoadOnDemand: 1
+## RequiredDeps: UITweaks
+
+UITweaks_Auras.lua
