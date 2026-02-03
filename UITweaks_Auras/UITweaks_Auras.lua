@@ -410,21 +410,46 @@ function UITweaks:ApplyCooldownViewerAlpha()
         end
     end
 
-    self.defaultCooldownViewerAlpha = self.defaultCooldownViewerAlpha or {}
-    local function applyViewerAlpha(viewer, key)
-        if not viewer or not viewer.GetAlpha or not viewer.SetAlpha then return end
-        if self.defaultCooldownViewerAlpha[key] == nil then
-            local alpha = viewer:GetAlpha()
-            self.defaultCooldownViewerAlpha[key] = alpha ~= nil and alpha or 1
+    self.defaultCooldownViewerScale = self.defaultCooldownViewerScale or {}
+    self.defaultCooldownViewerAnchors = self.defaultCooldownViewerAnchors or {}
+    local function applyViewerTransform(viewer, key)
+        if not viewer then return end
+        if self.defaultCooldownViewerScale[key] == nil and viewer.GetScale then
+            self.defaultCooldownViewerScale[key] = viewer:GetScale() or 1
         end
-        local targetAlpha = shouldHide and 0 or self.defaultCooldownViewerAlpha[key]
-        viewer:SetAlpha(targetAlpha)
+        if self.defaultCooldownViewerAnchors[key] == nil and viewer.GetNumPoints and viewer.GetPoint then
+            local points = {}
+            for i = 1, viewer:GetNumPoints() do
+                points[i] = { viewer:GetPoint(i) }
+            end
+            self.defaultCooldownViewerAnchors[key] = points
+        end
+        if shouldHide then
+            if viewer.SetScale then
+                viewer:SetScale(0.01)
+            end
+            if viewer.ClearAllPoints and viewer.SetPoint then
+                viewer:ClearAllPoints()
+                viewer:SetPoint("TOPLEFT", UIParent, "TOPLEFT", -20000, 20000)
+            end
+        else
+            if viewer.SetScale then
+                viewer:SetScale(self.defaultCooldownViewerScale[key] or 1)
+            end
+            local anchors = self.defaultCooldownViewerAnchors[key]
+            if anchors and viewer.ClearAllPoints and viewer.SetPoint then
+                viewer:ClearAllPoints()
+                for _, point in ipairs(anchors) do
+                    viewer:SetPoint(unpack(point))
+                end
+            end
+        end
     end
 
-    applyViewerAlpha(BuffBarCooldownViewer, "buffBar")
-    applyViewerAlpha(BuffIconCooldownViewer, "buffIcon")
-    applyViewerAlpha(EssentialCooldownViewer, "essential")
-    applyViewerAlpha(UtilityCooldownViewer, "utility")
+    applyViewerTransform(BuffBarCooldownViewer, "buffBar")
+    applyViewerTransform(BuffIconCooldownViewer, "buffIcon")
+    applyViewerTransform(EssentialCooldownViewer, "essential")
+    applyViewerTransform(UtilityCooldownViewer, "utility")
 end
 
 function UITweaks:ApplyActionButtonAuraTimers()
