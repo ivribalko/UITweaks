@@ -1,0 +1,9 @@
+## Interface: 120000
+## Title: UI Tweaks: Timers
+## Notes: Optional action button aura timers for UI Tweaks
+## Author: Me
+## Version: 1.2
+## LoadOnDemand: 1
+## RequiredDeps: UITweaks
+
+UITweaks_Timers.lua

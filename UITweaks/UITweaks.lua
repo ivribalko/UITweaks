@@ -26,6 +26,8 @@ local defaults = {
         collapseObjectiveTrackerInDungeons = false,
         collapseObjectiveTrackerEverywhereElse = false,
         combatVisibilityDelaySeconds = 5,
+        showActionButtonAuraTimers = false,
+        hideBlizzardCooldownViewer = false,
         showOptionsOnReload = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
@@ -140,6 +142,17 @@ function UITweaks:ApplyChatLineFade()
         end
     end
 end
+
+function UITweaks:EnsureActionButtonAuraTimersLoaded()
+    if self.ApplyActionButtonAuraTimers then return true end
+    if C_AddOns and C_AddOns.LoadAddOn then
+        C_AddOns.LoadAddOn("UITweaks_Timers")
+    elseif LoadAddOn then
+        LoadAddOn("UITweaks_Timers")
+    end
+    return self.ApplyActionButtonAuraTimers ~= nil
+end
+
 local talentAlertFrameNames = {
     "TalentMicroButtonAlert",
     "PlayerSpellsMicroButtonAlert",
@@ -950,11 +963,42 @@ function UITweaks:OnInitialize()
         name = "UI Tweaks",
         type = "group",
         args = {
+            actionTimers = {
+                type = "group",
+                name = "Action Timers",
+                inline = true,
+                order = 1,
+                args = {
+                    hideBlizzardCooldownViewer = toggleOption(
+                        "hideBlizzardCooldownViewer",
+                        "Hide Blizzard Cooldown Viewers",
+                        "Set the Buff Bar, Buff Icon, Essential, and Utility cooldown viewer alpha to zero.",
+                        1,
+                        function()
+                            if self:EnsureActionButtonAuraTimersLoaded() then
+                                self:ApplyActionButtonAuraTimers()
+                            end
+                        end,
+                        "showActionButtonAuraTimers"
+                    ),
+                    showActionButtonAuraTimers = toggleOption(
+                        "showActionButtonAuraTimers",
+                        "Show Action Button Aura Timers",
+                        "Show buffs and debuffs timer (how long it will last) on action buttons.",
+                        2,
+                        function()
+                            if self:EnsureActionButtonAuraTimersLoaded() then
+                                self:ApplyActionButtonAuraTimers()
+                            end
+                        end
+                    ),
+                },
+            },
             alerts = {
                 type = "group",
                 name = "Alerts",
                 inline = true,
-                order = 1,
+                order = 2,
                 args = {
                     suppressTalentAlert = toggleOption(
                         "suppressTalentAlert",
@@ -971,7 +1015,7 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "Chat",
                 inline = true,
-                order = 2,
+                order = 3,
                 args = {
                     chatMessageFadeAfterOverride = toggleOption(
                         "chatMessageFadeAfterOverride",
@@ -1060,7 +1104,7 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "Combat",
                 inline = true,
-                order = 3,
+                order = 4,
                 args = {
                     combatVisibilityDelaySeconds = rangeOption(
                         "combatVisibilityDelaySeconds",
@@ -1181,7 +1225,7 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "Frames",
                 inline = true,
-                order = 5,
+                order = 6,
                 args = {
                     hideBackpackButton = toggleOption(
                         "hideBackpackButton",
@@ -1243,7 +1287,7 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "ConsolePort",
                 inline = true,
-                order = 4,
+                order = 5,
                 args = {
                     consolePortBarSharing = toggleOption(
                         "consolePortBarSharing",
@@ -1262,7 +1306,7 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "Service",
                 inline = true,
-                order = 6,
+                order = 7,
                 args = {
                     openConsolePortActionBarConfigOnReload = toggleOption(
                         "openConsolePortActionBarConfigOnReload",
@@ -1304,6 +1348,11 @@ function UITweaks:OnEnable()
     self:ApplyChatBackgroundAlpha()
     self:HookTalentAlertFrames()
     self:ApplyBuffFrameHide()
+    if self.db.profile.showActionButtonAuraTimers then
+        if self:EnsureActionButtonAuraTimersLoaded() then
+            self:ApplyActionButtonAuraTimers()
+        end
+    end
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
@@ -1333,14 +1382,37 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:HookTalentAlertFrames()
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameHide()
+        if self.db.profile.showActionButtonAuraTimers then
+            if self:EnsureActionButtonAuraTimersLoaded() then
+                self:ApplyActionButtonAuraTimers()
+            end
+        end
         self:ApplyVisibilityState()
         self:ScheduleDelayedVisibilityUpdate(true)
     elseif addonName == "Blizzard_GroupLootHistory" then
         self:UpdateGroupLootHistoryVisibility()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
+        if self.db.profile.showActionButtonAuraTimers then
+            if self:EnsureActionButtonAuraTimersLoaded() then
+                self:BuildActionButtonCache()
+                self:RefreshActionButtonAuraOverlays()
+            end
+        end
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
+    elseif addonName == "ConsolePort"
+        or addonName == "ConsolePort_ActionBar"
+        or addonName == "ConsolePortActionBar"
+        or addonName == "ConsolePortGroupCrossbar"
+        or addonName == "ConsolePort_GroupCrossbar"
+    then
+        if self.db.profile.showActionButtonAuraTimers then
+            if self:EnsureActionButtonAuraTimersLoaded() then
+                self:BuildActionButtonCache()
+                self:RefreshActionButtonAuraOverlays()
+            end
+        end
     end
 end
 
