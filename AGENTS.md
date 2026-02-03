@@ -83,7 +83,7 @@ Exceptions:
 - Addon files live in `UITweaks/`.
 - Add new Lua files in `UITweaks/` and list them in `UITweaks/UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
-- Example install (macOS): `ln -s "$PWD/UITweaks" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
+- Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
 - `refs/` contains addons and other files used strictly as references. Do not use or read anything in `refs/` unless explicitly instructed.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.
