@@ -239,6 +239,32 @@ local function createActionButtonAuraOverlay(actionButton)
     return overlay
 end
 
+function UITweaks:ReportCooldownViewerMissing()
+    if self.cooldownViewerMissingReported then return end
+    self.cooldownViewerMissingReported = true
+
+    local message = "UITweaks: Aura timers require Cooldown Viewer, but it's disabled. Enable: Options -> Gameplay Enhancements -> Enable Cooldown Manager."
+    if self.Print then
+        self:Print(message)
+    elseif DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
+        DEFAULT_CHAT_FRAME:AddMessage(message)
+    end
+
+    if UIErrorsFrame and UIErrorsFrame.AddMessage then
+        UIErrorsFrame:AddMessage(message, 1, 0.2, 0.2)
+    end
+end
+
+function UITweaks:IsCooldownViewerVisible(viewer)
+    if not viewer or not viewer.GetAlpha then return false end
+    local alpha = viewer:GetAlpha()
+    if alpha and alpha <= 0 then return false end
+    if viewer.IsShown then
+        return viewer:IsShown()
+    end
+    return true
+end
+
 function UITweaks:GetActionButtonAuraOverlay(actionButton)
     if not self.actionButtonAuraOverlays[actionButton] then
         self.actionButtonAuraOverlays[actionButton] = createActionButtonAuraOverlay(actionButton)
@@ -249,7 +275,10 @@ end
 function UITweaks:UpdateActionButtonAuraFromItem(item)
     if not self.db.profile.showActionButtonAuraTimers then return end
     if not item.cooldownID then return end
-    if not C_CooldownViewer or not C_CooldownViewer.GetCooldownViewerCooldownInfo then return end
+    if not C_CooldownViewer or not C_CooldownViewer.GetCooldownViewerCooldownInfo then
+        self:ReportCooldownViewerMissing()
+        return
+    end
 
     local cdInfo = C_CooldownViewer.GetCooldownViewerCooldownInfo(item.cooldownID)
     if cdInfo and cdInfo.spellID then
@@ -331,8 +360,16 @@ function UITweaks:InitializeActionButtonAuraTimers()
             UIParentLoadAddOn("Blizzard_BuffFrame")
         end
     end
-    if not BuffBarCooldownViewer or not BuffIconCooldownViewer then return end
-
+    if not BuffBarCooldownViewer or not BuffIconCooldownViewer then
+        self:ReportCooldownViewerMissing()
+        return
+    end
+    local buffBarVisible = self:IsCooldownViewerVisible(BuffBarCooldownViewer)
+    local buffIconVisible = self:IsCooldownViewerVisible(BuffIconCooldownViewer)
+    if not buffBarVisible and not buffIconVisible then
+        self:ReportCooldownViewerMissing()
+        return
+    end
     self.actionButtonAuraTimersInitialized = true
     self.actionButtonAuraOverlays = self.actionButtonAuraOverlays or {}
     self.actionButtonsCache = nil
