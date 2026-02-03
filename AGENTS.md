@@ -61,7 +61,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Open ConsolePort Action Bar Config on Reload/Login — Open the ConsolePort action bar configuration window automatically after reload or login.
 - Open Cooldown Viewer Settings on Reload/Login — Open the Cooldown Viewer settings window on Buffs tab after reload or login.
 - Open This Settings Menu on Reload/Login — Re-open the UI Tweaks options panel after /reload or login (useful for development).
-- Reload — Reload the interface to immediately apply changes.
 
 ## Settings Rules
 

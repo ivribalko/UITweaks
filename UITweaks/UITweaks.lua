@@ -784,6 +784,69 @@ function UITweaks:OpenOptionsPanel()
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
     elseif AceConfigDialog then
         AceConfigDialog:Open(addonName)
+        if AceConfigDialog.OpenFrames and AceConfigDialog.OpenFrames[addonName] then
+            self:EnsureReloadButtonForFrame(AceConfigDialog.OpenFrames[addonName])
+        end
+    end
+end
+
+function UITweaks:EnsureReloadButtonForFrame(parent)
+    if type(parent) == "table" then
+        if parent.frame and parent.frame.GetObjectType then
+            parent = parent.frame
+        elseif parent.content and parent.content.GetObjectType then
+            parent = parent.content
+        end
+    end
+
+    if not (parent and parent.GetObjectType and parent:IsObjectType("Frame")) then
+        return
+    end
+    if not parent or not CreateFrame then return end
+
+    self.reloadButtons = self.reloadButtons or {}
+    if self.reloadButtons[parent] then return self.reloadButtons[parent] end
+
+    local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    button:SetText("Reload")
+    button:SetSize(120, 22)
+    button:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -16, -16)
+    button:SetScript("OnClick", function() ReloadUI() end)
+    button:SetScript("OnEnter", function()
+        if GameTooltip then
+            GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+            GameTooltip:SetText("Reload the interface to immediately apply changes.")
+            GameTooltip:Show()
+        end
+    end)
+    button:SetScript("OnLeave", function()
+        if GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+    button:Hide()
+
+    self.reloadButtons[parent] = button
+    parent:HookScript("OnShow", function() button:Show() end)
+    parent:HookScript("OnHide", function() button:Hide() end)
+    if parent:IsShown() then
+        button:Show()
+    end
+
+    return button
+end
+
+function UITweaks:EnsureReloadButton()
+    local parent = InterfaceOptionsFramePanelContainer or InterfaceOptionsFrame or self.optionsFrame
+    local button = self:EnsureReloadButtonForFrame(parent)
+    if not (button and self.optionsFrame) then return end
+
+    self.optionsFrame:HookScript("OnShow", function() button:Show() end)
+    self.optionsFrame:HookScript("OnHide", function() button:Hide() end)
+    if self.optionsFrame:IsShown() then
+        button:Show()
+    else
+        button:Hide()
     end
 end
 
@@ -1457,20 +1520,13 @@ function UITweaks:OnInitialize()
                         "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
                         3
                     ),
-                    reloadUI = {
-                        type = "execute",
-                        name = "Reload",
-                        desc = "Reload the interface to immediately apply changes.",
-                        width = "full",
-                        func = function() ReloadUI() end,
-                        order = 4,
-                    },
                 },
             },
         },
     }
     AceConfig:RegisterOptionsTable(addonName, options)
     self.optionsFrame = AceConfigDialog:AddToBlizOptions(addonName, "UI Tweaks")
+    self:EnsureReloadButton()
 end
 
 function UITweaks:OnEnable()
