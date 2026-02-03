@@ -100,7 +100,7 @@ function UITweaks:HookActionButtonUpdateAction(button)
     if type(button.UpdateAction) ~= "function" then return end
     hooksecurefunc(button, "UpdateAction", function()
         if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
-            self:RefreshActionButtonAuraOverlays(true)
+            self:RequestActionButtonAuraRefresh()
         end
     end)
     button.__UITweaksActionHooked = true
@@ -295,6 +295,26 @@ function UITweaks:RefreshActionButtonAuraOverlays(rebuildCache)
     end
 end
 
+function UITweaks:RequestActionButtonAuraRefresh(rebuildCache)
+    if rebuildCache then
+        self.actionButtonsCacheDirty = true
+    end
+    if self.pendingAuraRefresh then return end
+    self.pendingAuraRefresh = true
+
+    local function run()
+        self.pendingAuraRefresh = false
+        self:RefreshActionButtonAuraOverlays(self.actionButtonsCacheDirty)
+        self.actionButtonsCacheDirty = nil
+    end
+
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0, run)
+    else
+        run()
+    end
+end
+
 function UITweaks:ClearActionButtonAuraOverlays()
     if not self.actionButtonAuraOverlays then return end
     for _, overlay in pairs(self.actionButtonAuraOverlays) do
@@ -341,7 +361,7 @@ end
 
 function UITweaks:ConsolePortActionPageChanged()
     if self.db.profile.showActionButtonAuraTimers then
-        self:RefreshActionButtonAuraOverlays(true)
+        self:RequestActionButtonAuraRefresh(true)
     end
 end
 
@@ -382,19 +402,19 @@ end
 
 function UITweaks:ACTIONBAR_SLOT_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
-        self:RefreshActionButtonAuraOverlays()
+        self:RequestActionButtonAuraRefresh()
     end
 end
 
 function UITweaks:ACTIONBAR_PAGE_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
-        self:RefreshActionButtonAuraOverlays(true)
+        self:RequestActionButtonAuraRefresh(true)
     end
 end
 
 function UITweaks:MODIFIER_STATE_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
-        self:RefreshActionButtonAuraOverlays(true)
+        self:RequestActionButtonAuraRefresh(true)
     end
 end
 
