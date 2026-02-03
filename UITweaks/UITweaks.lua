@@ -33,6 +33,7 @@ local defaults = {
         chatFontSize = 16,
         consolePortBarSharing = false,
         openConsolePortActionBarConfigOnReload = false,
+        openCooldownViewerSettingsOnReload = false,
     },
 }
 local defaultsProfile = defaults.profile
@@ -853,6 +854,131 @@ function UITweaks:OpenConsolePortActionBarConfig()
     self.consolePortActionBarConfigOpened = true
 end
 
+function UITweaks:OpenCooldownViewerSettings()
+    if self.cooldownViewerSettingsOpened then return end
+    local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
+    if loadAddOn then
+        local isLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Blizzard_CooldownViewer"))
+            or (IsAddOnLoaded and IsAddOnLoaded("Blizzard_CooldownViewer"))
+        if not isLoaded then
+            loadAddOn("Blizzard_CooldownViewer")
+        end
+    end
+    local settingsFrame = _G.CooldownViewerSettings
+    if settingsFrame and settingsFrame.Show then
+        settingsFrame:Show()
+        self.cooldownViewerSettingsOpened = true
+        self:EnsureCooldownViewerSettingsHooked()
+        self:QueueCooldownViewerSettingsMove()
+    end
+end
+
+local function getFrameText(frame)
+    if not frame then return nil end
+    if frame.GetText then return frame:GetText() end
+    local textRegion = frame.Text or frame.Label or frame.Title
+    if textRegion and textRegion.GetText then
+        return textRegion:GetText()
+    end
+    return nil
+end
+
+local function traverseFrames(root, visitor)
+    if not root or not root.GetChildren then return end
+    local children = { root:GetChildren() }
+    for _, child in ipairs(children) do
+        if visitor(child) then return true end
+        if traverseFrames(child, visitor) then return true end
+    end
+    return false
+end
+
+function UITweaks:FindCooldownViewerPanelByTitle(root, title)
+    local match = nil
+    traverseFrames(root, function(frame)
+        local text = getFrameText(frame)
+        if text == title then
+            match = frame:GetParent()
+            return true
+        end
+        return false
+    end)
+    return match
+end
+
+function UITweaks:ClickCooldownViewerButtonsByLabel(root, labels)
+    local clicked = 0
+    traverseFrames(root, function(frame)
+        if clicked > 200 then return true end
+        if frame.GetObjectType and frame:GetObjectType() == "Button" and frame.Click then
+            local text = getFrameText(frame)
+            if text and labels[text] then
+                if frame.IsEnabled and not frame:IsEnabled() then
+                    return false
+                end
+                frame:Click()
+                clicked = clicked + 1
+            end
+        end
+        return false
+    end)
+    return clicked
+end
+
+function UITweaks:SelectCooldownViewerBuffsTab()
+    local settingsFrame = _G.CooldownViewerSettings
+    if not settingsFrame then return end
+    local tab = settingsFrame.AurasTab
+    if not settingsFrame.SetDisplayMode then return end
+    settingsFrame:SetDisplayMode((tab and tab.displayMode) or "auras")
+    if settingsFrame.UpdateTabs then settingsFrame:UpdateTabs() end
+end
+
+function UITweaks:MoveCooldownViewerNotDisplayedToTracked()
+    local settingsFrame = _G.CooldownViewerSettings
+    if not settingsFrame then return end
+
+    self:SelectCooldownViewerBuffsTab()
+
+    local notDisplayedPanel = self:FindCooldownViewerPanelByTitle(settingsFrame, "Not Displayed")
+    if not notDisplayedPanel then return end
+
+    local clicked = self:ClickCooldownViewerButtonsByLabel(notDisplayedPanel, {
+        ["Track"] = true,
+        ["Add"] = true,
+        ["Move"] = true,
+        ["Display"] = true,
+        ["Track All"] = true,
+        ["Add All"] = true,
+    })
+    if clicked > 0 then
+        self.cooldownViewerNotDisplayedMoved = true
+    end
+end
+
+function UITweaks:QueueCooldownViewerSettingsMove()
+    if self.cooldownViewerNotDisplayedMoved then return end
+    if not C_Timer or not C_Timer.After then
+        self:MoveCooldownViewerNotDisplayedToTracked()
+        return
+    end
+    C_Timer.After(0, function()
+        self:SelectCooldownViewerBuffsTab()
+        self:MoveCooldownViewerNotDisplayedToTracked()
+    end)
+end
+
+function UITweaks:EnsureCooldownViewerSettingsHooked()
+    if self.cooldownViewerSettingsHooked then return end
+    local settingsFrame = _G.CooldownViewerSettings
+    if not settingsFrame or not settingsFrame.HookScript then return end
+    settingsFrame:HookScript("OnShow", function()
+        self:SelectCooldownViewerBuffsTab()
+        self:QueueCooldownViewerSettingsMove()
+    end)
+    self.cooldownViewerSettingsHooked = true
+end
+
 function UITweaks:CloseConsolePortActionBarConfigIfNotPinned()
     if self.db.profile.openConsolePortActionBarConfigOnReload then
         return
@@ -1319,11 +1445,17 @@ function UITweaks:OnInitialize()
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
                         end
                     ),
+                    openCooldownViewerSettingsOnReload = toggleOption(
+                        "openCooldownViewerSettingsOnReload",
+                        "Open Cooldown Viewer Settings on Reload/Login",
+                        "Open the Cooldown Viewer settings window on Buffs tab after reload or login.",
+                        2
+                    ),
                     showOptionsOnReload = toggleOption(
                         "showOptionsOnReload",
                         "Open This Settings Menu on Reload/Login",
                         "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
-                        2
+                        3
                     ),
                     reloadUI = {
                         type = "execute",
@@ -1331,7 +1463,7 @@ function UITweaks:OnInitialize()
                         desc = "Reload the interface to immediately apply changes.",
                         width = "full",
                         func = function() ReloadUI() end,
-                        order = 3,
+                        order = 4,
                     },
                 },
             },
@@ -1368,6 +1500,9 @@ function UITweaks:OnEnable()
     if self.db.profile.openConsolePortActionBarConfigOnReload then
         self:OpenConsolePortActionBarConfig()
     end
+    if self.db.profile.openCooldownViewerSettingsOnReload then
+        self:OpenCooldownViewerSettings()
+    end
     if self.db.profile.showOptionsOnReload then
         if C_Timer and C_Timer.After then
             C_Timer.After(1, function() self:OpenOptionsPanel() end)
@@ -1380,6 +1515,11 @@ end
 function UITweaks:ADDON_LOADED(event, addonName)
     if addonName == "Blizzard_TalentUI" or addonName == "Blizzard_PlayerSpells" then
         self:HookTalentAlertFrames()
+    elseif addonName == "Blizzard_CooldownViewer" then
+        self:EnsureCooldownViewerSettingsHooked()
+        if self.db.profile.openCooldownViewerSettingsOnReload then
+            self:OpenCooldownViewerSettings()
+        end
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameHide()
         if self.db.profile.showActionButtonAuraTimers then
@@ -1441,6 +1581,9 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:ScheduleDelayedVisibilityUpdate(true)
     if self.db.profile.openConsolePortActionBarConfigOnReload then
         self:OpenConsolePortActionBarConfig()
+    end
+    if self.db.profile.openCooldownViewerSettingsOnReload then
+        self:OpenCooldownViewerSettings()
     end
     if self.db.profile.consolePortBarSharing then
         self:RestoreConsolePortActionBarProfile()
