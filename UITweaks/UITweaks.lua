@@ -144,6 +144,9 @@ function UITweaks:ApplyChatLineFade()
     end
 end
 
+local UIAuras = {}
+UITweaks.UIAuras = UIAuras
+
 local function isActionButtonFrame(frame)
     if not frame or type(frame) ~= "table" then return false end
     if not frame.GetObjectType then return false end
@@ -210,7 +213,7 @@ local function getActionSpellID(button)
     return nil
 end
 
-function UITweaks:BuildActionButtonCache()
+function UIAuras:BuildActionButtonCache()
     local buttons = {}
     local seen = {}
     local function addButton(btn)
@@ -239,7 +242,7 @@ function UITweaks:BuildActionButtonCache()
     self.actionButtonsCache = buttons
 end
 
-function UITweaks:HookActionButtonUpdateAction(button)
+function UIAuras:HookActionButtonUpdateAction(button)
     if not button or button.__UITweaksActionHooked then return end
     if type(button.UpdateAction) ~= "function" then return end
     hooksecurefunc(button, "UpdateAction", function()
@@ -250,7 +253,7 @@ function UITweaks:HookActionButtonUpdateAction(button)
     button.__UITweaksActionHooked = true
 end
 
-function UITweaks:FindActionButtonsForSpellName(name)
+function UIAuras:FindActionButtonsForSpellName(name)
     if not self.actionButtonsCache then
         self:BuildActionButtonCache()
     end
@@ -282,7 +285,7 @@ function UITweaks:FindActionButtonsForSpellName(name)
     return matches
 end
 
-function UITweaks:GetActionButtonList(spellID)
+function UIAuras:GetActionButtonList(spellID)
     local buttonList = {}
     local seen = {}
     local spellName = C_Spell.GetSpellName(spellID)
@@ -383,7 +386,7 @@ local function createActionButtonAuraOverlay(actionButton)
     return overlay
 end
 
-function UITweaks:ReportCooldownViewerMissing()
+function UIAuras:ReportCooldownViewerMissing()
     if self.cooldownViewerMissingReported then return end
     self.cooldownViewerMissingReported = true
 
@@ -399,7 +402,7 @@ function UITweaks:ReportCooldownViewerMissing()
     end
 end
 
-function UITweaks:IsCooldownViewerVisible(viewer)
+function UIAuras:IsCooldownViewerVisible(viewer)
     if not viewer or not viewer.GetAlpha then return false end
     local alpha = viewer:GetAlpha()
     if alpha and alpha <= 0 then return false end
@@ -409,14 +412,14 @@ function UITweaks:IsCooldownViewerVisible(viewer)
     return true
 end
 
-function UITweaks:GetActionButtonAuraOverlay(actionButton)
+function UIAuras:GetActionButtonAuraOverlay(actionButton)
     if not self.actionButtonAuraOverlays[actionButton] then
         self.actionButtonAuraOverlays[actionButton] = createActionButtonAuraOverlay(actionButton)
     end
     return self.actionButtonAuraOverlays[actionButton]
 end
 
-function UITweaks:UpdateActionButtonAuraFromItem(item)
+function UIAuras:UpdateActionButtonAuraFromItem(item)
     if not self.db.profile.showActionButtonAuraTimers then return end
     if not item.cooldownID then return end
     if not C_CooldownViewer or not C_CooldownViewer.GetCooldownViewerCooldownInfo then
@@ -435,7 +438,7 @@ function UITweaks:UpdateActionButtonAuraFromItem(item)
     end
 end
 
-function UITweaks:UpdateActionButtonAurasFromViewer(viewer)
+function UIAuras:UpdateActionButtonAurasFromViewer(viewer)
     if not viewer or not viewer.GetItemFrames then return end
     for _, itemFrame in ipairs(viewer:GetItemFrames()) do
         if itemFrame.cooldownID then
@@ -444,7 +447,7 @@ function UITweaks:UpdateActionButtonAurasFromViewer(viewer)
     end
 end
 
-function UITweaks:HookActionButtonAuraViewerItem(item)
+function UIAuras:HookActionButtonAuraViewerItem(item)
     if not item.__UITweaksAuraHooked then
         local hook = function() self:UpdateActionButtonAuraFromItem(item) end
         hooksecurefunc(item, "RefreshData", hook)
@@ -452,7 +455,7 @@ function UITweaks:HookActionButtonAuraViewerItem(item)
     end
 end
 
-function UITweaks:RefreshActionButtonAuraOverlays(rebuildCache)
+function UIAuras:RefreshActionButtonAuraOverlays(rebuildCache)
     if not self.actionButtonAuraOverlays then return end
     if rebuildCache then
         self.actionButtonsCache = nil
@@ -468,7 +471,7 @@ function UITweaks:RefreshActionButtonAuraOverlays(rebuildCache)
     end
 end
 
-function UITweaks:RequestActionButtonAuraRefresh(rebuildCache)
+function UIAuras:RequestActionButtonAuraRefresh(rebuildCache)
     if rebuildCache then
         self.actionButtonsCacheDirty = true
     end
@@ -488,7 +491,7 @@ function UITweaks:RequestActionButtonAuraRefresh(rebuildCache)
     end
 end
 
-function UITweaks:ClearActionButtonAuraOverlays()
+function UIAuras:ClearActionButtonAuraOverlays()
     if not self.actionButtonAuraOverlays then return end
     for _, overlay in pairs(self.actionButtonAuraOverlays) do
         overlay:SetViewerItem(nil)
@@ -496,7 +499,7 @@ function UITweaks:ClearActionButtonAuraOverlays()
     end
 end
 
-function UITweaks:InitializeActionButtonAuraTimers()
+function UIAuras:InitializeActionButtonAuraTimers()
     if self.actionButtonAuraTimersInitialized then return end
     if not C_UnitAuras or not C_UnitAuras.GetAuraDuration then return end
     if not BuffBarCooldownViewer or not BuffIconCooldownViewer then
@@ -529,7 +532,7 @@ function UITweaks:InitializeActionButtonAuraTimers()
     self:RegisterConsolePortActionPageCallback()
 end
 
-function UITweaks:RegisterConsolePortActionPageCallback()
+function UIAuras:RegisterConsolePortActionPageCallback()
     if self.consolePortActionPageCallbackRegistered then return end
     local consolePort = _G.ConsolePort
     if not consolePort or not consolePort.GetData then return end
@@ -539,13 +542,13 @@ function UITweaks:RegisterConsolePortActionPageCallback()
     self.consolePortActionPageCallbackRegistered = true
 end
 
-function UITweaks:ConsolePortActionPageChanged()
+function UIAuras:ConsolePortActionPageChanged()
     if self.db.profile.showActionButtonAuraTimers then
         self:RequestActionButtonAuraRefresh(true)
     end
 end
 
-function UITweaks:ApplyCooldownViewerAlpha()
+function UIAuras:ApplyCooldownViewerAlpha()
     local shouldHide = self.db.profile.showActionButtonAuraTimers and self.db.profile.hideBlizzardCooldownViewer
     if shouldHide and UIParentLoadAddOn then
         if not BuffBarCooldownViewer or not BuffIconCooldownViewer then
@@ -595,7 +598,7 @@ function UITweaks:ApplyCooldownViewerAlpha()
     applyViewerTransform(UtilityCooldownViewer, "utility")
 end
 
-function UITweaks:ApplyActionButtonAuraTimers()
+function UIAuras:ApplyActionButtonAuraTimers()
     if self.db.profile.showActionButtonAuraTimers then
         self:InitializeActionButtonAuraTimers()
         self:RefreshActionButtonAuraOverlays()
@@ -605,22 +608,106 @@ function UITweaks:ApplyActionButtonAuraTimers()
     self:ApplyCooldownViewerAlpha()
 end
 
-function UITweaks:ACTIONBAR_SLOT_CHANGED()
+function UIAuras:ACTIONBAR_SLOT_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
         self:RequestActionButtonAuraRefresh()
     end
 end
 
-function UITweaks:ACTIONBAR_PAGE_CHANGED()
+function UIAuras:ACTIONBAR_PAGE_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
         self:RequestActionButtonAuraRefresh(true)
     end
 end
 
-function UITweaks:MODIFIER_STATE_CHANGED()
+function UIAuras:MODIFIER_STATE_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
         self:RequestActionButtonAuraRefresh(true)
     end
+end
+
+function UITweaks:BuildActionButtonCache()
+    return UIAuras.BuildActionButtonCache(self)
+end
+
+function UITweaks:HookActionButtonUpdateAction(button)
+    return UIAuras.HookActionButtonUpdateAction(self, button)
+end
+
+function UITweaks:FindActionButtonsForSpellName(name)
+    return UIAuras.FindActionButtonsForSpellName(self, name)
+end
+
+function UITweaks:GetActionButtonList(spellID)
+    return UIAuras.GetActionButtonList(self, spellID)
+end
+
+function UITweaks:ReportCooldownViewerMissing()
+    return UIAuras.ReportCooldownViewerMissing(self)
+end
+
+function UITweaks:IsCooldownViewerVisible(viewer)
+    return UIAuras.IsCooldownViewerVisible(self, viewer)
+end
+
+function UITweaks:GetActionButtonAuraOverlay(actionButton)
+    return UIAuras.GetActionButtonAuraOverlay(self, actionButton)
+end
+
+function UITweaks:UpdateActionButtonAuraFromItem(item)
+    return UIAuras.UpdateActionButtonAuraFromItem(self, item)
+end
+
+function UITweaks:UpdateActionButtonAurasFromViewer(viewer)
+    return UIAuras.UpdateActionButtonAurasFromViewer(self, viewer)
+end
+
+function UITweaks:HookActionButtonAuraViewerItem(item)
+    return UIAuras.HookActionButtonAuraViewerItem(self, item)
+end
+
+function UITweaks:RefreshActionButtonAuraOverlays(rebuildCache)
+    return UIAuras.RefreshActionButtonAuraOverlays(self, rebuildCache)
+end
+
+function UITweaks:RequestActionButtonAuraRefresh(rebuildCache)
+    return UIAuras.RequestActionButtonAuraRefresh(self, rebuildCache)
+end
+
+function UITweaks:ClearActionButtonAuraOverlays()
+    return UIAuras.ClearActionButtonAuraOverlays(self)
+end
+
+function UITweaks:InitializeActionButtonAuraTimers()
+    return UIAuras.InitializeActionButtonAuraTimers(self)
+end
+
+function UITweaks:RegisterConsolePortActionPageCallback()
+    return UIAuras.RegisterConsolePortActionPageCallback(self)
+end
+
+function UITweaks:ConsolePortActionPageChanged()
+    return UIAuras.ConsolePortActionPageChanged(self)
+end
+
+function UITweaks:ApplyCooldownViewerAlpha()
+    return UIAuras.ApplyCooldownViewerAlpha(self)
+end
+
+function UITweaks:ApplyActionButtonAuraTimers()
+    return UIAuras.ApplyActionButtonAuraTimers(self)
+end
+
+function UITweaks:ACTIONBAR_SLOT_CHANGED()
+    return UIAuras.ACTIONBAR_SLOT_CHANGED(self)
+end
+
+function UITweaks:ACTIONBAR_PAGE_CHANGED()
+    return UIAuras.ACTIONBAR_PAGE_CHANGED(self)
+end
+
+function UITweaks:MODIFIER_STATE_CHANGED()
+    return UIAuras.MODIFIER_STATE_CHANGED(self)
 end
 
 local talentAlertFrameNames = {
