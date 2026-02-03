@@ -12,7 +12,36 @@ end
 
 local function getActionSpellID(button)
     if not button then return nil end
-    local action = button.action or (button.GetAttribute and button:GetAttribute("action"))
+    if button.GetAttribute then
+        local actionField = button:GetAttribute("action_field")
+        if actionField then
+            local actionValue = button:GetAttribute(actionField)
+            if actionField == "action" and actionValue then
+                local actionType, actionID = GetActionInfo(actionValue)
+                if actionType == "spell" then
+                    return actionID
+                end
+                if actionType == "macro" then
+                    local macroSpellID = GetMacroSpell and GetMacroSpell(actionID)
+                    if macroSpellID then
+                        return macroSpellID
+                    end
+                end
+            elseif actionField == "spell" then
+                return actionValue
+            elseif actionField == "macro" then
+                local macroSpellID = GetMacroSpell and GetMacroSpell(actionValue)
+                if macroSpellID then
+                    return macroSpellID
+                end
+            end
+        end
+    end
+
+    local action = button.GetAttribute and button:GetAttribute("action") or nil
+    if not action then
+        action = button.action
+    end
     if not action and ActionButtonUtil and ActionButtonUtil.GetActionID then
         action = ActionButtonUtil.GetActionID(button)
     end
@@ -44,6 +73,7 @@ function UITweaks:BuildActionButtonCache()
         if not btn or seen[btn] then return end
         seen[btn] = true
         table.insert(buttons, btn)
+        self:HookActionButtonUpdateAction(btn)
     end
 
     if ActionButtonUtil and ActionButtonUtil.ActionBarButtonNames then
@@ -63,6 +93,17 @@ function UITweaks:BuildActionButtonCache()
     end
 
     self.actionButtonsCache = buttons
+end
+
+function UITweaks:HookActionButtonUpdateAction(button)
+    if not button or button.__UITweaksActionHooked then return end
+    if type(button.UpdateAction) ~= "function" then return end
+    hooksecurefunc(button, "UpdateAction", function()
+        if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
+            self:RefreshActionButtonAuraOverlays(true)
+        end
+    end)
+    button.__UITweaksActionHooked = true
 end
 
 function UITweaks:FindActionButtonsForSpellName(name)
@@ -238,8 +279,12 @@ function UITweaks:HookActionButtonAuraViewerItem(item)
     end
 end
 
-function UITweaks:RefreshActionButtonAuraOverlays()
+function UITweaks:RefreshActionButtonAuraOverlays(rebuildCache)
     if not self.actionButtonAuraOverlays then return end
+    if rebuildCache then
+        self.actionButtonsCache = nil
+        self:BuildActionButtonCache()
+    end
     for _, overlay in pairs(self.actionButtonAuraOverlays) do
         overlay:SetViewerItem(nil)
     end
@@ -278,6 +323,26 @@ function UITweaks:InitializeActionButtonAuraTimers()
 
     self:BuildActionButtonCache()
     self:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+    self:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+    self:RegisterEvent("MODIFIER_STATE_CHANGED")
+    self:RegisterEvent("ADDON_LOADED")
+    self:RegisterConsolePortActionPageCallback()
+end
+
+function UITweaks:RegisterConsolePortActionPageCallback()
+    if self.consolePortActionPageCallbackRegistered then return end
+    local consolePort = _G.ConsolePort
+    if not consolePort or not consolePort.GetData then return end
+    local data = consolePort:GetData()
+    if not data or not data.RegisterCallback then return end
+    data:RegisterCallback("OnActionPageChanged", self.ConsolePortActionPageChanged, self)
+    self.consolePortActionPageCallbackRegistered = true
+end
+
+function UITweaks:ConsolePortActionPageChanged()
+    if self.db.profile.showActionButtonAuraTimers then
+        self:RefreshActionButtonAuraOverlays(true)
+    end
 end
 
 function UITweaks:ApplyCooldownViewerAlpha()
@@ -318,5 +383,23 @@ end
 function UITweaks:ACTIONBAR_SLOT_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
         self:RefreshActionButtonAuraOverlays()
+    end
+end
+
+function UITweaks:ACTIONBAR_PAGE_CHANGED()
+    if self.db.profile.showActionButtonAuraTimers then
+        self:RefreshActionButtonAuraOverlays(true)
+    end
+end
+
+function UITweaks:MODIFIER_STATE_CHANGED()
+    if self.db.profile.showActionButtonAuraTimers then
+        self:RefreshActionButtonAuraOverlays(true)
+    end
+end
+
+function UITweaks:ADDON_LOADED(addonName)
+    if addonName == "ConsolePort" then
+        self:RegisterConsolePortActionPageCallback()
     end
 end
