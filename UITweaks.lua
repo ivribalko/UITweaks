@@ -1417,6 +1417,15 @@ local function isConsolePortLoaded()
         or (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
 end
 
+local function shallowCopyTable(src)
+    if type(src) ~= "table" then return end
+    local out = {}
+    for key, value in pairs(src) do
+        out[key] = value
+    end
+    return out
+end
+
 function UITweaks:IsConsolePortPresetEmpty(preset)
     return type(preset) ~= "table" or next(preset) == nil
 end
@@ -1435,11 +1444,34 @@ function UITweaks:EnsureConsolePortBarLoaded()
 end
 
 function UITweaks:GetConsolePortPreset(name)
+    if not self.consolePortPresetCache then
+        self:CacheConsolePortPresets()
+    end
+    if self.consolePortPresetCache and self.consolePortPresetCache[name] then
+        return self.consolePortPresetCache[name]
+    end
     local env = self:GetConsolePortBarEnv()
     if not env then return end
     local preset = env("Presets/" .. name)
     if type(preset) ~= "table" then return end
+    if not self.consolePortPresetCache then
+        self.consolePortPresetCache = {}
+    end
+    self.consolePortPresetCache[name] = preset
     return preset
+end
+
+function UITweaks:CacheConsolePortPresets()
+    local env = self:GetConsolePortBarEnv()
+    if not env then return end
+    local presets = env("Presets")
+    if type(presets) ~= "table" then return end
+    self.consolePortPresetCache = shallowCopyTable(presets) or {}
+end
+
+function UITweaks:RefreshConsolePortPresetCache()
+    self.consolePortPresetCache = nil
+    self:CacheConsolePortPresets()
 end
 
 function UITweaks:HasConsolePortPreset(name)
@@ -1448,20 +1480,42 @@ function UITweaks:HasConsolePortPreset(name)
     return true
 end
 
-function UITweaks:GetConsolePortActionBarLoadout()
+function UITweaks:GetConsolePortActionBarLoadout(allowOpen)
+    if self.consolePortActionBarLoadout then
+        local loadout = self.consolePortActionBarLoadout
+        if loadout and (loadout.OnSave or loadout.OnLoadPreset) then
+            return loadout
+        end
+    end
     local configFrame = _G.ConsolePortActionBarConfig
     if not configFrame then
+        if not allowOpen then
+            return
+        end
         self:OpenConsolePortActionBarConfig()
         configFrame = _G.ConsolePortActionBarConfig
     end
-    return configFrame
+    local loadout = configFrame
         and configFrame.SettingsContainer
         and configFrame.SettingsContainer.ScrollChild
         and configFrame.SettingsContainer.ScrollChild.Loadout
+    if loadout and (loadout.OnSave or loadout.OnLoadPreset) then
+        self.consolePortActionBarLoadout = loadout
+    end
+    return loadout
+end
+
+function UITweaks:EnsureConsolePortActionBarLoadoutCached(allowOpen)
+    if self.consolePortActionBarLoadout then return true end
+    if allowOpen and (InCombatLockdown and InCombatLockdown()) then
+        return false
+    end
+    local loadout = self:GetConsolePortActionBarLoadout(allowOpen)
+    return loadout ~= nil
 end
 
 function UITweaks:SaveConsolePortActionBarProfileAs(name, desc)
-    local loadout = self:GetConsolePortActionBarLoadout()
+    local loadout = self:GetConsolePortActionBarLoadout(true)
     if not (loadout and loadout.OnSave) then
         return
     end
@@ -1469,17 +1523,21 @@ function UITweaks:SaveConsolePortActionBarProfileAs(name, desc)
         name = name,
         desc = desc,
     }, true, true)
+    self:RefreshConsolePortPresetCache()
     self:CloseConsolePortActionBarConfigIfNotPinned()
 end
 
 function UITweaks:SaveConsolePortActionBarProfile()
-    self:SaveConsolePortActionBarProfileAs("UITweaksProfile", "Saved by UI Tweaks")
+    self:SaveConsolePortActionBarProfileAs("UITweaksGeneralProfile", "Saved by UI Tweaks")
 end
 
 function UITweaks:RestoreConsolePortActionBarProfileFrom(name)
     local preset = self:GetConsolePortPreset(name)
     if self:IsConsolePortPresetEmpty(preset) then return false end
-    local loadout = self:GetConsolePortActionBarLoadout()
+    if not self:EnsureConsolePortActionBarLoadoutCached(false) then
+        return false
+    end
+    local loadout = self.consolePortActionBarLoadout
     if loadout and loadout.OnLoadPreset then
         loadout:OnLoadPreset(preset)
     end
@@ -1488,7 +1546,7 @@ function UITweaks:RestoreConsolePortActionBarProfileFrom(name)
 end
 
 function UITweaks:RestoreConsolePortActionBarProfile()
-    return self:RestoreConsolePortActionBarProfileFrom("UITweaksProfile")
+    return self:RestoreConsolePortActionBarProfileFrom("UITweaksGeneralProfile")
 end
 
 function UITweaks:SaveConsolePortCombatProfile()
@@ -1504,7 +1562,7 @@ function UITweaks:ApplyConsolePortCombatProfile()
     if not self:EnsureConsolePortBarLoaded() then return end
     if self.consolePortCombatProfileActive then return end
     if not self:HasConsolePortPreset("UITweaksCombatProfile") then return end
-    if not self:HasConsolePortPreset("UITweaksProfile") then return end
+    if not self:HasConsolePortPreset("UITweaksGeneralProfile") then return end
     if self:RestoreConsolePortCombatProfile() then
         self.consolePortCombatProfileActive = true
     end
@@ -1538,6 +1596,14 @@ function UITweaks:ScheduleConsolePortCombatProfileRestore()
             self:RestoreConsolePortProfileAfterCombat()
         end
     end)
+end
+
+function UITweaks:UpdateConsolePortProfileShuffle()
+    if self.db.profile.consolePortBarSharing then
+        self:EnsureConsolePortActionBarLoadoutCached(true)
+    else
+        self.consolePortCombatProfileActive = false
+    end
 end
 
 function UITweaks:OpenConsolePortActionBarConfig()
@@ -2121,9 +2187,11 @@ function UITweaks:OnInitialize()
                     consolePortBarSharing = toggleOption(
                         "consolePortBarSharing",
                         "Share ConsolePort Action Bar Settings For All Characters",
-                        "Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
+                        "Warning: This will overwrite your ConsolePort UI settings. Use the saved UITweaksGeneralProfile across characters and switch to UITweaksCombatProfile during combat when present (then restore after the shared delay).",
                         1,
-                        nil,
+                        function()
+                            self:UpdateConsolePortProfileShuffle()
+                        end,
                         function()
                             return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
@@ -2132,11 +2200,12 @@ function UITweaks:OnInitialize()
                     saveGeneralConsolePortProfile = {
                         type = "execute",
                         name = "Save General",
-                        desc = "Save your current ConsolePort action bar layout to the \"UITweaksProfile\" preset so it can be restored on any character.",
+                        desc = "Save your current ConsolePort action bar layout to the \"UITweaksGeneralProfile\" preset so it can be restored on any character.",
                         order = 2,
                         func = function()
                             if not isConsolePortLoaded() then return end
                             self:SaveConsolePortActionBarProfile()
+                            self:UpdateConsolePortProfileShuffle()
                         end,
                         disabled = function()
                             return not isConsolePortLoaded() or not self.db.profile.consolePortBarSharing
@@ -2150,6 +2219,7 @@ function UITweaks:OnInitialize()
                         func = function()
                             if not isConsolePortLoaded() then return end
                             self:SaveConsolePortCombatProfile()
+                            self:UpdateConsolePortProfileShuffle()
                         end,
                         disabled = function()
                             return not isConsolePortLoaded() or not self.db.profile.consolePortBarSharing
@@ -2222,6 +2292,7 @@ function UITweaks:OnEnable()
     if self.db.profile.openCooldownViewerSettingsOnReload then
         self:OpenCooldownViewerSettings()
     end
+    self:UpdateConsolePortProfileShuffle()
     if self.db.profile.showOptionsOnReload then
         if C_Timer and C_Timer.After then
             C_Timer.After(1, function() self:OpenOptionsPanel() end)
@@ -2277,7 +2348,9 @@ function UITweaks:PLAYER_REGEN_DISABLED()
         self.consolePortCombatProfileTimer:Cancel()
         self.consolePortCombatProfileTimer = nil
     end
-    self:ApplyConsolePortCombatProfile()
+    if self.db.profile.consolePortBarSharing then
+        self:ApplyConsolePortCombatProfile()
+    end
     if self:ShouldCollapseObjectiveTracker() then
         self:CollapseTrackerIfNeeded()
     end
@@ -2293,7 +2366,9 @@ function UITweaks:PLAYER_REGEN_DISABLED()
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
-    self:ScheduleConsolePortCombatProfileRestore()
+    if self.db.profile.consolePortBarSharing then
+        self:ScheduleConsolePortCombatProfileRestore()
+    end
     self:ScheduleDelayedVisibilityUpdate()
 end
 
