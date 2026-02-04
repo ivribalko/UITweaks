@@ -48,6 +48,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. Use the saved UITweaksGeneralProfile across characters and switch to UITweaksCombatProfile during combat when present (then restore after the shared delay).
 - Save Combat — Save your current ConsolePort action bar layout to the "UITweaksCombatProfile" preset for use during combat.
 - Save General — Save your current ConsolePort action bar layout to the "UITweaksGeneralProfile" preset so it can be restored on any character.
+- Open ConsolePort Designer — Open the ConsolePort action bar configuration window.
 
 ### Frames
 
@@ -60,7 +61,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Service
 
-- Open ConsolePort Action Bar Config on Reload/Login — Open the ConsolePort action bar configuration window automatically after reload or login.
 - Open Cooldown Viewer Settings on Reload/Login — Open the Cooldown Viewer settings window on Buffs tab after reload or login.
 - Open This Settings Menu on Reload/Login — Re-open the UI Tweaks options panel after /reload or login (useful for development).
 

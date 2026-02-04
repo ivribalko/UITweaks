@@ -32,7 +32,6 @@ local defaults = {
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
         consolePortBarSharing = false,
-        openConsolePortActionBarConfigOnReload = false,
         openCooldownViewerSettingsOnReload = false,
     },
 }
@@ -1607,24 +1606,33 @@ function UITweaks:UpdateConsolePortProfileShuffle()
 end
 
 function UITweaks:OpenConsolePortActionBarConfig()
-    if self.consolePortActionBarConfigOpened then return end
-    local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
-    if loadAddOn then
-        local isLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort_Bar"))
-            or (IsAddOnLoaded and IsAddOnLoaded("ConsolePort_Bar"))
-        if not isLoaded then
-            loadAddOn("ConsolePort_Bar")
-        end
+    if not self:EnsureConsolePortBarLoaded() then
+        return
     end
     local relaTable = LibStub("RelaTable", true)
     if not relaTable then return end
     local env = relaTable("ConsolePort_Bar")
     if not env or not env.TriggerEvent then return end
     env:TriggerEvent("OnConfigToggle")
-    if _G.ConsolePortActionBarConfig then
-        _G.ConsolePortActionBarConfig:Show()
+    env:TriggerEvent("OnConfigToggle", true)
+
+    local configFrame = _G.ConsolePortActionBarConfig
+    if not configFrame and _G.ConsolePort then
+        local cp = _G.ConsolePort
+        if cp.ToggleConfig then
+            cp:ToggleConfig()
+        elseif cp.ToggleConfigFrame then
+            cp:ToggleConfigFrame()
+        end
+        configFrame = _G.ConsolePortActionBarConfig
     end
-    self.consolePortActionBarConfigOpened = true
+
+    if configFrame then
+        configFrame:Show()
+        self.consolePortActionBarConfigOpened = true
+        return
+    end
+
 end
 
 function UITweaks:OpenCooldownViewerSettings()
@@ -1753,7 +1761,7 @@ function UITweaks:EnsureCooldownViewerSettingsHooked()
 end
 
 function UITweaks:CloseConsolePortActionBarConfigIfNotPinned()
-    if self.db.profile.openConsolePortActionBarConfigOnReload then
+    if self.consolePortActionBarConfigPinned then
         return
     end
     if _G.ConsolePortActionBarConfig and _G.ConsolePortActionBarConfig:IsShown() then
@@ -2225,6 +2233,20 @@ function UITweaks:OnInitialize()
                             return not isConsolePortLoaded() or not self.db.profile.consolePortBarSharing
                         end,
                     },
+                    openConsolePortDesigner = {
+                        type = "execute",
+                        name = "Open ConsolePort Designer",
+                        desc = "Open the ConsolePort action bar configuration window.",
+                        order = 4,
+                        func = function()
+                            if not isConsolePortLoaded() then return end
+                            self.consolePortActionBarConfigPinned = true
+                            self:OpenConsolePortActionBarConfig()
+                        end,
+                        disabled = function()
+                            return not isConsolePortLoaded()
+                        end,
+                    },
                 },
             },
             service = {
@@ -2233,28 +2255,17 @@ function UITweaks:OnInitialize()
                 inline = true,
                 order = 7,
                 args = {
-                    openConsolePortActionBarConfigOnReload = toggleOption(
-                        "openConsolePortActionBarConfigOnReload",
-                        "Open ConsolePort Action Bar Config on Reload/Login",
-                        "Open the ConsolePort action bar configuration window automatically after reload or login.",
-                        1,
-                        nil,
-                        function()
-                            return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
-                                and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
-                        end
-                    ),
                     openCooldownViewerSettingsOnReload = toggleOption(
                         "openCooldownViewerSettingsOnReload",
                         "Open Cooldown Viewer Settings on Reload/Login",
                         "Open the Cooldown Viewer settings window on Buffs tab after reload or login.",
-                        2
+                        1
                     ),
                     showOptionsOnReload = toggleOption(
                         "showOptionsOnReload",
                         "Open This Settings Menu on Reload/Login",
                         "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
-                        3
+                        2
                     ),
                 },
             },
@@ -2286,9 +2297,6 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
-    if self.db.profile.openConsolePortActionBarConfigOnReload then
-        self:OpenConsolePortActionBarConfig()
-    end
     if self.db.profile.openCooldownViewerSettingsOnReload then
         self:OpenCooldownViewerSettings()
     end
@@ -2376,9 +2384,6 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate(true)
-    if self.db.profile.openConsolePortActionBarConfigOnReload then
-        self:OpenConsolePortActionBarConfig()
-    end
     if self.db.profile.openCooldownViewerSettingsOnReload then
         self:OpenCooldownViewerSettings()
     end
