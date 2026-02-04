@@ -32,7 +32,6 @@ local defaults = {
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
         consolePortBarSharing = false,
-        openCooldownViewerSettingsOnReload = false,
     },
 }
 local defaultsProfile = defaults.profile
@@ -1636,7 +1635,6 @@ function UITweaks:OpenConsolePortActionBarConfig()
 end
 
 function UITweaks:OpenCooldownViewerSettings()
-    if self.cooldownViewerSettingsOpened then return end
     local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
     if loadAddOn then
         local isLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Blizzard_CooldownViewer"))
@@ -1648,7 +1646,6 @@ function UITweaks:OpenCooldownViewerSettings()
     local settingsFrame = _G.CooldownViewerSettings
     if settingsFrame and settingsFrame.Show then
         settingsFrame:Show()
-        self.cooldownViewerSettingsOpened = true
         self:EnsureCooldownViewerSettingsHooked()
         self:QueueCooldownViewerSettingsMove()
     end
@@ -1756,6 +1753,9 @@ function UITweaks:EnsureCooldownViewerSettingsHooked()
     settingsFrame:HookScript("OnShow", function()
         self:SelectCooldownViewerBuffsTab()
         self:QueueCooldownViewerSettingsMove()
+    end)
+    settingsFrame:HookScript("OnHide", function()
+        self.cooldownViewerSettingsOpened = false
     end)
     self.cooldownViewerSettingsHooked = true
 end
@@ -1912,6 +1912,15 @@ function UITweaks:OnInitialize()
                             self:ApplyActionButtonAuraTimers()
                         end
                     ),
+                    openCooldownViewerSettings = {
+                        type = "execute",
+                        name = "Open Cooldown Viewer Settings",
+                        desc = "Open the Cooldown Viewer settings window on Buffs tab.",
+                        order = 3,
+                        func = function()
+                            self:OpenCooldownViewerSettings()
+                        end,
+                    },
                 },
             },
             chatSettings = {
@@ -2255,17 +2264,11 @@ function UITweaks:OnInitialize()
                 inline = true,
                 order = 7,
                 args = {
-                    openCooldownViewerSettingsOnReload = toggleOption(
-                        "openCooldownViewerSettingsOnReload",
-                        "Open Cooldown Viewer Settings on Reload/Login",
-                        "Open the Cooldown Viewer settings window on Buffs tab after reload or login.",
-                        1
-                    ),
                     showOptionsOnReload = toggleOption(
                         "showOptionsOnReload",
                         "Open This Settings Menu on Reload/Login",
                         "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
-                        2
+                        1
                     ),
                 },
             },
@@ -2297,9 +2300,6 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
-    if self.db.profile.openCooldownViewerSettingsOnReload then
-        self:OpenCooldownViewerSettings()
-    end
     self:UpdateConsolePortProfileShuffle()
     if self.db.profile.showOptionsOnReload then
         if C_Timer and C_Timer.After then
@@ -2315,9 +2315,6 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:HookTalentAlertFrames()
     elseif addonName == "Blizzard_CooldownViewer" then
         self:EnsureCooldownViewerSettingsHooked()
-        if self.db.profile.openCooldownViewerSettingsOnReload then
-            self:OpenCooldownViewerSettings()
-        end
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameHide()
         if self.db.profile.showActionButtonAuraTimers then
@@ -2384,9 +2381,6 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate(true)
-    if self.db.profile.openCooldownViewerSettingsOnReload then
-        self:OpenCooldownViewerSettings()
-    end
     if self.db.profile.consolePortBarSharing then
         self:RestoreConsolePortActionBarProfile()
     end

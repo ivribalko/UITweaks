@@ -20,6 +20,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 - Hide Blizzard Cooldown Viewers — Set the Buff Bar, Buff Icon, Essential, and Utility cooldown viewer alpha to zero.
 - Show Action Button Aura Timers — Show buffs and debuffs timer (how long it will last) on action buttons.
+- Open Cooldown Viewer Settings — Open the Cooldown Viewer settings window on Buffs tab.
 
 ### Chat
 
@@ -61,7 +62,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Service
 
-- Open Cooldown Viewer Settings on Reload/Login — Open the Cooldown Viewer settings window on Buffs tab after reload or login.
 - Open This Settings Menu on Reload/Login — Re-open the UI Tweaks options panel after /reload or login (useful for development).
 
 ## Settings Rules
