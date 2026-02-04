@@ -7,7 +7,7 @@ local defaults = {
     profile = {
         chatMessageFadeAfterOverride = false,
         chatMessageFadeAfterSeconds = 10,
-        suppressTalentAlert = false,
+        hideHelpTips = false,
         hideBuffFrame = false,
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
@@ -717,38 +717,16 @@ function UITweaks:MODIFIER_STATE_CHANGED()
     return UIAuras.MODIFIER_STATE_CHANGED(self)
 end
 
-local talentAlertFrameNames = {
-    "TalentMicroButtonAlert",
-    "PlayerSpellsMicroButtonAlert",
-}
-local talentAlertFrameLookup = {}
-for _, name in ipairs(talentAlertFrameNames) do
-    talentAlertFrameLookup[name] = true
-end
-local suppressedTalentTextMatchers = {
-    function(text)
-        return text and text:lower():find("unspent talent points", 1, true)
-    end,
-}
-
-local function hideTalentAlertOnShow(frame)
-    if UITweaks.db and UITweaks.db.profile.suppressTalentAlert then frame:Hide() end
-end
-
-function UITweaks:HookTalentAlertFrames()
-    self:EnsureTalentAlertHooks()
-    for _, frameName in ipairs(talentAlertFrameNames) do
-        local frame = _G[frameName]
-        if frame then
-            if not frame.UITweaksHooked then
-                frame:HookScript("OnShow", hideTalentAlertOnShow)
-                frame.UITweaksHooked = true
-            end
-            if self.db.profile.suppressTalentAlert then
-                frame:Hide()
-            end
-        end
+function UITweaks:HideHelpTips()
+    if self.db and self.db.profile.hideHelpTips and HelpTip then
+        if HelpTip.HideAllSystem then HelpTip:HideAllSystem() end
+        if HelpTip.HideAll then HelpTip:HideAll(UIParent) end
     end
+end
+
+function UITweaks:HookHelpTipFrames()
+    self:EnsureHelpTipHooks()
+    self:HideHelpTips()
 end
 
 local function collapseObjectiveTracker()
@@ -1792,32 +1770,17 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateBackpackButtonVisibility()
 end
 
-function UITweaks:EnsureTalentAlertHooks()
-    if not self.microButtonAlertHooked and MainMenuMicroButton_ShowMicroAlert then
-        hooksecurefunc("MainMenuMicroButton_ShowMicroAlert", function(alertFrame)
-            if UITweaks.db and UITweaks.db.profile.suppressTalentAlert then
-                if alertFrame and talentAlertFrameLookup[alertFrame:GetName() or ""] then
-                    alertFrame:Hide()
-                end
-            end
-        end)
-        self.microButtonAlertHooked = true
-    end
-    if HelpTip and not self.helpTipHooked then
+function UITweaks:EnsureHelpTipHooks()
+    if HelpTip and not self.helpTipShowHooked then
         hooksecurefunc(HelpTip, "Show", function(_, owner, info)
-            if UITweaks.db and UITweaks.db.profile.suppressTalentAlert then
-                local text = info and info.text
-                if text then
-                    for _, matcher in ipairs(suppressedTalentTextMatchers) do
-                        if matcher(text) then
-                            HelpTip:Hide(owner, info.text)
-                            break
-                        end
-                    end
-                end
+            if not (UITweaks.db and UITweaks.db.profile and UITweaks.db.profile.hideHelpTips) then return end
+            if HelpTip.HideAllSystem then HelpTip:HideAllSystem() end
+            if HelpTip.HideAll then HelpTip:HideAll(owner or UIParent) end
+            if HelpTip.Hide and info and info.text then
+                HelpTip:Hide(owner, info.text)
             end
         end)
-        self.helpTipHooked = true
+        self.helpTipShowHooked = true
     end
 end
 
@@ -1879,28 +1842,11 @@ function UITweaks:OnInitialize()
         name = "UI Tweaks",
         type = "group",
         args = {
-            alerts = {
-                type = "group",
-                name = "Alerts",
-                inline = true,
-                order = 1,
-                args = {
-                    suppressTalentAlert = toggleOption(
-                        "suppressTalentAlert",
-                        "Hide Unspent Talent Alert",
-                        "Prevent the 'You have unspent talent points' reminder from popping up.",
-                        1,
-                        function()
-                            self:HookTalentAlertFrames()
-                        end
-                    ),
-                },
-            },
             actionTimers = {
                 type = "group",
                 name = "Button Auras",
                 inline = true,
-                order = 2,
+                order = 1,
                 args = {
                     hideBlizzardCooldownViewer = toggleOption(
                         "hideBlizzardCooldownViewer",
@@ -1936,7 +1882,7 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "Chat",
                 inline = true,
-                order = 3,
+                order = 2,
                 args = {
                     chatMessageFadeAfterOverride = toggleOption(
                         "chatMessageFadeAfterOverride",
@@ -2025,7 +1971,7 @@ function UITweaks:OnInitialize()
                 type = "group",
                 name = "Combat",
                 inline = true,
-                order = 4,
+                order = 3,
                 args = {
                     combatVisibilityDelaySeconds = rangeOption(
                         "combatVisibilityDelaySeconds",
@@ -2142,73 +2088,11 @@ function UITweaks:OnInitialize()
                     ),
                 },
             },
-            framesVisibility = {
-                type = "group",
-                name = "Frames",
-                inline = true,
-                order = 6,
-                args = {
-                    hideBackpackButton = toggleOption(
-                        "hideBackpackButton",
-                        "Auto-Hide Bags Bar",
-                        "Auto-Hide the Blizzard Bags Bar until you mouse over it.",
-                        1,
-                        function()
-                            self:UpdateBackpackButtonVisibility()
-                        end
-                    ),
-                    hideBuffFrame = toggleOption(
-                        "hideBuffFrame",
-                        "Auto-Hide Buff Frame",
-                        "Auto-Hide the default player buff frame until you mouse over it.",
-                        2,
-                        function()
-                            self:ApplyBuffFrameHide()
-                        end
-                    ),
-                    hideStanceButtons = toggleOption(
-                        "hideStanceButtons",
-                        "Auto-Hide Stance Buttons",
-                        "Auto-Hide the Blizzard stance bar/buttons until you mouse over them.",
-                        3,
-                        function()
-                            self:UpdateStanceButtonsVisibility()
-                        end
-                    ),
-                    hideGroupLootHistoryFrame = toggleOption(
-                        "hideGroupLootHistoryFrame",
-                        "Hide Group Loot History",
-                        "Hide the group loot history frame.",
-                        4,
-                        function()
-                            self:UpdateGroupLootHistoryVisibility()
-                        end
-                    ),
-                    hideMicroMenuButtons = toggleOption(
-                        "hideMicroMenuButtons",
-                        "Hide Micro Menu Buttons",
-                        "Hide all micro menu buttons except the Dungeon Finder eye.",
-                        5,
-                        function()
-                            self:UpdateMicroMenuVisibility()
-                        end
-                    ),
-                    hidePetFrame = toggleOption(
-                        "hidePetFrame",
-                        "Hide Pet Frame",
-                        "Hide the pet unit frame.",
-                        6,
-                        function()
-                            self:UpdatePetFrameVisibility()
-                        end
-                    ),
-                },
-            },
             consolePortSettings = {
                 type = "group",
                 name = "ConsolePort",
                 inline = true,
-                order = 5,
+                order = 4,
                 args = {
                     consolePortBarSharing = toggleOption(
                         "consolePortBarSharing",
@@ -2267,11 +2151,82 @@ function UITweaks:OnInitialize()
                     },
                 },
             },
+            framesVisibility = {
+                type = "group",
+                name = "Other",
+                inline = true,
+                order = 5,
+                args = {
+                    hideBackpackButton = toggleOption(
+                        "hideBackpackButton",
+                        "Auto-Hide Bags Bar",
+                        "Auto-Hide the Blizzard Bags Bar until you mouse over it.",
+                        1,
+                        function()
+                            self:UpdateBackpackButtonVisibility()
+                        end
+                    ),
+                    hideBuffFrame = toggleOption(
+                        "hideBuffFrame",
+                        "Auto-Hide Buff Frame",
+                        "Auto-Hide the default player buff frame until you mouse over it.",
+                        2,
+                        function()
+                            self:ApplyBuffFrameHide()
+                        end
+                    ),
+                    hideStanceButtons = toggleOption(
+                        "hideStanceButtons",
+                        "Auto-Hide Stance Buttons",
+                        "Auto-Hide the Blizzard stance bar/buttons until you mouse over them.",
+                        3,
+                        function()
+                            self:UpdateStanceButtonsVisibility()
+                        end
+                    ),
+                    hideGroupLootHistoryFrame = toggleOption(
+                        "hideGroupLootHistoryFrame",
+                        "Hide Group Loot History",
+                        "Hide the group loot history frame.",
+                        4,
+                        function()
+                            self:UpdateGroupLootHistoryVisibility()
+                        end
+                    ),
+                    hideHelpTips = toggleOption(
+                        "hideHelpTips",
+                        "Hide Help Tips",
+                        "Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.",
+                        5,
+                        function()
+                            self:HookHelpTipFrames()
+                        end
+                    ),
+                    hideMicroMenuButtons = toggleOption(
+                        "hideMicroMenuButtons",
+                        "Hide Micro Menu Buttons",
+                        "Hide all micro menu buttons except the Dungeon Finder eye.",
+                        6,
+                        function()
+                            self:UpdateMicroMenuVisibility()
+                        end
+                    ),
+                    hidePetFrame = toggleOption(
+                        "hidePetFrame",
+                        "Hide Pet Frame",
+                        "Hide the pet unit frame.",
+                        7,
+                        function()
+                            self:UpdatePetFrameVisibility()
+                        end
+                    ),
+                },
+            },
             service = {
                 type = "group",
                 name = "Service",
                 inline = true,
-                order = 7,
+                order = 6,
                 args = {
                     showOptionsOnReload = toggleOption(
                         "showOptionsOnReload",
@@ -2293,7 +2248,7 @@ function UITweaks:OnEnable()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
     self:ApplyChatBackgroundAlpha()
-    self:HookTalentAlertFrames()
+    self:HookHelpTipFrames()
     self:ApplyBuffFrameHide()
     if self.db.profile.showActionButtonAuraTimers then
         self:ApplyActionButtonAuraTimers()
@@ -2320,8 +2275,8 @@ function UITweaks:OnEnable()
 end
 
 function UITweaks:ADDON_LOADED(event, addonName)
-    if addonName == "Blizzard_TalentUI" or addonName == "Blizzard_PlayerSpells" then
-        self:HookTalentAlertFrames()
+    if addonName == "Blizzard_HelpTip" then
+        self:HookHelpTipFrames()
     elseif addonName == "Blizzard_CooldownViewer" then
         self:EnsureCooldownViewerSettingsHooked()
     elseif addonName == "Blizzard_BuffFrame" then

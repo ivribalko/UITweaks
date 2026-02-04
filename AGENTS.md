@@ -12,10 +12,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ## Available Settings
 
-### Alerts
-
-- Hide Unspent Talent Alert — Prevent the 'You have unspent talent points' reminder from popping up.
-
 ### Button Auras
 
 - Hide Blizzard Cooldown Viewers — Set the Buff Bar, Buff Icon, Essential, and Utility cooldown viewer alpha to zero.
@@ -51,12 +47,13 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Save General — Save your current ConsolePort action bar layout to the "UITweaksGeneralProfile" preset so it can be restored on any character.
 - Open ConsolePort Designer — Open the ConsolePort action bar configuration window.
 
-### Frames
+### Other
 
 - Auto-Hide Bags Bar — Auto-Hide the Blizzard Bags Bar until you mouse over it.
 - Auto-Hide Buff Frame — Auto-Hide the default player buff frame until you mouse over it.
 - Auto-Hide Stance Buttons — Auto-Hide the Blizzard stance bar/buttons until you mouse over them.
 - Hide Group Loot History — Hide the group loot history frame.
+- Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
 - Hide Pet Frame — Hide the pet unit frame.
 
