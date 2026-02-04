@@ -2148,6 +2148,7 @@ function UITweaks:OnInitialize()
                     ),
                 },
             },
+            --@alpha@
             service = {
                 type = "group",
                 name = "Service",
@@ -2162,6 +2163,7 @@ function UITweaks:OnInitialize()
                     ),
                 },
             },
+            --@end-alpha@
         },
     }
     AceConfig:RegisterOptionsTable(addonName, options)

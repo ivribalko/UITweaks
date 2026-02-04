@@ -57,10 +57,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
 - Hide Pet Frame — Hide the pet unit frame.
 
-### Service
-
-- Open This Settings Menu on Reload/Login — Re-open the UI Tweaks options panel after /reload or login (useful for development).
-
 ## Settings Rules
 
 Keep the Available Settings section above in sync with `UITweaks/UITweaks.lua`.
@@ -83,5 +79,6 @@ Exceptions:
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
+- Service panel is alpha-only and intentionally omitted from this README.
 - `refs/` contains addons and other files used strictly as references. Do not use or read anything in `refs/` unless explicitly instructed.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.
