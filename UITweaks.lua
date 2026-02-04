@@ -66,8 +66,17 @@ local function hookChatFrameHover(frame)
     end)
     frame:HookScript("OnLeave", function(chatFrame)
         if UITweaks.db and UITweaks.db.profile.chatMessageFadeAfterOverride then
-            if chatFrame.SetFading then chatFrame:SetFading(true) end
-            if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
+            if C_Timer and C_Timer.After then
+                -- Defer fade reset to avoid rapid OnLeave/OnEnter churn from hyperlink hover.
+                C_Timer.After(0, function()
+                    if chatFrame.IsMouseOver and chatFrame:IsMouseOver() then return end
+                    if chatFrame.SetFading then chatFrame:SetFading(true) end
+                    if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
+                end)
+            else
+                if chatFrame.SetFading then chatFrame:SetFading(true) end
+                if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
+            end
         end
     end)
     frame.UITweaksHoverHooked = true
