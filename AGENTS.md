@@ -42,9 +42,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### ConsolePort
 
-- Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. Use the saved UITweaksGeneralProfile across characters and switch to UITweaksCombatProfile during combat when present (then restore after the shared delay).
-- Save Combat — Save your current ConsolePort action bar layout to the "UITweaksCombatProfile" preset for use during combat.
-- Save General — Save your current ConsolePort action bar layout to the "UITweaksGeneralProfile" preset so it can be restored on any character.
+- Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as "UITweaksProfile" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.
 - Open ConsolePort Designer — Open the ConsolePort action bar configuration window.
 
 ### Other
