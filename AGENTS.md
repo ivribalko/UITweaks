@@ -82,5 +82,6 @@ Exceptions:
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
+- Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - `refs/` contains addons and other files used strictly as references. Do not use or read anything in `refs/` unless explicitly instructed.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.

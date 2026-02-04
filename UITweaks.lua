@@ -142,10 +142,12 @@ end
 function UITweaks:ApplyChatLineFade()
     local frames = getChatFrames()
     if self.db.profile.chatMessageFadeAfterOverride then
+        self:CacheDefaultChatWindowTimes()
         local seconds = sanitizeSeconds(self.db.profile.chatMessageFadeAfterSeconds) or defaultsProfile.chatMessageFadeAfterSeconds
         for _, frame in ipairs(frames) do
             if frame.SetTimeVisible then frame:SetTimeVisible(seconds) end
             if frame.SetFading then frame:SetFading(true) end
+            if frame.ResetFadeTimer then frame:ResetFadeTimer() end
             hookChatFrameHover(frame)
         end
     end
@@ -633,88 +635,10 @@ function UIAuras:MODIFIER_STATE_CHANGED()
     end
 end
 
-function UITweaks:BuildActionButtonCache()
-    return UIAuras.BuildActionButtonCache(self)
-end
-
-function UITweaks:HookActionButtonUpdateAction(button)
-    return UIAuras.HookActionButtonUpdateAction(self, button)
-end
-
-function UITweaks:FindActionButtonsForSpellName(name)
-    return UIAuras.FindActionButtonsForSpellName(self, name)
-end
-
-function UITweaks:GetActionButtonList(spellID)
-    return UIAuras.GetActionButtonList(self, spellID)
-end
-
-function UITweaks:ReportCooldownViewerMissing()
-    return UIAuras.ReportCooldownViewerMissing(self)
-end
-
-function UITweaks:IsCooldownViewerVisible(viewer)
-    return UIAuras.IsCooldownViewerVisible(self, viewer)
-end
-
-function UITweaks:GetActionButtonAuraOverlay(actionButton)
-    return UIAuras.GetActionButtonAuraOverlay(self, actionButton)
-end
-
-function UITweaks:UpdateActionButtonAuraFromItem(item)
-    return UIAuras.UpdateActionButtonAuraFromItem(self, item)
-end
-
-function UITweaks:UpdateActionButtonAurasFromViewer(viewer)
-    return UIAuras.UpdateActionButtonAurasFromViewer(self, viewer)
-end
-
-function UITweaks:HookActionButtonAuraViewerItem(item)
-    return UIAuras.HookActionButtonAuraViewerItem(self, item)
-end
-
-function UITweaks:RefreshActionButtonAuraOverlays(rebuildCache)
-    return UIAuras.RefreshActionButtonAuraOverlays(self, rebuildCache)
-end
-
-function UITweaks:RequestActionButtonAuraRefresh(rebuildCache)
-    return UIAuras.RequestActionButtonAuraRefresh(self, rebuildCache)
-end
-
-function UITweaks:ClearActionButtonAuraOverlays()
-    return UIAuras.ClearActionButtonAuraOverlays(self)
-end
-
-function UITweaks:InitializeActionButtonAuraTimers()
-    return UIAuras.InitializeActionButtonAuraTimers(self)
-end
-
-function UITweaks:RegisterConsolePortActionPageCallback()
-    return UIAuras.RegisterConsolePortActionPageCallback(self)
-end
-
-function UITweaks:ConsolePortActionPageChanged()
-    return UIAuras.ConsolePortActionPageChanged(self)
-end
-
-function UITweaks:ApplyCooldownViewerAlpha()
-    return UIAuras.ApplyCooldownViewerAlpha(self)
-end
-
-function UITweaks:ApplyActionButtonAuraTimers()
-    return UIAuras.ApplyActionButtonAuraTimers(self)
-end
-
-function UITweaks:ACTIONBAR_SLOT_CHANGED()
-    return UIAuras.ACTIONBAR_SLOT_CHANGED(self)
-end
-
-function UITweaks:ACTIONBAR_PAGE_CHANGED()
-    return UIAuras.ACTIONBAR_PAGE_CHANGED(self)
-end
-
-function UITweaks:MODIFIER_STATE_CHANGED()
-    return UIAuras.MODIFIER_STATE_CHANGED(self)
+for key, value in pairs(UIAuras) do
+    if UITweaks[key] == nil then
+        UITweaks[key] = value
+    end
 end
 
 function UITweaks:HideHelpTips()
@@ -876,7 +800,8 @@ function UITweaks:ApplyBuffFrameHide(retry)
 end
 
 local function UpdateCombatFrameVisibility(frame, profileKey, stateDriver, delayStateDriver)
-    if frame and UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey] then
+    if not frame then return end
+    if UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey] then
         if not frame.UITweaksHooked then
             -- Keep frames hidden outside combat when addons try to show them.
             frame:HookScript("OnShow", function(shownFrame)
@@ -1052,17 +977,19 @@ function UITweaks:UpdateChatTabsVisibility()
 end
 
 function UITweaks:UpdateChatMenuButtonVisibility()
-    if _G.ChatFrameMenuButton and self.db.profile.hideChatMenuButton then
-        if not _G.ChatFrameMenuButton.UITweaksHooked then
+    local button = _G.ChatFrameMenuButton
+    if not button then return end
+    if self.db.profile.hideChatMenuButton then
+        if not button.UITweaksHooked then
             -- Keep the menu button hidden even when UI code shows it.
-            _G.ChatFrameMenuButton:HookScript("OnShow", function(frame)
+            button:HookScript("OnShow", function(frame)
                 if UITweaks.db and UITweaks.db.profile.hideChatMenuButton then
                     frame:Hide()
                 end
             end)
-            _G.ChatFrameMenuButton.UITweaksHooked = true
+            button.UITweaksHooked = true
         end
-        _G.ChatFrameMenuButton:Hide()
+        button:Hide()
     end
 end
 
@@ -1080,25 +1007,26 @@ local function ensureGroupLootHistoryLoaded()
 end
 
 function UITweaks:UpdateGroupLootHistoryVisibility()
-    if self.db.profile.hideGroupLootHistoryFrame and ensureGroupLootHistoryLoaded() then
-        local frame = _G.GroupLootHistoryFrame
-        if frame then
-            if not frame.UITweaksHooked then
-                frame:HookScript("OnShow", function(shownFrame)
-                    if UITweaks.db and UITweaks.db.profile.hideGroupLootHistoryFrame then
-                        shownFrame:Hide()
-                    end
-                end)
-                frame.UITweaksHooked = true
-            end
-            frame:Hide()
+    if not ensureGroupLootHistoryLoaded() then return end
+    local frame = _G.GroupLootHistoryFrame
+    if not frame then return end
+    if self.db.profile.hideGroupLootHistoryFrame then
+        if not frame.UITweaksHooked then
+            frame:HookScript("OnShow", function(shownFrame)
+                if UITweaks.db and UITweaks.db.profile.hideGroupLootHistoryFrame then
+                    shownFrame:Hide()
+                end
+            end)
+            frame.UITweaksHooked = true
         end
+        frame:Hide()
     end
 end
 
 function UITweaks:UpdatePetFrameVisibility()
-    if self.db.profile.hidePetFrame and _G.PetFrame then
-        local frame = _G.PetFrame
+    local frame = _G.PetFrame
+    if not frame then return end
+    if self.db.profile.hidePetFrame then
         if not frame.UITweaksHooked then
             frame:HookScript("OnShow", function(shownFrame)
                 if UITweaks.db and UITweaks.db.profile.hidePetFrame then
@@ -1130,23 +1058,21 @@ local function getMicroMenuButtons()
 end
 
 function UITweaks:UpdateMicroMenuVisibility()
-    if self.db.profile.hideMicroMenuButtons then
-        for _, button in ipairs(getMicroMenuButtons()) do
-            local name = button and button.GetName and button:GetName() or ""
-            if name ~= "QueueStatusButton" then
-                if not button.UITweaksHooked then
-                    button:HookScript("OnShow", function(btn)
-                        if UITweaks.db and UITweaks.db.profile.hideMicroMenuButtons then
-                            local btnName = btn and btn.GetName and btn:GetName() or ""
-                            if btnName ~= "QueueStatusButton" then
-                                btn:Hide()
-                            end
+    for _, button in ipairs(getMicroMenuButtons()) do
+        local name = button and button.GetName and button:GetName() or ""
+        if self.db.profile.hideMicroMenuButtons and name ~= "QueueStatusButton" then
+            if not button.UITweaksHooked then
+                button:HookScript("OnShow", function(btn)
+                    if UITweaks.db and UITweaks.db.profile.hideMicroMenuButtons then
+                        local btnName = btn and btn.GetName and btn:GetName() or ""
+                        if btnName ~= "QueueStatusButton" then
+                            btn:Hide()
                         end
-                    end)
-                    button.UITweaksHooked = true
-                end
-                button:Hide()
+                    end
+                end)
+                button.UITweaksHooked = true
             end
+            button:Hide()
         end
     end
 end
