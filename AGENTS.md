@@ -53,7 +53,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Hide Group Loot History — Hide the group loot history frame.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
-- Hide Pet Frame — Hide the pet unit frame.
 
 ## Settings Rules
 
