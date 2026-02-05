@@ -1805,8 +1805,8 @@ function UITweaks:OnInitialize()
                 args = {
                     combatVisibilityDelaySeconds = rangeOption(
                         "combatVisibilityDelaySeconds",
-                        "Delay After Combat Seconds",
-                        "Delay after combat seconds before restoring frames.",
+                        "Delay Restoring Out of Combat",
+                        "Delay before restoring frames after combat end for set seconds.",
                         1,
                         0,
                         20,
@@ -1877,7 +1877,7 @@ function UITweaks:OnInitialize()
                     hidePlayerFrameOutOfCombat = toggleOption(
                         "hidePlayerFrameOutOfCombat",
                         "Hide Player Frame Out of Combat",
-                        "Hide the player unit frame outside combat and restore it after the delay.",
+                        "Hide the player unit frame outside combat.",
                         4,
                         function()
                             self:UpdatePlayerFrameVisibility()
@@ -1887,7 +1887,7 @@ function UITweaks:OnInitialize()
                     hideTargetFrameOutOfCombat = toggleOption(
                         "hideTargetFrameOutOfCombat",
                         "Hide Target Frame Out of Combat",
-                        "Hide the target unit frame outside combat and restore it after the delay.",
+                        "Hide the target unit frame outside combat.",
                         5,
                         function()
                             self:UpdateTargetFrameVisibility()
@@ -1972,7 +1972,7 @@ function UITweaks:OnInitialize()
                     hideBuffFrame = toggleOption(
                         "hideBuffFrame",
                         "Auto-Hide Buff Frame",
-                        "Auto-Hide the default player buff frame until you mouse over it.",
+                        "Auto-Hide the Blizzard player buff frame until you mouse over it.",
                         2,
                         function()
                             self:ApplyBuffFrameHide()

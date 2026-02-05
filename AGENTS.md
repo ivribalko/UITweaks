@@ -30,14 +30,14 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Combat
 
-- Delay After Combat Seconds — Delay after combat seconds before restoring frames.
+- Delay Restoring Out of Combat — Delay before restoring frames after combat end for set seconds.
 - Auto-Hide Damage Meter Out of Combat — Auto-Hide the built-in damage meter frame after combat until you mouse over it.
 - In Raids — Collapse the objective tracker in combat while in raid instances.
 - In Dungeons — Collapse the objective tracker in combat while in dungeon instances.
 - Everywhere Else — Collapse the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).
-- Hide Player Frame Out of Combat — Hide the player unit frame outside combat and restore it after the delay.
-- Hide Target Frame Out of Combat — Hide the target unit frame outside combat and restore it after the delay.
-- Replace Target Frame With Tooltip Out of Combat — Show the target tooltip when the target frame is not shown out of combat (useful for quest info like how many to kill).
+- Hide Player Frame Out of Combat — Hide the player unit frame outside combat.
+- Hide Target Frame Out of Combat — Hide the target unit frame outside combat.
+- Replace Target Frame With Tooltip Out of Combat — Show the target tooltip instead of target frame out of combat (useful to check if target is related to any active quests).
 - Show Tooltip For Soft (Action) Target Out of Combat — Also display the ConsolePort soft (action) target's tooltip while out of combat.
 
 ### ConsolePort
@@ -48,7 +48,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 ### Other
 
 - Auto-Hide Bags Bar — Auto-Hide the Blizzard Bags Bar until you mouse over it.
-- Auto-Hide Buff Frame — Auto-Hide the default player buff frame until you mouse over it.
+- Auto-Hide Buff Frame — Auto-Hide the Blizzard player buff frame until you mouse over it.
 - Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.
 - Hide Group Loot History — Hide the group loot history frame.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
