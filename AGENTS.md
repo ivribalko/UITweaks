@@ -14,9 +14,9 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Button Auras
 
-- Hide Blizzard Cooldown Viewers — Set the Buff Bar, Buff Icon, Essential, and Utility cooldown viewer alpha to zero.
-- Show Action Button Aura Timers — Show buffs and debuffs timer (how long it will last) on action buttons.
-- Open Cooldown Viewer Settings — Open the Cooldown Viewer settings window on Buffs tab.
+- Hide Blizzard Cooldown Viewers — Move Blizzard's Cooldown Viewer elements off-screen and shrink them to near-zero scale (Buff Bar, Buff Icon, Essential, Utility).
+- Show Action Button Aura Timers — Show buffs and debuffs timer (how long it will last) on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars'. Tracking only works for abilities in 'Tracked Buffs' or 'Tracked Bars' and is limited to these abilities only.
+- Open Advanced Cooldown Settings — Open the Cooldown Viewer settings window on Buffs tab.
 
 ### Chat
 
@@ -49,7 +49,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 - Auto-Hide Bags Bar — Auto-Hide the Blizzard Bags Bar until you mouse over it.
 - Auto-Hide Buff Frame — Auto-Hide the default player buff frame until you mouse over it.
-- Auto-Hide Stance Buttons — Auto-Hide the Blizzard stance bar/buttons until you mouse over them.
+- Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.
 - Hide Group Loot History — Hide the group loot history frame.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.

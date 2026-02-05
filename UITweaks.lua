@@ -1681,7 +1681,7 @@ function UITweaks:OnInitialize()
                     hideBlizzardCooldownViewer = toggleOption(
                         "hideBlizzardCooldownViewer",
                         "Hide Blizzard Cooldown Viewers",
-                        "Set the Buff Bar, Buff Icon, Essential, and Utility cooldown viewer alpha to zero.",
+                        "Move Blizzard's Cooldown Viewer elements off-screen and shrink them to near-zero scale (Buff Bar, Buff Icon, Essential, Utility).",
                         1,
                         function()
                             self:ApplyActionButtonAuraTimers()
@@ -1691,7 +1691,7 @@ function UITweaks:OnInitialize()
                     showActionButtonAuraTimers = toggleOption(
                         "showActionButtonAuraTimers",
                         "Show Action Button Aura Timers",
-                        "Show buffs and debuffs timer (how long it will last) on action buttons.",
+                        "Show buffs and debuffs timer (how long it will last) on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars'. Tracking only works for abilities in 'Tracked Buffs' or 'Tracked Bars' and is limited to these abilities only.",
                         2,
                         function()
                             self:ApplyActionButtonAuraTimers()
@@ -1699,7 +1699,7 @@ function UITweaks:OnInitialize()
                     ),
                     openCooldownViewerSettings = {
                         type = "execute",
-                        name = "Open Cooldown Viewer Settings",
+                        name = "Open Advanced Cooldown Settings",
                         desc = "Open the Cooldown Viewer settings window on Buffs tab.",
                         order = 3,
                         func = function()
@@ -1980,8 +1980,8 @@ function UITweaks:OnInitialize()
                     ),
                     hideStanceButtons = toggleOption(
                         "hideStanceButtons",
-                        "Auto-Hide Stance Buttons",
-                        "Auto-Hide the Blizzard stance bar/buttons until you mouse over them.",
+                        "Auto-Hide Stance Bar",
+                        "Auto-Hide the Blizzard stance bar until you mouse over it.",
                         3,
                         function()
                             self:UpdateStanceButtonsVisibility()
