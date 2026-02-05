@@ -3,6 +3,10 @@ local L = addonTable
 local UITweaks = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0")
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
+-- Skyriding uses Bonus Bar 5, which maps to action slots 121-132.
+local SKYRIDING_BAR_SLOT_START = 121
+local SKYRIDING_BAR_SLOT_COUNT = 12
+local SKYRIDING_BAR_SLOT_END = SKYRIDING_BAR_SLOT_START + SKYRIDING_BAR_SLOT_COUNT - 1
 local defaults = {
     profile = {
         chatMessageFadeAfterOverride = false,
@@ -31,6 +35,10 @@ local defaults = {
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
         consolePortBarSharing = false,
+        skyridingBarSharing = false,
+    },
+    global = {
+        skyridingBarLayout = {},
     },
 }
 local defaultsProfile = defaults.profile
@@ -1461,6 +1469,119 @@ function UITweaks:OpenConsolePortActionBarConfig(show)
 
 end
 
+function UITweaks:SaveSkyridingBarLayout()
+    local layout = {}
+    for index = 1, SKYRIDING_BAR_SLOT_COUNT do
+        local slot = SKYRIDING_BAR_SLOT_START + index - 1
+        local actionType, actionID, subType = GetActionInfo(slot)
+        if actionType then
+            layout[index] = {
+                type = actionType,
+                id = actionID,
+                subType = subType,
+            }
+        else
+            layout[index] = false
+        end
+    end
+    if not next(layout) then return end
+    local hasAny = false
+    for _, entry in pairs(layout) do
+        if entry then
+            hasAny = true
+            break
+        end
+    end
+    if not hasAny then return end
+    self.db.global.skyridingBarLayout = layout
+end
+
+local function clearActionSlot(slot)
+    if ClearAction then
+        ClearAction(slot)
+        return
+    end
+    if PickupAction and ClearCursor then
+        PickupAction(slot)
+        ClearCursor()
+    end
+end
+
+local function placeActionIntoSlot(slot, entry)
+    if not entry or entry == false then return end
+    local actionType = entry.type
+    local actionID = entry.id
+    if not actionType or not actionID then return false end
+
+    if actionType == "spell" then
+        if C_Spell and C_Spell.PickupSpell then
+            C_Spell.PickupSpell(actionID)
+        end
+    elseif actionType == "item" and PickupItem then
+        PickupItem(actionID)
+    elseif actionType == "macro" and PickupMacro then
+        PickupMacro(actionID)
+    elseif actionType == "equipmentset" and C_EquipmentSet and C_EquipmentSet.PickupEquipmentSet then
+        C_EquipmentSet.PickupEquipmentSet(actionID)
+    else
+        return
+    end
+
+    if PlaceAction then
+        PlaceAction(slot)
+    end
+    if ClearCursor then
+        ClearCursor()
+    end
+
+    local placedType, placedID = GetActionInfo(slot)
+    return placedType == actionType and placedID == actionID
+end
+
+local function isSavedActionAvailable(entry)
+    if not entry or entry == false then return false end
+    local actionType = entry.type
+    local actionID = entry.id
+    if not actionType or not actionID then return false end
+
+    if actionType == "spell" then
+        if (IsSpellKnown and IsSpellKnown(actionID)) or (IsPlayerSpell and IsPlayerSpell(actionID)) then
+            return true
+        end
+        if IsUsableSpell and IsUsableSpell(actionID) then
+            return true
+        end
+        if C_Spell and C_Spell.IsSpellUsable and C_Spell.IsSpellUsable(actionID) then
+            return true
+        end
+        return false
+    elseif actionType == "item" then
+        if C_Item and C_Item.DoesItemExist then
+            return C_Item.DoesItemExist(actionID)
+        end
+        return GetItemInfo and GetItemInfo(actionID) ~= nil
+    elseif actionType == "macro" and GetMacroInfo then
+        return GetMacroInfo(actionID) ~= nil
+    elseif actionType == "equipmentset" and C_EquipmentSet and C_EquipmentSet.GetEquipmentSetInfo then
+        return C_EquipmentSet.GetEquipmentSetInfo(actionID) ~= nil
+    end
+
+    return false
+end
+
+function UITweaks:RestoreSkyridingBarLayout()
+    local layout = self.db.global.skyridingBarLayout
+    if not layout or not next(layout) then return end
+    for index = 1, SKYRIDING_BAR_SLOT_COUNT do
+        local slot = SKYRIDING_BAR_SLOT_START + index - 1
+        local entry = layout[index]
+        if entry and entry ~= false and isSavedActionAvailable(entry) then
+            clearActionSlot(slot)
+            placeActionIntoSlot(slot, entry)
+        end
+    end
+end
+
 function UITweaks:OpenCooldownViewerSettings()
     local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
     if loadAddOn then
@@ -1674,7 +1795,7 @@ function UITweaks:OnInitialize()
         args = {
             actionTimers = {
                 type = "group",
-                name = "Button Auras",
+                name = "Action Bars",
                 inline = true,
                 order = 1,
                 args = {
@@ -1688,11 +1809,24 @@ function UITweaks:OnInitialize()
                         end,
                         "showActionButtonAuraTimers"
                     ),
+                    skyridingBarSharing = toggleOption(
+                        "skyridingBarSharing",
+                        "Share Skyriding Action Bar Skills For All Characters",
+                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character.",
+                        3,
+                        function(val)
+                            if val then
+                                self:StartSkyridingBarMonitor()
+                            else
+                                self:StopSkyridingBarMonitor()
+                            end
+                        end
+                    ),
                     showActionButtonAuraTimers = toggleOption(
                         "showActionButtonAuraTimers",
                         "Show Action Button Aura Timers",
                         "Show buffs and debuffs timer (how long it will last) on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars'. Tracking only works for abilities in 'Tracked Buffs' or 'Tracked Bars' and is limited to these abilities only.",
-                        2,
+                        4,
                         function()
                             self:ApplyActionButtonAuraTimers()
                         end
@@ -1701,7 +1835,8 @@ function UITweaks:OnInitialize()
                         type = "execute",
                         name = "Open Advanced Cooldown Settings",
                         desc = "Open the Cooldown Viewer settings window on Buffs tab.",
-                        order = 3,
+                        order = 99,
+                        width = "full",
                         func = function()
                             self:OpenCooldownViewerSettings()
                         end,
@@ -1939,6 +2074,7 @@ function UITweaks:OnInitialize()
                         name = "Open ConsolePort Designer",
                         desc = "Open the ConsolePort action bar configuration window.",
                         order = 2,
+                        width = "full",
                         func = function()
                             if not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
@@ -2023,11 +2159,31 @@ function UITweaks:OnInitialize()
                 inline = true,
                 order = 6,
                 args = {
+                    forceSaveSkyridingBarLayout = {
+                        type = "execute",
+                        name = "Force Save Skyriding Bar Layout",
+                        desc = "Save the current Skyriding action bar (bonus bar 5) layout immediately.",
+                        order = 1,
+                        width = "full",
+                        func = function()
+                            self:SaveSkyridingBarLayout()
+                        end,
+                    },
+                    forceRestoreSkyridingBarLayout = {
+                        type = "execute",
+                        name = "Force Restore Skyriding Bar Layout",
+                        desc = "Restore the saved Skyriding action bar (bonus bar 5) layout immediately.",
+                        order = 2,
+                        width = "full",
+                        func = function()
+                            self:RestoreSkyridingBarLayout()
+                        end,
+                    },
                     showOptionsOnReload = toggleOption(
                         "showOptionsOnReload",
                         "Open This Settings Menu on Reload/Login",
                         "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
-                        1
+                        3
                     ),
                 },
             },
@@ -2037,6 +2193,28 @@ function UITweaks:OnInitialize()
     AceConfig:RegisterOptionsTable(addonName, options)
     self.optionsFrame = AceConfigDialog:AddToBlizOptions(addonName, "UI Tweaks")
     self:EnsureReloadButton()
+end
+
+function UITweaks:IsSkyridingBarActive()
+    if IsMounted and IsMounted() then
+        return true
+    end
+    return false
+end
+
+function UITweaks:StartSkyridingBarMonitor()
+    if self.skyridingBarTicker then return end
+    if not (C_Timer and C_Timer.NewTicker) then return end
+    self.skyridingBarTicker = C_Timer.NewTicker(0.5, function()
+        self:UpdateSkyridingBarSaveState()
+    end)
+end
+
+function UITweaks:StopSkyridingBarMonitor()
+    if self.skyridingBarTicker then
+        self.skyridingBarTicker:Cancel()
+        self.skyridingBarTicker = nil
+    end
 end
 
 function UITweaks:OnEnable()
@@ -2134,11 +2312,25 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     if self.db.profile.consolePortBarSharing then
         self:RestoreConsolePortActionBarProfile()
     end
+    self.skyridingBarActive = self:IsSkyridingBarActive()
+    if self.db.profile.skyridingBarSharing then
+        self:RestoreSkyridingBarLayout()
+        self:StartSkyridingBarMonitor()
+    end
 end
 
 function UITweaks:PLAYER_LOGOUT()
     if self.db.profile.consolePortBarSharing then
         self:SaveConsolePortActionBarProfile()
+    end
+end
+
+function UITweaks:UpdateSkyridingBarSaveState()
+    local wasActive = self.skyridingBarActive
+    local isActive = self:IsSkyridingBarActive()
+    self.skyridingBarActive = isActive
+    if wasActive and not isActive and self.db.profile.skyridingBarSharing then
+        self:SaveSkyridingBarLayout()
     end
 end
 
