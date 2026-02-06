@@ -1812,7 +1812,7 @@ function UITweaks:OnInitialize()
                     skyridingBarSharing = toggleOption(
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",
-                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character.",
+                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots with empty or unavailable skills.",
                         3,
                         function(val)
                             if val then
@@ -2314,7 +2314,11 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     end
     self.skyridingBarActive = self:IsSkyridingBarActive()
     if self.db.profile.skyridingBarSharing then
-        self:RestoreSkyridingBarLayout()
+        if C_Timer and C_Timer.After then
+            C_Timer.After(2, function() self:RestoreSkyridingBarLayout() end)
+        else
+            self:RestoreSkyridingBarLayout()
+        end
         self:StartSkyridingBarMonitor()
     end
 end
