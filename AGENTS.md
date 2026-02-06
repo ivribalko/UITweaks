@@ -15,7 +15,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 ### Action Bars
 
 - Hide Blizzard Cooldown Viewers — Move Blizzard's Cooldown Viewer elements off-screen and shrink them to near-zero scale (Buff Bar, Buff Icon, Essential, Utility).
-- Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots with empty or unavailable skills.
+- Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
 - Show Action Button Aura Timers — Show buffs and debuffs timer (how long it will last) on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars'. Tracking only works for abilities in 'Tracked Buffs' or 'Tracked Bars' and is limited to these abilities only.
 - Open Advanced Cooldown Settings — Open the Cooldown Viewer settings window on Buffs tab.
 

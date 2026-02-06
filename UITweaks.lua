@@ -1812,7 +1812,7 @@ function UITweaks:OnInitialize()
                     skyridingBarSharing = toggleOption(
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",
-                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots with empty or unavailable skills.",
+                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
                         3,
                         function(val)
                             if val then
