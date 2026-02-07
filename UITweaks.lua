@@ -173,6 +173,37 @@ local function isActionButtonFrame(frame)
     return type(action) == "number"
 end
 
+local function isCustomBindingButton(button)
+    -- ConsolePort uses "custom" type for proxy binding buttons (e.g. target nearest).
+    if not button or not button.GetAttribute then return false end
+    local actionType = button:GetAttribute("type")
+    if actionType == "custom" then
+        return true
+    end
+    local actionType2 = button:GetAttribute("type2")
+    if actionType2 == "custom" then
+        return true
+    end
+    return false
+end
+
+local function getActionIDFromButton(button)
+    local action = button.GetAttribute and button:GetAttribute("action") or nil
+    if not action then
+        action = button.action
+    end
+    if not action and ActionButtonUtil and ActionButtonUtil.GetActionID then
+        action = ActionButtonUtil.GetActionID(button)
+    end
+    if not action and ActionButton_GetPagedID then
+        action = ActionButton_GetPagedID(button)
+    end
+    if not action and ActionButton_CalculateAction then
+        action = ActionButton_CalculateAction(button)
+    end
+    return action
+end
+
 local function getActionSpellID(button)
     if not button then return nil end
     if button.GetAttribute then
@@ -201,19 +232,7 @@ local function getActionSpellID(button)
         end
     end
 
-    local action = button.GetAttribute and button:GetAttribute("action") or nil
-    if not action then
-        action = button.action
-    end
-    if not action and ActionButtonUtil and ActionButtonUtil.GetActionID then
-        action = ActionButtonUtil.GetActionID(button)
-    end
-    if not action and ActionButton_GetPagedID then
-        action = ActionButton_GetPagedID(button)
-    end
-    if not action and ActionButton_CalculateAction then
-        action = ActionButton_CalculateAction(button)
-    end
+    local action = getActionIDFromButton(button)
     if not action then return nil end
 
     local actionType, actionID = GetActionInfo(action)
@@ -229,11 +248,84 @@ local function getActionSpellID(button)
     return nil
 end
 
+local function getItemSpellInfoFromAction(actionID)
+    if not actionID or not GetItemSpell then return end
+    local spellName, spellID = GetItemSpell(actionID)
+    if spellID or spellName then
+        return spellID, spellName
+    end
+end
+
+local function getSpellInfoFromMacro(macroID)
+    if not macroID then return end
+    if GetMacroSpell then
+        local macroSpellID = GetMacroSpell(macroID)
+        if macroSpellID then
+            return macroSpellID, C_Spell.GetSpellName(macroSpellID)
+        end
+    end
+    if GetMacroItem then
+        local macroItem = GetMacroItem(macroID)
+        if macroItem then
+            local itemID = GetItemInfoInstant and select(1, GetItemInfoInstant(macroItem)) or nil
+            local spellID, spellName = getItemSpellInfoFromAction(itemID or macroItem)
+            if spellID or spellName then
+                return spellID, spellName
+            end
+        end
+    end
+end
+
+local function getActionInfoFromButton(button)
+    if not button then return end
+    if button.GetAttribute then
+        local actionField = button:GetAttribute("action_field")
+        if actionField then
+            local actionValue = button:GetAttribute(actionField)
+            if actionField == "action" and actionValue then
+                return GetActionInfo(actionValue)
+            elseif actionField == "spell" then
+                return "spell", actionValue
+            elseif actionField == "macro" then
+                return "macro", actionValue
+            elseif actionField == "item" then
+                return "item", actionValue
+            end
+        end
+    end
+
+    local action = getActionIDFromButton(button)
+    if not action then return end
+    return GetActionInfo(action)
+end
+
+local function getActionKeyFromButton(button)
+    local actionType, actionID = getActionInfoFromButton(button)
+    if not actionType or not actionID then return nil end
+    return tostring(actionType) .. ":" .. tostring(actionID)
+end
+
+local function findAuraDuration(unit, spellID, spellName)
+    if spellID and C_UnitAuras and C_UnitAuras.GetAuraDataBySpellID then
+        local aura = C_UnitAuras.GetAuraDataBySpellID(unit, spellID)
+        if aura and aura.duration then
+            return aura.duration, aura.expirationTime
+        end
+    end
+    if spellName and AuraUtil and AuraUtil.FindAuraByName then
+        local _, _, _, _, duration, expirationTime = AuraUtil.FindAuraByName(spellName, unit, "HELPFUL")
+        if duration then
+            return duration, expirationTime
+        end
+    end
+end
+
 function UIAuras:BuildActionButtonCache()
     local buttons = {}
     local seen = {}
     local function addButton(btn)
         if not btn or seen[btn] then return end
+        if isCustomBindingButton(btn) then return end
         seen[btn] = true
         table.insert(buttons, btn)
         self:HookActionButtonUpdateAction(btn)
@@ -249,8 +341,15 @@ function UIAuras:BuildActionButtonCache()
 
     local frame = EnumerateFrames()
     while frame do
-        if isActionButtonFrame(frame) and getActionSpellID(frame) then
-            addButton(frame)
+        if isActionButtonFrame(frame) then
+            if getActionSpellID(frame) then
+                addButton(frame)
+            elseif self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
+                local actionType = getActionInfoFromButton(frame)
+                if actionType then
+                    addButton(frame)
+                end
+            end
         end
         frame = EnumerateFrames(frame)
     end
@@ -265,8 +364,109 @@ function UIAuras:HookActionButtonUpdateAction(button)
         if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
             self:RequestActionButtonAuraRefresh()
         end
+        local overlay = self.actionButtonAuraOverlays and self.actionButtonAuraOverlays[button] or nil
+        if overlay and overlay.manualActionKey then
+            local currentKey = getActionKeyFromButton(button)
+            if currentKey ~= overlay.manualActionKey then
+                overlay.manualStart = nil
+                overlay.manualDuration = nil
+                overlay.manualActionKey = nil
+                if overlay.Update then overlay:Update() end
+            end
+        end
     end)
     button.__UITweaksActionHooked = true
+end
+
+function UIAuras:ResolveActionButtonInfo(button)
+    local actionType, actionID = getActionInfoFromButton(button)
+    if not actionType then return end
+    local spellID
+    local spellName
+    local itemName
+    if actionType == "spell" then
+        spellID = actionID
+        spellName = C_Spell.GetSpellName(spellID)
+    elseif actionType == "item" then
+        spellID, spellName = getItemSpellInfoFromAction(actionID)
+        if GetItemInfo then
+            itemName = GetItemInfo(actionID)
+        end
+    elseif actionType == "macro" then
+        spellID, spellName = getSpellInfoFromMacro(actionID)
+    end
+
+    if not spellName and itemName then
+        spellName = itemName
+    end
+    if not spellName then return end
+    return spellID, spellName
+end
+
+function UIAuras:ReapplyManualHighlightsFromPlayerAuras()
+    if not self.db or not self.db.profile or not self.db.profile.showActionButtonAuraTimers then return end
+    if InCombatLockdown and InCombatLockdown() then return end
+    if not self.actionButtonsCache or self.actionButtonsCacheDirty then
+        self.actionButtonsCacheDirty = nil
+        self:BuildActionButtonCache()
+    end
+    local auraBySpellID = {}
+    local auraByName = {}
+    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+        local index = 1
+        while true do
+            local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
+            if not aura then break end
+            if aura.spellId then
+                auraBySpellID[aura.spellId] = aura
+            end
+            if aura.name then
+                auraByName[aura.name] = aura
+            end
+            index = index + 1
+        end
+    elseif AuraUtil and AuraUtil.ForEachAura then
+        AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
+            if aura.spellId then
+                auraBySpellID[aura.spellId] = aura
+            end
+            if aura.name then
+                auraByName[aura.name] = aura
+            end
+            return true
+        end)
+    end
+    for _, button in ipairs(self.actionButtonsCache or {}) do
+        local overlay = self:GetActionButtonAuraOverlay(button)
+        if not overlay.viewerItem then
+            local spellID, spellName = self:ResolveActionButtonInfo(button)
+            local aura = (spellID and auraBySpellID[spellID]) or (spellName and auraByName[spellName]) or nil
+            if aura and aura.duration and aura.duration > 0 and aura.expirationTime then
+                local startTime = aura.expirationTime - aura.duration
+                overlay.manualActionKey = getActionKeyFromButton(button)
+                overlay:SetManualCooldownFromStart(startTime, aura.duration)
+            elseif overlay.manualStart then
+                overlay.manualStart = nil
+                overlay.manualDuration = nil
+                overlay.manualActionKey = nil
+                overlay:Update()
+            end
+        end
+    end
+end
+
+function UIAuras:ScheduleReapplyManualHighlightsFromPlayerAuras()
+    if self.pendingReapplyPlayerAuras then return end
+    self.pendingReapplyPlayerAuras = true
+    local function run()
+        self.pendingReapplyPlayerAuras = false
+        self:ReapplyManualHighlightsFromPlayerAuras()
+    end
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0.05, run)
+    else
+        run()
+    end
 end
 
 function UIAuras:FindActionButtonsForSpellName(name)
@@ -354,10 +554,29 @@ local function createActionButtonAuraOverlay(actionButton)
 
     function overlay:SetViewerItem(item)
         self.viewerItem = item
+        if item then
+            self.manualStart = nil
+            self.manualDuration = nil
+        end
     end
 
     function overlay:Update()
         if not self.viewerItem then
+            if self.manualStart and self.manualDuration and GetTime then
+                local now = GetTime()
+                if now < (self.manualStart + self.manualDuration) then
+                    self.Cooldown:SetCooldown(self.manualStart, self.manualDuration)
+                    self.Cooldown:Show()
+                    if self.Glow then
+                        self.Glow:SetVertexColor(0, 0.7, 0, 0.5)
+                        self.Glow:Show()
+                    end
+                    self:Show()
+                    return
+                end
+            end
+            self.manualStart = nil
+            self.manualDuration = nil
             if self.Glow then self.Glow:Hide() end
             self:Hide()
             return
@@ -384,11 +603,7 @@ local function createActionButtonAuraOverlay(actionButton)
                 self.Stacks:Hide()
             end
 
-            if unit == "player" then
-                self.Glow:SetVertexColor(0, 0.7, 0, 0.5)
-            else
-                self.Glow:SetVertexColor(1, 0, 0, 0.5)
-            end
+            self.Glow:SetVertexColor(0, 0.7, 0, 0.5)
             self.Glow:Show()
 
             self:Show()
@@ -396,6 +611,22 @@ local function createActionButtonAuraOverlay(actionButton)
             self.Glow:Hide()
             self:Hide()
         end
+    end
+
+    function overlay:SetManualCooldown(durationSeconds)
+        if not durationSeconds or durationSeconds <= 0 or not GetTime then return end
+        self.viewerItem = nil
+        self.manualStart = GetTime()
+        self.manualDuration = durationSeconds
+        self:Update()
+    end
+
+    function overlay:SetManualCooldownFromStart(startTime, durationSeconds)
+        if not startTime or not durationSeconds or durationSeconds <= 0 then return end
+        self.viewerItem = nil
+        self.manualStart = startTime
+        self.manualDuration = durationSeconds
+        self:Update()
     end
 
     overlay:Hide()
@@ -429,6 +660,9 @@ function UIAuras:IsCooldownViewerVisible(viewer)
 end
 
 function UIAuras:GetActionButtonAuraOverlay(actionButton)
+    if not self.actionButtonAuraOverlays then
+        self.actionButtonAuraOverlays = {}
+    end
     if not self.actionButtonAuraOverlays[actionButton] then
         self.actionButtonAuraOverlays[actionButton] = createActionButtonAuraOverlay(actionButton)
     end
@@ -463,6 +697,13 @@ function UIAuras:UpdateActionButtonAurasFromViewer(viewer)
     end
 end
 
+function UIAuras:HookActionButtonAuraViewer(viewer)
+    if not viewer or viewer.__UITweaksAuraViewerHooked then return end
+    local hook = function(_, item) self:HookActionButtonAuraViewerItem(item) end
+    hooksecurefunc(viewer, "OnAcquireItemFrame", hook)
+    viewer.__UITweaksAuraViewerHooked = true
+end
+
 function UIAuras:HookActionButtonAuraViewerItem(item)
     if not item.__UITweaksAuraHooked then
         local hook = function() self:UpdateActionButtonAuraFromItem(item) end
@@ -482,6 +723,8 @@ function UIAuras:RefreshActionButtonAuraOverlays(rebuildCache)
     end
     self:UpdateActionButtonAurasFromViewer(BuffBarCooldownViewer)
     self:UpdateActionButtonAurasFromViewer(BuffIconCooldownViewer)
+    self:UpdateActionButtonAurasFromViewer(EssentialCooldownViewer)
+    self:UpdateActionButtonAurasFromViewer(UtilityCooldownViewer)
     for _, overlay in pairs(self.actionButtonAuraOverlays) do
         overlay:Update()
     end
@@ -523,13 +766,18 @@ function UIAuras:InitializeActionButtonAuraTimers()
             UIParentLoadAddOn("Blizzard_BuffFrame")
         end
     end
+    if (not EssentialCooldownViewer or not UtilityCooldownViewer) and UIParentLoadAddOn then
+        UIParentLoadAddOn("Blizzard_CooldownViewer")
+    end
     if not BuffBarCooldownViewer or not BuffIconCooldownViewer then
         self:ReportCooldownViewerMissing()
         return
     end
     local buffBarVisible = self:IsCooldownViewerVisible(BuffBarCooldownViewer)
     local buffIconVisible = self:IsCooldownViewerVisible(BuffIconCooldownViewer)
-    if not buffBarVisible and not buffIconVisible then
+    local essentialVisible = self:IsCooldownViewerVisible(EssentialCooldownViewer)
+    local utilityVisible = self:IsCooldownViewerVisible(UtilityCooldownViewer)
+    if not buffBarVisible and not buffIconVisible and not essentialVisible and not utilityVisible then
         self:ReportCooldownViewerMissing()
         return
     end
@@ -537,14 +785,16 @@ function UIAuras:InitializeActionButtonAuraTimers()
     self.actionButtonAuraOverlays = self.actionButtonAuraOverlays or {}
     self.actionButtonsCache = nil
 
-    local hook = function(_, item) self:HookActionButtonAuraViewerItem(item) end
-    hooksecurefunc(BuffBarCooldownViewer, "OnAcquireItemFrame", hook)
-    hooksecurefunc(BuffIconCooldownViewer, "OnAcquireItemFrame", hook)
+    self:HookActionButtonAuraViewer(BuffBarCooldownViewer)
+    self:HookActionButtonAuraViewer(BuffIconCooldownViewer)
+    self:HookActionButtonAuraViewer(EssentialCooldownViewer)
+    self:HookActionButtonAuraViewer(UtilityCooldownViewer)
 
     self:BuildActionButtonCache()
     self:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
     self:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
     self:RegisterEvent("MODIFIER_STATE_CHANGED")
+    self:RegisterEvent("UNIT_AURA")
     self:RegisterConsolePortActionPageCallback()
 end
 
@@ -562,6 +812,7 @@ function UIAuras:ConsolePortActionPageChanged()
     if self.db.profile.showActionButtonAuraTimers then
         self:RequestActionButtonAuraRefresh(true)
     end
+    self:ScheduleReapplyManualHighlightsFromPlayerAuras()
 end
 
 function UIAuras:ApplyCooldownViewerAlpha()
@@ -634,11 +885,22 @@ function UIAuras:ACTIONBAR_PAGE_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
         self:RequestActionButtonAuraRefresh(true)
     end
+    self:ScheduleReapplyManualHighlightsFromPlayerAuras()
 end
 
 function UIAuras:MODIFIER_STATE_CHANGED()
     if self.db.profile.showActionButtonAuraTimers then
         self:RequestActionButtonAuraRefresh(true)
+    end
+    self:ScheduleReapplyManualHighlightsFromPlayerAuras()
+end
+
+function UIAuras:UNIT_AURA(_, unit)
+    if not self.db.profile.showActionButtonAuraTimers then return end
+    if unit ~= "player" and unit ~= "target" then return end
+    self:RequestActionButtonAuraRefresh()
+    if unit == "player" then
+        self:ScheduleReapplyManualHighlightsFromPlayerAuras()
     end
 end
 
@@ -1825,7 +2087,7 @@ function UITweaks:OnInitialize()
                     showActionButtonAuraTimers = toggleOption(
                         "showActionButtonAuraTimers",
                         "Show Action Button Aura Timers",
-                        "Show buffs and debuffs timer (how long it will last) on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars'. Tracking only works for abilities in 'Tracked Buffs' or 'Tracked Bars' and is limited to these abilities only.",
+                        "Show buffs and debuffs timers on action buttons and highlight action buttons with resolved buff durations when available. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars'. Cooldown Viewer auras work in and out of combat. Manual highlights from player buffs (items/spells) only reapply out of combat.",
                         4,
                         function()
                             self:ApplyActionButtonAuraTimers()
@@ -2320,6 +2582,13 @@ function UITweaks:PLAYER_ENTERING_WORLD()
             self:RestoreSkyridingBarLayout()
         end
         self:StartSkyridingBarMonitor()
+    end
+    if self.db.profile.showActionButtonAuraTimers then
+        if C_Timer and C_Timer.After then
+            C_Timer.After(0.3, function() self:ReapplyManualHighlightsFromPlayerAuras() end)
+        else
+            self:ReapplyManualHighlightsFromPlayerAuras()
+        end
     end
 end
 

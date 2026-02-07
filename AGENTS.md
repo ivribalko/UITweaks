@@ -10,13 +10,15 @@ In game, go to `Options -> AddOns -> UI Tweaks` to enable features.
 
 After changing any setting, use the **Reload** button (or run `/reload`).
 
+Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforge.com/wow/addons/cdmbuttonauras).
+
 ## Available Settings
 
 ### Action Bars
 
 - Hide Blizzard Cooldown Viewers — Move Blizzard's Cooldown Viewer elements off-screen and shrink them to near-zero scale (Buff Bar, Buff Icon, Essential, Utility).
 - Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
-- Show Action Button Aura Timers — Show buffs and debuffs timer (how long it will last) on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars'. Tracking only works for abilities in 'Tracked Buffs' or 'Tracked Bars' and is limited to these abilities only.
+- Show Action Button Aura Timers — Show buffs and debuffs timers on action buttons and highlight action buttons with resolved buff durations when available. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars'. Cooldown Viewer auras work in and out of combat. Manual highlights from player buffs (items/spells) only reapply out of combat.
 - Open Advanced Cooldown Settings — Open the Cooldown Viewer settings window on Buffs tab.
 
 ### Chat
@@ -67,6 +69,7 @@ Exceptions:
 - Objective tracker toggles stay in this order: In Raids, In Dungeons, Everywhere Else.
 - Combat: Delay After Combat Seconds stays first.
 - Chat: keep checkboxes together with their respective ranges for Auto-Hide Chat Messages, Fade After Seconds and such.
+- Action Bars: Open Advanced Cooldown Settings stays last.
 - Service panel stays last.
 
 ## Dev Notes
