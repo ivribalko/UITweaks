@@ -356,9 +356,7 @@ function UIAuras:HookActionButtonUpdateAction(button)
     if not button or button.__UITweaksActionHooked then return end
     if type(button.UpdateAction) ~= "function" then return end
     hooksecurefunc(button, "UpdateAction", function()
-        if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
-            self:RequestActionButtonAuraRefresh()
-        end
+        self:RequestActionButtonAuraRefresh()
         local overlay = self.actionButtonAuraOverlays and self.actionButtonAuraOverlays[button] or nil
         if overlay and overlay.manualActionKey then
             local currentKey = getActionKeyFromButton(button)
@@ -726,6 +724,9 @@ function UIAuras:RefreshActionButtonAuraOverlays(rebuildCache)
 end
 
 function UIAuras:RequestActionButtonAuraRefresh(rebuildCache)
+    if not self.db or not self.db.profile or not self.db.profile.showActionButtonAuraTimers then
+        return
+    end
     if rebuildCache then
         self.actionButtonsCacheDirty = true
     end
@@ -734,6 +735,10 @@ function UIAuras:RequestActionButtonAuraRefresh(rebuildCache)
 
     local function run()
         self.pendingAuraRefresh = false
+        if not self.db or not self.db.profile or not self.db.profile.showActionButtonAuraTimers then
+            self.actionButtonsCacheDirty = nil
+            return
+        end
         self:RefreshActionButtonAuraOverlays(self.actionButtonsCacheDirty)
         self.actionButtonsCacheDirty = nil
     end
@@ -800,9 +805,7 @@ function UIAuras:RegisterConsolePortActionPageCallback()
 end
 
 function UIAuras:ConsolePortActionPageChanged()
-    if self.db.profile.showActionButtonAuraTimers then
-        self:RequestActionButtonAuraRefresh(true)
-    end
+    self:RequestActionButtonAuraRefresh(true)
     self:ScheduleReapplyManualHighlightsFromPlayerAuras()
 end
 
@@ -867,27 +870,20 @@ function UIAuras:ApplyActionButtonAuraTimers()
 end
 
 function UIAuras:ACTIONBAR_SLOT_CHANGED()
-    if self.db.profile.showActionButtonAuraTimers then
-        self:RequestActionButtonAuraRefresh()
-    end
+    self:RequestActionButtonAuraRefresh()
 end
 
 function UIAuras:ACTIONBAR_PAGE_CHANGED()
-    if self.db.profile.showActionButtonAuraTimers then
-        self:RequestActionButtonAuraRefresh(true)
-    end
+    self:RequestActionButtonAuraRefresh(true)
     self:ScheduleReapplyManualHighlightsFromPlayerAuras()
 end
 
 function UIAuras:MODIFIER_STATE_CHANGED()
-    if self.db.profile.showActionButtonAuraTimers then
-        self:RequestActionButtonAuraRefresh(true)
-    end
+    self:RequestActionButtonAuraRefresh(true)
     self:ScheduleReapplyManualHighlightsFromPlayerAuras()
 end
 
 function UIAuras:UNIT_AURA(_, unit)
-    if not self.db.profile.showActionButtonAuraTimers then return end
     if unit ~= "player" and unit ~= "target" then return end
     self:RequestActionButtonAuraRefresh()
     if unit == "player" then
@@ -2506,8 +2502,8 @@ function UITweaks:ADDON_LOADED(event, addonName)
         self:UpdateStanceButtonsVisibility()
         if self.db.profile.showActionButtonAuraTimers then
             self:InitializeActionButtonAuraTimers()
-            self:RequestActionButtonAuraRefresh(true)
         end
+        self:RequestActionButtonAuraRefresh(true)
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
     elseif addonName == "ConsolePort"
@@ -2521,8 +2517,8 @@ function UITweaks:ADDON_LOADED(event, addonName)
         end
         if self.db.profile.showActionButtonAuraTimers then
             self:InitializeActionButtonAuraTimers()
-            self:RequestActionButtonAuraRefresh(true)
         end
+        self:RequestActionButtonAuraRefresh(true)
     end
 end
 
