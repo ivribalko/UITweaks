@@ -430,7 +430,7 @@ function UIAuras:ReapplyManualHighlightsFromPlayerAuras()
     end
     for _, button in ipairs(self.actionButtonsCache or {}) do
         local overlay = self:GetActionButtonAuraOverlay(button)
-        if not overlay.viewerItem then
+        if not overlay.viewerAuraUnit or not overlay.viewerAuraInstanceID then
             local spellID, spellName = self:ResolveActionButtonInfo(button)
             local aura = (spellID and auraBySpellID[spellID]) or (spellName and auraByName[spellName]) or nil
             if aura and aura.duration and aura.duration > 0 and aura.expirationTime then
@@ -540,16 +540,28 @@ local function createActionButtonAuraOverlay(actionButton)
     glow:Hide()
     overlay.Glow = glow
 
-    function overlay:SetViewerItem(item)
-        self.viewerItem = item
-        if item then
+    function overlay:SetViewerItem(item, spellID)
+        if item and item.auraDataUnit and item.auraInstanceID then
+            self.viewerAuraUnit = item.auraDataUnit
+            self.viewerAuraInstanceID = item.auraInstanceID
+            self.viewerSpellID = spellID
+            if UnitGUID then
+                self.viewerUnitGUID = UnitGUID(item.auraDataUnit)
+            else
+                self.viewerUnitGUID = nil
+            end
             self.manualStart = nil
             self.manualDuration = nil
+            return
         end
+        self.viewerAuraUnit = nil
+        self.viewerAuraInstanceID = nil
+        self.viewerSpellID = nil
+        self.viewerUnitGUID = nil
     end
 
     function overlay:Update()
-        if not self.viewerItem then
+        if not self.viewerAuraUnit or not self.viewerAuraInstanceID then
             if self.manualStart and self.manualDuration and GetTime then
                 local now = GetTime()
                 if now < (self.manualStart + self.manualDuration) then
@@ -570,15 +582,51 @@ local function createActionButtonAuraOverlay(actionButton)
             return
         end
 
-        local unit = self.viewerItem.auraDataUnit
-        local auraInstanceID = self.viewerItem.auraInstanceID
+        local unit = self.viewerAuraUnit
+        local auraInstanceID = self.viewerAuraInstanceID
         if unit and auraInstanceID then
+            if UnitExists and unit ~= "player" and not UnitExists(unit) then
+                self.viewerAuraUnit = nil
+                self.viewerAuraInstanceID = nil
+                self.viewerSpellID = nil
+                self.viewerUnitGUID = nil
+                self.Stacks:SetText("")
+                self.Stacks:Hide()
+                self.Cooldown:Hide()
+                self.Glow:Hide()
+                self:Hide()
+                return
+            end
+            if self.viewerUnitGUID and UnitGUID then
+                local currentGUID = UnitGUID(unit)
+                if not currentGUID or currentGUID ~= self.viewerUnitGUID then
+                    self.viewerAuraUnit = nil
+                    self.viewerAuraInstanceID = nil
+                    self.viewerSpellID = nil
+                    self.viewerUnitGUID = nil
+                    self.Stacks:SetText("")
+                    self.Stacks:Hide()
+                    self.Cooldown:Hide()
+                    self.Glow:Hide()
+                    self:Hide()
+                    return
+                end
+            end
             local duration = C_UnitAuras.GetAuraDuration(unit, auraInstanceID)
             if duration then
                 self.Cooldown:SetCooldownFromDurationObject(duration, true)
                 self.Cooldown:Show()
             else
+                self.viewerAuraUnit = nil
+                self.viewerAuraInstanceID = nil
+                self.viewerSpellID = nil
+                self.viewerUnitGUID = nil
+                self.Stacks:SetText("")
+                self.Stacks:Hide()
                 self.Cooldown:Hide()
+                self.Glow:Hide()
+                self:Hide()
+                return
             end
 
             local count = C_UnitAuras.GetAuraApplicationDisplayCount(unit, auraInstanceID)
@@ -597,7 +645,6 @@ local function createActionButtonAuraOverlay(actionButton)
                 self.Glow:SetVertexColor(1, 0, 0, 0.5)
             end
             self.Glow:Show()
-
             self:Show()
         else
             self.Glow:Hide()
@@ -607,7 +654,10 @@ local function createActionButtonAuraOverlay(actionButton)
 
     function overlay:SetManualCooldown(durationSeconds)
         if not durationSeconds or durationSeconds <= 0 or not GetTime then return end
-        self.viewerItem = nil
+        self.viewerAuraUnit = nil
+        self.viewerAuraInstanceID = nil
+        self.viewerSpellID = nil
+        self.viewerUnitGUID = nil
         self.manualStart = GetTime()
         self.manualDuration = durationSeconds
         self:Update()
@@ -615,7 +665,10 @@ local function createActionButtonAuraOverlay(actionButton)
 
     function overlay:SetManualCooldownFromStart(startTime, durationSeconds)
         if not startTime or not durationSeconds or durationSeconds <= 0 then return end
-        self.viewerItem = nil
+        self.viewerAuraUnit = nil
+        self.viewerAuraInstanceID = nil
+        self.viewerSpellID = nil
+        self.viewerUnitGUID = nil
         self.manualStart = startTime
         self.manualDuration = durationSeconds
         self:Update()
@@ -664,6 +717,7 @@ end
 function UIAuras:UpdateActionButtonAuraFromItem(item)
     if not self.db.profile.showActionButtonAuraTimers then return end
     if not item.cooldownID then return end
+    if not item.auraDataUnit or not item.auraInstanceID then return end
     if not C_CooldownViewer or not C_CooldownViewer.GetCooldownViewerCooldownInfo then
         self:ReportCooldownViewerMissing()
         return
@@ -674,7 +728,7 @@ function UIAuras:UpdateActionButtonAuraFromItem(item)
         local buttonList = self:GetActionButtonList(cdInfo.spellID)
         for _, button in ipairs(buttonList) do
             local overlay = self:GetActionButtonAuraOverlay(button)
-            overlay:SetViewerItem(item)
+            overlay:SetViewerItem(item, cdInfo.spellID)
             overlay:Update()
         end
     end
@@ -2624,6 +2678,9 @@ end
 function UITweaks:PLAYER_TARGET_CHANGED()
     self:UpdateTargetTooltip()
     self:UpdateTargetFrameVisibility()
+    if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
+        self:RequestActionButtonAuraRefresh()
+    end
 end
 
 function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()

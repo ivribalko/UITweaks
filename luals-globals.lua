@@ -68,6 +68,7 @@ StanceBar = StanceBar
 UIErrorsFrame = UIErrorsFrame
 UIParent = UIParent
 UIParentLoadAddOn = UIParentLoadAddOn
+UnitGUID = UnitGUID
 UnitExists = UnitExists
 UtilityCooldownViewer = UtilityCooldownViewer
 hooksecurefunc = hooksecurefunc
