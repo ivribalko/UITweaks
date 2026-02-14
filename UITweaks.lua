@@ -30,6 +30,7 @@ local defaults = {
         showActionButtonAuraTimers = false,
         hideBlizzardCooldownViewer = false,
         showOptionsOnReload = false,
+        showReloadButtonBottomLeft = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
         consolePortBarSharing = false,
@@ -1551,6 +1552,45 @@ function UITweaks:EnsureReloadButton()
     end
 end
 
+function UITweaks:EnsureBottomLeftReloadButton()
+    if self.bottomLeftReloadButton then
+        return self.bottomLeftReloadButton
+    end
+    if not CreateFrame then return end
+
+    local button = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
+    button:SetText("Reload")
+    button:SetSize(120, 22)
+    button:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 16, -16)
+    button:SetScript("OnClick", function() ReloadUI() end)
+    button:SetScript("OnEnter", function()
+        if GameTooltip then
+            GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+            GameTooltip:SetText("Reload the interface to immediately apply changes.")
+            GameTooltip:Show()
+        end
+    end)
+    button:SetScript("OnLeave", function()
+        if GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+    button:Hide()
+
+    self.bottomLeftReloadButton = button
+    return button
+end
+
+function UITweaks:UpdateBottomLeftReloadButton()
+    local button = self:EnsureBottomLeftReloadButton()
+    if not button then return end
+    if self.db.profile.showReloadButtonBottomLeft then
+        button:Show()
+    else
+        button:Hide()
+    end
+end
+
 function UITweaks:GetConsolePortBarEnv()
     local relaTable = LibStub("RelaTable", true)
     if not relaTable then return end
@@ -2424,6 +2464,15 @@ function UITweaks:OnInitialize()
                         "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
                         3
                     ),
+                    showReloadButtonBottomLeft = toggleOption(
+                        "showReloadButtonBottomLeft",
+                        "Show Reload Button in Top Left Corner",
+                        "Show a Reload button in the top-left corner of the screen.",
+                        4,
+                        function()
+                            self:UpdateBottomLeftReloadButton()
+                        end
+                    ),
                 },
             },
             --@end-alpha@
@@ -2465,6 +2514,7 @@ function UITweaks:OnEnable()
     if self.db.profile.showActionButtonAuraTimers then
         self:ApplyActionButtonAuraTimers()
     end
+    self:UpdateBottomLeftReloadButton()
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
