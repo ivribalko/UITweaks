@@ -73,17 +73,12 @@ local function hookChatFrameHover(frame)
     end)
     frame:HookScript("OnLeave", function(chatFrame)
         if UITweaks.db and UITweaks.db.profile.chatMessageFadeAfterOverride then
-            if C_Timer and C_Timer.After then
-                -- Defer fade reset to avoid rapid OnLeave/OnEnter churn from hyperlink hover.
-                C_Timer.After(0, function()
-                    if chatFrame.IsMouseOver and chatFrame:IsMouseOver() then return end
-                    if chatFrame.SetFading then chatFrame:SetFading(true) end
-                    if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
-                end)
-            else
+            -- Defer fade reset to avoid rapid OnLeave/OnEnter churn from hyperlink hover.
+            C_Timer.After(0, function()
+                if chatFrame.IsMouseOver and chatFrame:IsMouseOver() then return end
                 if chatFrame.SetFading then chatFrame:SetFading(true) end
                 if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
-            end
+            end)
         end
     end)
     frame.UITweaksHoverHooked = true
@@ -462,11 +457,7 @@ function UIAuras:ScheduleReapplyManualHighlightsFromPlayerAuras()
         self.pendingReapplyPlayerAuras = false
         self:ReapplyManualHighlightsFromPlayerAuras()
     end
-    if C_Timer and C_Timer.After then
-        C_Timer.After(0.05, run)
-    else
-        run()
-    end
+    C_Timer.After(0.05, run)
 end
 
 function UIAuras:FindActionButtonsForSpellName(name)
@@ -743,11 +734,7 @@ function UIAuras:RequestActionButtonAuraRefresh(rebuildCache)
         self.actionButtonsCacheDirty = nil
     end
 
-    if C_Timer and C_Timer.After then
-        C_Timer.After(0, run)
-    else
-        run()
-    end
+    C_Timer.After(0, run)
 end
 
 function UIAuras:ClearActionButtonAuraOverlays()
@@ -1018,7 +1005,7 @@ local function setBuffFrameAlpha(alpha)
 end
 
 local function setBuffFrameHoverPolling(enabled)
-    if not (BuffFrame and C_Timer and C_Timer.NewTicker) then return end
+    if not BuffFrame then return end
     if BuffFrame.UITweaksHoverTicker then
         BuffFrame.UITweaksHoverTicker:Cancel()
         BuffFrame.UITweaksHoverTicker = nil
@@ -1063,7 +1050,7 @@ function UITweaks:ApplyBuffFrameHide(retry)
             setBuffFrameHoverPolling(false)
             setBuffFrameAlpha(1)
         end
-    elseif not retry and C_Timer and C_Timer.After then
+    elseif not retry then
         C_Timer.After(0.5, function() self:ApplyBuffFrameHide(true) end)
     end
 end
@@ -1120,7 +1107,7 @@ function UITweaks:UpdateBackpackButtonVisibility()
         _G.BagsBar:SetAlpha(0)
         _G.BagsBar:Show()
     end
-    if _G.BagsBar and C_Timer and C_Timer.NewTicker then
+    if _G.BagsBar then
         self.bagsBarHoverTicker = C_Timer.NewTicker(0.1, function()
             if not (UITweaks.db and UITweaks.db.profile.hideBackpackButton and _G.BagsBar) then return end
             if _G.BagsBar:IsMouseOver() then
@@ -1138,7 +1125,7 @@ function UITweaks:UpdateDamageMeterVisibility(retry)
         self.damageMeterHoverTicker = nil
     end
     if not _G.DamageMeter then
-        if not retry and C_Timer and C_Timer.After then
+        if not retry then
             C_Timer.After(0.5, function() self:UpdateDamageMeterVisibility(true) end)
         end
         return
@@ -1169,7 +1156,7 @@ function UITweaks:UpdateDamageMeterVisibility(retry)
     end
     _G.DamageMeter:SetAlpha(0)
     _G.DamageMeter:Show()
-    if _G.DamageMeter and C_Timer and C_Timer.NewTicker then
+    if _G.DamageMeter then
         self.damageMeterHoverTicker = C_Timer.NewTicker(0.1, function()
             if not (UITweaks.db and UITweaks.db.profile.hideDamageMeter and _G.DamageMeter) then return end
             if InCombatLockdown and InCombatLockdown() then
@@ -1228,7 +1215,7 @@ function UITweaks:UpdateChatTabsVisibility()
             end
         end
     end
-    if self.db.profile.hideChatTabs and C_Timer and C_Timer.NewTicker then
+    if self.db.profile.hideChatTabs then
         self.chatTabsHoverTicker = C_Timer.NewTicker(0.1, function()
             if not (UITweaks.db and UITweaks.db.profile.hideChatTabs) then return end
             for i = 1, NUM_CHAT_WINDOWS do
@@ -1396,31 +1383,29 @@ function UITweaks:UpdateStanceButtonsVisibility()
         return
     end
     setStanceAlpha(0)
-    if C_Timer and C_Timer.NewTicker then
-        self.stanceBarHoverTicker = C_Timer.NewTicker(0.1, function()
-            if not (UITweaks.db and UITweaks.db.profile.hideStanceButtons) then return end
-            local hovered = false
-            for _, stanceBar in ipairs(getStanceBars()) do
-                if stanceBar and stanceBar:IsMouseOver() then
+    self.stanceBarHoverTicker = C_Timer.NewTicker(0.1, function()
+        if not (UITweaks.db and UITweaks.db.profile.hideStanceButtons) then return end
+        local hovered = false
+        for _, stanceBar in ipairs(getStanceBars()) do
+            if stanceBar and stanceBar:IsMouseOver() then
+                hovered = true
+                break
+            end
+        end
+        if not hovered then
+            for _, button in ipairs(getStanceButtons()) do
+                if button and button:IsMouseOver() then
                     hovered = true
                     break
                 end
             end
-            if not hovered then
-                for _, button in ipairs(getStanceButtons()) do
-                    if button and button:IsMouseOver() then
-                        hovered = true
-                        break
-                    end
-                end
-            end
-            if hovered then
-                setStanceAlpha(1)
-            else
-                setStanceAlpha(0)
-            end
-        end)
-    end
+        end
+        if hovered then
+            setStanceAlpha(1)
+        else
+            setStanceAlpha(0)
+        end
+    end)
 end
 
 function UITweaks:GetTargetTooltipUnit()
@@ -1476,24 +1461,22 @@ function UITweaks:ScheduleDelayedVisibilityUpdate(skipDelay)
     end
     self.visibilityDelayActive = false
     if self:HasDelayedVisibilityFeatures() then
-        if C_Timer and C_Timer.NewTimer then
-            local delay = tonumber(self.db.profile.combatVisibilityDelaySeconds)
-            if not delay or delay < 0 then delay = defaultsProfile.combatVisibilityDelaySeconds end
-            if skipDelay and not (InCombatLockdown and InCombatLockdown()) then
-                self:ApplyDelayedVisibility()
-            elseif delay <= 0 then
-                self:ApplyDelayedVisibility()
-            else
-                self.visibilityDelayActive = true
-                self:UpdatePlayerFrameVisibility()
-                self:UpdateTargetFrameVisibility()
-                self.visibilityTimer = C_Timer.NewTimer(delay, function()
-                    if not InCombatLockdown or not InCombatLockdown() then
-                        self.visibilityDelayActive = false
-                        self:ApplyDelayedVisibility()
-                    end
-                end)
-            end
+        local delay = tonumber(self.db.profile.combatVisibilityDelaySeconds)
+        if not delay or delay < 0 then delay = defaultsProfile.combatVisibilityDelaySeconds end
+        if skipDelay and not (InCombatLockdown and InCombatLockdown()) then
+            self:ApplyDelayedVisibility()
+        elseif delay <= 0 then
+            self:ApplyDelayedVisibility()
+        else
+            self.visibilityDelayActive = true
+            self:UpdatePlayerFrameVisibility()
+            self:UpdateTargetFrameVisibility()
+            self.visibilityTimer = C_Timer.NewTimer(delay, function()
+                if not InCombatLockdown or not InCombatLockdown() then
+                    self.visibilityDelayActive = false
+                    self:ApplyDelayedVisibility()
+                end
+            end)
         end
     end
 end
@@ -1946,10 +1929,6 @@ end
 
 function UITweaks:QueueCooldownViewerSettingsMove()
     if self.cooldownViewerNotDisplayedMoved then return end
-    if not C_Timer or not C_Timer.After then
-        self:MoveCooldownViewerNotDisplayedToTracked()
-        return
-    end
     C_Timer.After(0, function()
         self:SelectCooldownViewerBuffsTab()
         self:MoveCooldownViewerNotDisplayedToTracked()
@@ -2466,7 +2445,6 @@ end
 
 function UITweaks:StartSkyridingBarMonitor()
     if self.skyridingBarTicker then return end
-    if not (C_Timer and C_Timer.NewTicker) then return end
     self.skyridingBarTicker = C_Timer.NewTicker(0.5, function()
         self:UpdateSkyridingBarSaveState()
     end)
@@ -2502,11 +2480,7 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
     if self.db.profile.showOptionsOnReload then
-        if C_Timer and C_Timer.After then
-            C_Timer.After(1, function() self:OpenOptionsPanel() end)
-        else
-            self:OpenOptionsPanel()
-        end
+        C_Timer.After(1, function() self:OpenOptionsPanel() end)
     end
 end
 
@@ -2576,19 +2550,11 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     end
     self.skyridingBarActive = self:IsSkyridingBarActive()
     if self.db.profile.skyridingBarSharing then
-        if C_Timer and C_Timer.After then
-            C_Timer.After(2, function() self:RestoreSkyridingBarLayout() end)
-        else
-            self:RestoreSkyridingBarLayout()
-        end
+        C_Timer.After(2, function() self:RestoreSkyridingBarLayout() end)
         self:StartSkyridingBarMonitor()
     end
     if self.db.profile.showActionButtonAuraTimers then
-        if C_Timer and C_Timer.After then
-            C_Timer.After(0.3, function() self:ReapplyManualHighlightsFromPlayerAuras() end)
-        else
-            self:ReapplyManualHighlightsFromPlayerAuras()
-        end
+        C_Timer.After(0.3, function() self:ReapplyManualHighlightsFromPlayerAuras() end)
     end
 end
 
