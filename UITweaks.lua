@@ -198,6 +198,32 @@ local function getActionIDFromButton(button)
     return action
 end
 
+local function getResolvedActionSlot(button, fallbackAction)
+    local action = fallbackAction
+    if not action then
+        action = button and button.GetAttribute and button:GetAttribute("action") or nil
+    end
+    if ActionButtonUtil and ActionButtonUtil.GetActionID then
+        local resolved = ActionButtonUtil.GetActionID(button)
+        if resolved then
+            return resolved
+        end
+    end
+    if ActionButton_GetPagedID then
+        local resolved = ActionButton_GetPagedID(button)
+        if resolved then
+            return resolved
+        end
+    end
+    if ActionButton_CalculateAction then
+        local resolved = ActionButton_CalculateAction(button)
+        if resolved then
+            return resolved
+        end
+    end
+    return action
+end
+
 local function getActionSpellID(button)
     if not button then return nil end
     if button.GetAttribute then
@@ -205,7 +231,8 @@ local function getActionSpellID(button)
         if actionField then
             local actionValue = button:GetAttribute(actionField)
             if actionField == "action" and actionValue then
-                local actionType, actionID = GetActionInfo(actionValue)
+                local actionSlot = getResolvedActionSlot(button, actionValue)
+                local actionType, actionID = GetActionInfo(actionSlot)
                 if actionType == "spell" then
                     return actionID
                 end
@@ -277,7 +304,8 @@ local function getActionInfoFromButton(button)
         if actionField then
             local actionValue = button:GetAttribute(actionField)
             if actionField == "action" and actionValue then
-                return GetActionInfo(actionValue)
+                local actionSlot = getResolvedActionSlot(button, actionValue)
+                return GetActionInfo(actionSlot)
             elseif actionField == "spell" then
                 return "spell", actionValue
             elseif actionField == "macro" then
