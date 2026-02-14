@@ -1,8 +1,18 @@
 {
     "cSpell.words": [
+        "ACTIONBAR",
+        "Bliz",
         "Cooldown",
         "debuffs",
+        "equipmentset",
         "eventtrace",
-        "fstack"
+        "fstack",
+        "hooksecurefunc",
+        "Lockdown",
+        "REGEN",
+        "SKYRIDING",
+        "softenemy",
+        "softfriend",
+        "softinteract"
     ]
 }
