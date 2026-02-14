@@ -594,7 +594,11 @@ local function createActionButtonAuraOverlay(actionButton)
                 self.Stacks:Hide()
             end
 
-            self.Glow:SetVertexColor(0, 0.7, 0, 0.5)
+            if unit == "player" then
+                self.Glow:SetVertexColor(0, 0.7, 0, 0.5)
+            else
+                self.Glow:SetVertexColor(1, 0, 0, 0.5)
+            end
             self.Glow:Show()
 
             self:Show()
