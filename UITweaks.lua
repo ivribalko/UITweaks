@@ -156,6 +156,9 @@ end
 
 local UIAuras = {}
 UITweaks.UIAuras = UIAuras
+local hookedActionButtons = setmetatable({}, { __mode = "k" })
+local hookedAuraViewers = setmetatable({}, { __mode = "k" })
+local hookedAuraItems = setmetatable({}, { __mode = "k" })
 
 local function isActionButtonFrame(frame)
     if not frame or type(frame) ~= "table" then return false end
@@ -380,7 +383,7 @@ function UIAuras:BuildActionButtonCache()
 end
 
 function UIAuras:HookActionButtonUpdateAction(button)
-    if not button or button.__UITweaksActionHooked then return end
+    if not button or hookedActionButtons[button] then return end
     if type(button.UpdateAction) ~= "function" then return end
     hooksecurefunc(button, "UpdateAction", function()
         self:RequestActionButtonAuraRefresh()
@@ -395,7 +398,7 @@ function UIAuras:HookActionButtonUpdateAction(button)
             end
         end
     end)
-    button.__UITweaksActionHooked = true
+    hookedActionButtons[button] = true
 end
 
 function UIAuras:ResolveActionButtonInfo(button)
@@ -772,18 +775,17 @@ function UIAuras:UpdateActionButtonAurasFromViewer(viewer)
 end
 
 function UIAuras:HookActionButtonAuraViewer(viewer)
-    if not viewer or viewer.__UITweaksAuraViewerHooked then return end
+    if not viewer or hookedAuraViewers[viewer] then return end
     local hook = function(_, item) self:HookActionButtonAuraViewerItem(item) end
     hooksecurefunc(viewer, "OnAcquireItemFrame", hook)
-    viewer.__UITweaksAuraViewerHooked = true
+    hookedAuraViewers[viewer] = true
 end
 
 function UIAuras:HookActionButtonAuraViewerItem(item)
-    if not item.__UITweaksAuraHooked then
-        local hook = function() self:UpdateActionButtonAuraFromItem(item) end
-        hooksecurefunc(item, "RefreshData", hook)
-        item.__UITweaksAuraHooked = true
-    end
+    if not item or hookedAuraItems[item] then return end
+    local hook = function() self:UpdateActionButtonAuraFromItem(item) end
+    hooksecurefunc(item, "RefreshData", hook)
+    hookedAuraItems[item] = true
 end
 
 function UIAuras:RefreshActionButtonAuraOverlays(rebuildCache)
