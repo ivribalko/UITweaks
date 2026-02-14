@@ -1,12 +1,10 @@
 local addonName, addonTable = ...
-local L = addonTable
 local UITweaks = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0")
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 -- Skyriding uses Bonus Bar 5, which maps to action slots 121-132.
 local SKYRIDING_BAR_SLOT_START = 121
 local SKYRIDING_BAR_SLOT_COUNT = 12
-local SKYRIDING_BAR_SLOT_END = SKYRIDING_BAR_SLOT_START + SKYRIDING_BAR_SLOT_COUNT - 1
 local defaults = {
     profile = {
         chatMessageFadeAfterOverride = false,
