@@ -331,21 +331,6 @@ local function getActionKeyFromButton(button)
     return tostring(actionType) .. ":" .. tostring(actionID)
 end
 
-local function findAuraDuration(unit, spellID, spellName)
-    if spellID and C_UnitAuras and C_UnitAuras.GetAuraDataBySpellID then
-        local aura = C_UnitAuras.GetAuraDataBySpellID(unit, spellID)
-        if aura and aura.duration then
-            return aura.duration, aura.expirationTime
-        end
-    end
-    if spellName and AuraUtil and AuraUtil.FindAuraByName then
-        local _, _, _, _, duration, expirationTime = AuraUtil.FindAuraByName(spellName, unit, "HELPFUL")
-        if duration then
-            return duration, expirationTime
-        end
-    end
-end
-
 function UIAuras:BuildActionButtonCache()
     local buttons = {}
     local seen = {}

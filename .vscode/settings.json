@@ -1,4 +1,9 @@
 {
+    "Lua.diagnostics.severity": {
+        "unused-local": "Warning",
+        "unused-function": "Warning"
+    },
+    "Lua.diagnostics.disable": [],
     "cSpell.words": [
         "ACTIONBAR",
         "Bliz",
