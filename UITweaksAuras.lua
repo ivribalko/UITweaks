@@ -20,7 +20,7 @@ local function isActionButtonFrame(frame)
 end
 
 local function isCustomBindingButton(button)
-    -- ConsolePort uses "custom" type for proxy binding buttons (e.g. target nearest).
+    -- prevent highlighting ConsolePort targeting R2/L2 buttons
     if not button or not button.GetAttribute then return false end
     local actionType = button:GetAttribute("type")
     if actionType == "custom" then

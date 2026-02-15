@@ -45,6 +45,127 @@ function UITweaks:OnEnable()
     end
 end
 
+function UITweaks:ADDON_LOADED(_, addonName)
+    if addonName == "Blizzard_HelpTip" then
+        self:HookHelpTipFrames()
+    elseif addonName == "Blizzard_CooldownViewer" then
+        self:EnsureCooldownViewerSettingsHooked()
+    elseif addonName == "Blizzard_BuffFrame" then
+        self:ApplyBuffFrameHide()
+        if self.db.profile.showActionButtonAuraTimers then
+            self.auras.ApplyActionButtonAuraTimers(self)
+        end
+        self:ApplyVisibilityState()
+        self:ScheduleDelayedVisibilityUpdate(true)
+    elseif addonName == "Blizzard_GroupLootHistory" then
+        self:UpdateGroupLootHistoryVisibility()
+    elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
+        self:UpdateStanceButtonsVisibility()
+        if self.db.profile.showActionButtonAuraTimers then
+            self.auras.InitializeActionButtonAuraTimers(self)
+        end
+        self.auras.RequestActionButtonAuraRefresh(self, true)
+    elseif addonName == "Blizzard_ObjectiveTracker" then
+        self:UpdateObjectiveTrackerState()
+    elseif addonName == "ConsolePort"
+        or addonName == "ConsolePort_ActionBar"
+        or addonName == "ConsolePortActionBar"
+        or addonName == "ConsolePortGroupCrossbar"
+        or addonName == "ConsolePort_GroupCrossbar"
+    then
+        self:UpdateConsolePortTempAbilityFrameVisibility()
+        if addonName == "ConsolePort" then
+            self.auras.RegisterConsolePortActionPageCallback(self)
+        end
+        if self.db.profile.showActionButtonAuraTimers then
+            self.auras.InitializeActionButtonAuraTimers(self)
+        end
+        self.auras.RequestActionButtonAuraRefresh(self, true)
+    end
+end
+
+function UITweaks:PLAYER_REGEN_DISABLED()
+    if self:ShouldCollapseObjectiveTracker() then
+        self:CollapseTrackerIfNeeded()
+    end
+    self:UpdatePlayerFrameVisibility()
+    self:UpdateTargetFrameVisibility()
+    self:UpdateDamageMeterVisibility()
+    if self.db.profile.replaceTargetFrameWithTooltip then GameTooltip:Hide() end
+    if self.visibilityTimer then
+        self.visibilityTimer:Cancel()
+        self.visibilityTimer = nil
+    end
+    self.visibilityDelayActive = false
+end
+
+function UITweaks:PLAYER_REGEN_ENABLED()
+    self:ScheduleDelayedVisibilityUpdate()
+end
+
+function UITweaks:PLAYER_ENTERING_WORLD()
+    self:ApplyBuffFrameHide()
+    self:ApplyVisibilityState()
+    self:ScheduleDelayedVisibilityUpdate(true)
+    if self.db.profile.consolePortBarSharing then
+        self:RestoreConsolePortActionBarProfile()
+    end
+    self.skyridingBarActive = self:IsSkyridingBarActive()
+    if self.db.profile.skyridingBarSharing then
+        C_Timer.After(2, function() self:RestoreSkyridingBarLayout() end)
+        self:StartSkyridingBarMonitor()
+    end
+    if self.db.profile.showActionButtonAuraTimers then
+        C_Timer.After(0.3, function() self.auras.ReapplyManualHighlightsFromPlayerAuras(self) end)
+    end
+end
+
+function UITweaks:PLAYER_LOGOUT()
+    if self.db.profile.consolePortBarSharing then
+        self:SaveConsolePortActionBarProfile()
+    end
+end
+
+function UITweaks:PLAYER_TARGET_CHANGED()
+    self:UpdateTargetTooltip()
+    self:UpdateTargetFrameVisibility()
+    if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
+        self.auras.RequestActionButtonAuraRefresh(self)
+    end
+end
+
+function UITweaks:ACTIONBAR_SLOT_CHANGED()
+    self.auras.ACTIONBAR_SLOT_CHANGED(self)
+end
+
+function UITweaks:ACTIONBAR_PAGE_CHANGED()
+    self.auras.ACTIONBAR_PAGE_CHANGED(self)
+end
+
+function UITweaks:MODIFIER_STATE_CHANGED()
+    self.auras.MODIFIER_STATE_CHANGED(self)
+end
+
+function UITweaks:UNIT_AURA(_, unit)
+    self.auras.UNIT_AURA(self, nil, unit)
+end
+
+function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()
+    self:UpdateTargetTooltip()
+end
+
+function UITweaks:PLAYER_SOFT_INTERACT_CHANGED()
+    self:UpdateTargetTooltip()
+end
+
+function UITweaks:LOOT_OPENED()
+    self:UpdateTargetTooltip(true)
+end
+
+function UITweaks:LOOT_CLOSED()
+    self:UpdateTargetTooltip()
+end
+
 local function getChatFrames()
     local frames = {}
     for i = 1, NUM_CHAT_WINDOWS do
@@ -1301,87 +1422,6 @@ function UITweaks:StopSkyridingBarMonitor()
     end
 end
 
-function UITweaks:ADDON_LOADED(_, addonName)
-    if addonName == "Blizzard_HelpTip" then
-        self:HookHelpTipFrames()
-    elseif addonName == "Blizzard_CooldownViewer" then
-        self:EnsureCooldownViewerSettingsHooked()
-    elseif addonName == "Blizzard_BuffFrame" then
-        self:ApplyBuffFrameHide()
-        if self.db.profile.showActionButtonAuraTimers then
-            self.auras.ApplyActionButtonAuraTimers(self)
-        end
-        self:ApplyVisibilityState()
-        self:ScheduleDelayedVisibilityUpdate(true)
-    elseif addonName == "Blizzard_GroupLootHistory" then
-        self:UpdateGroupLootHistoryVisibility()
-    elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
-        self:UpdateStanceButtonsVisibility()
-        if self.db.profile.showActionButtonAuraTimers then
-            self.auras.InitializeActionButtonAuraTimers(self)
-        end
-        self.auras.RequestActionButtonAuraRefresh(self, true)
-    elseif addonName == "Blizzard_ObjectiveTracker" then
-        self:UpdateObjectiveTrackerState()
-    elseif addonName == "ConsolePort"
-        or addonName == "ConsolePort_ActionBar"
-        or addonName == "ConsolePortActionBar"
-        or addonName == "ConsolePortGroupCrossbar"
-        or addonName == "ConsolePort_GroupCrossbar"
-    then
-        self:UpdateConsolePortTempAbilityFrameVisibility()
-        if addonName == "ConsolePort" then
-            self.auras.RegisterConsolePortActionPageCallback(self)
-        end
-        if self.db.profile.showActionButtonAuraTimers then
-            self.auras.InitializeActionButtonAuraTimers(self)
-        end
-        self.auras.RequestActionButtonAuraRefresh(self, true)
-    end
-end
-
-function UITweaks:PLAYER_REGEN_DISABLED()
-    if self:ShouldCollapseObjectiveTracker() then
-        self:CollapseTrackerIfNeeded()
-    end
-    self:UpdatePlayerFrameVisibility()
-    self:UpdateTargetFrameVisibility()
-    self:UpdateDamageMeterVisibility()
-    if self.db.profile.replaceTargetFrameWithTooltip then GameTooltip:Hide() end
-    if self.visibilityTimer then
-        self.visibilityTimer:Cancel()
-        self.visibilityTimer = nil
-    end
-    self.visibilityDelayActive = false
-end
-
-function UITweaks:PLAYER_REGEN_ENABLED()
-    self:ScheduleDelayedVisibilityUpdate()
-end
-
-function UITweaks:PLAYER_ENTERING_WORLD()
-    self:ApplyBuffFrameHide()
-    self:ApplyVisibilityState()
-    self:ScheduleDelayedVisibilityUpdate(true)
-    if self.db.profile.consolePortBarSharing then
-        self:RestoreConsolePortActionBarProfile()
-    end
-    self.skyridingBarActive = self:IsSkyridingBarActive()
-    if self.db.profile.skyridingBarSharing then
-        C_Timer.After(2, function() self:RestoreSkyridingBarLayout() end)
-        self:StartSkyridingBarMonitor()
-    end
-    if self.db.profile.showActionButtonAuraTimers then
-        C_Timer.After(0.3, function() self.auras.ReapplyManualHighlightsFromPlayerAuras(self) end)
-    end
-end
-
-function UITweaks:PLAYER_LOGOUT()
-    if self.db.profile.consolePortBarSharing then
-        self:SaveConsolePortActionBarProfile()
-    end
-end
-
 function UITweaks:UpdateSkyridingBarSaveState()
     local wasActive = self.skyridingBarActive
     local isActive = self:IsSkyridingBarActive()
@@ -1389,44 +1429,4 @@ function UITweaks:UpdateSkyridingBarSaveState()
     if wasActive and not isActive and self.db.profile.skyridingBarSharing then
         self:SaveSkyridingBarLayout()
     end
-end
-
-function UITweaks:PLAYER_TARGET_CHANGED()
-    self:UpdateTargetTooltip()
-    self:UpdateTargetFrameVisibility()
-    if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
-        self.auras.RequestActionButtonAuraRefresh(self)
-    end
-end
-
-function UITweaks:ACTIONBAR_SLOT_CHANGED()
-    self.auras.ACTIONBAR_SLOT_CHANGED(self)
-end
-
-function UITweaks:ACTIONBAR_PAGE_CHANGED()
-    self.auras.ACTIONBAR_PAGE_CHANGED(self)
-end
-
-function UITweaks:MODIFIER_STATE_CHANGED()
-    self.auras.MODIFIER_STATE_CHANGED(self)
-end
-
-function UITweaks:UNIT_AURA(_, unit)
-    self.auras.UNIT_AURA(self, nil, unit)
-end
-
-function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()
-    self:UpdateTargetTooltip()
-end
-
-function UITweaks:PLAYER_SOFT_INTERACT_CHANGED()
-    self:UpdateTargetTooltip()
-end
-
-function UITweaks:LOOT_OPENED()
-    self:UpdateTargetTooltip(true)
-end
-
-function UITweaks:LOOT_CLOSED()
-    self:UpdateTargetTooltip()
 end
