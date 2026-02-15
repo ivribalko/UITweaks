@@ -1,4 +1,4 @@
-# UI Tweaks
+# Stock UI Tweaks
 
 Options for WoW's stock UI to reduce on-screen elements.
 
@@ -6,7 +6,7 @@ Aimed at [ConsolePort addon](https://www.curseforge.com/wow/addons/console-port)
 
 By default, nothing is enabled, so installing the addon only adds the settings menu.
 
-In game, go to `Options -> AddOns -> UI Tweaks` to enable features.
+In game, go to `Options -> AddOns -> Stock UI Tweaks` to enable features.
 
 After changing any setting, use the **Reload** button (or run `/reload`).
 
@@ -17,7 +17,7 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 ### Action Bars
 
 - Hide Blizzard Cooldown Viewers — Move Blizzard's Cooldown Viewer elements off-screen and shrink them to near-zero scale (Buff Bar, Buff Icon, Essential, Utility).
-- Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
+- Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
 - Show Action Button Aura Timers — Show buffs and debuffs highlight and remaining duration on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars' then close the window to save it. Cooldown Viewer auras work in and out of combat. Additional highlights from untracked player buffs and items on the action bar only reapply out of combat.
 - Open Advanced Cooldown Settings — Open the Cooldown Viewer settings window on Buffs tab.
 
@@ -46,7 +46,7 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 ### ConsolePort
 
 - Hide ConsolePort 'New Ability Available!' Frame — Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.
-- Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as "UITweaksProfile" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.
+- Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. When enabled, Stock UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as "UITweaksProfile" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.
 - Open ConsolePort Designer — Open the ConsolePort action bar configuration window.
 
 ### Other

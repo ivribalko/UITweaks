@@ -98,7 +98,7 @@ function Options.OnInitialize(self)
         return option
     end
     local options = {
-        name = "UI Tweaks",
+        name = "Stock UI Tweaks",
         type = "group",
         args = {
             actionTimers = {
@@ -120,7 +120,7 @@ function Options.OnInitialize(self)
                     skyridingBarSharing = toggleOption(
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",
-                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
+                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
                         3,
                         function(val)
                             if val then
@@ -383,7 +383,7 @@ function Options.OnInitialize(self)
                     consolePortBarSharing = toggleOption(
                         "consolePortBarSharing",
                         "Share ConsolePort Action Bar Settings For All Characters",
-                        "Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
+                        "Warning: This will overwrite your ConsolePort UI settings. When enabled, Stock UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
                         3,
                         function()
                             return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
@@ -504,7 +504,7 @@ function Options.OnInitialize(self)
                     showOptionsOnReload = toggleOption(
                         "showOptionsOnReload",
                         "Open This Settings Menu on Reload/Login",
-                        "Re-open the UI Tweaks options panel after /reload or login (useful for development).",
+                        "Re-open the Stock UI Tweaks options panel after /reload or login (useful for development).",
                         3
                     ),
                     showReloadButtonBottomLeft = toggleOption(
@@ -522,7 +522,7 @@ function Options.OnInitialize(self)
         },
     }
     AceConfig:RegisterOptionsTable(addonName, options)
-    self.optionsFrame = AceConfigDialog:AddToBlizOptions(addonName, "UI Tweaks")
+    self.optionsFrame = AceConfigDialog:AddToBlizOptions(addonName, "Stock UI Tweaks")
     self:EnsureReloadButton()
 end
 

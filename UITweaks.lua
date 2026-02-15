@@ -1085,7 +1085,7 @@ function UITweaks:SaveConsolePortActionBarProfileAs(name, desc)
 end
 
 function UITweaks:SaveConsolePortActionBarProfile()
-    self:SaveConsolePortActionBarProfileAs("UITweaksProfile", "Saved by UI Tweaks")
+    self:SaveConsolePortActionBarProfileAs("UITweaksProfile", "Saved by Stock UI Tweaks")
 end
 
 function UITweaks:RestoreConsolePortActionBarProfileFrom(name)

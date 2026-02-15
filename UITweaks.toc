@@ -1,6 +1,6 @@
 ## Interface: 120001, 120000
-## Title: UI Tweaks
-## Notes: Various UI Tweaks
+## Title: Stock UI Tweaks
+## Notes: Various Stock UI Tweaks
 ## Author: Me
 ## Version: 1.4
 ## IconTexture: Interface\AddOns\UITweaks\icon64.tga
