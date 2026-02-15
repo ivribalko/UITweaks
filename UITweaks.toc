@@ -17,3 +17,5 @@ Libs\AceDB-3.0\AceDB-3.0.xml
 Libs\AceEvent-3.0\AceEvent-3.0.xml
 
 UITweaks.lua
+UITweaksOptions.lua
+UITweaks.Auras.lua

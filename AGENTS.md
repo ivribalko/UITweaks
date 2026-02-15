@@ -60,10 +60,10 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 
 ## Settings Rules
 
-Keep the Available Settings section above in sync with `UITweaks/UITweaks.lua`.
+Keep the Available Settings section above in sync with `UITweaks.Options.lua`.
 Each setting must use the exact in-code description string.
 
-Keep panels and items sorted alphabetically (by display name) in both `UITweaks.lua` and this README.
+Keep panels and items sorted alphabetically (by display name) in both `UITweaks.Options.lua` and this README.
 
 Exceptions:
 
@@ -75,8 +75,9 @@ Exceptions:
 
 ## Dev Notes
 
-- Addon files live in `UITweaks/`.
-- Add new Lua files in `UITweaks/` and list them in `UITweaks/UITweaks.toc`.
+- Addon files live in the repository root.
+- Main addon files are split as: `UITweaks.lua` (core), `UITweaks.Options.lua` (defaults + options), `UITweaks.Auras.lua` (action button aura logic).
+- Add new Lua files in the repository root and list them in `UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
