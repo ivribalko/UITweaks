@@ -576,11 +576,6 @@ local function createActionButtonAuraOverlay(actionButton)
             self.viewerAuraUnit = item.auraDataUnit
             self.viewerAuraInstanceID = item.auraInstanceID
             self.viewerSpellID = spellID
-            if UnitGUID then
-                self.viewerUnitGUID = UnitGUID(item.auraDataUnit)
-            else
-                self.viewerUnitGUID = nil
-            end
             self.manualStart = nil
             self.manualDuration = nil
             return
@@ -588,7 +583,6 @@ local function createActionButtonAuraOverlay(actionButton)
         self.viewerAuraUnit = nil
         self.viewerAuraInstanceID = nil
         self.viewerSpellID = nil
-        self.viewerUnitGUID = nil
     end
 
     function overlay:Update()
@@ -620,28 +614,12 @@ local function createActionButtonAuraOverlay(actionButton)
                 self.viewerAuraUnit = nil
                 self.viewerAuraInstanceID = nil
                 self.viewerSpellID = nil
-                self.viewerUnitGUID = nil
                 self.Stacks:SetText("")
                 self.Stacks:Hide()
                 self.Cooldown:Hide()
                 self.Glow:Hide()
                 self:Hide()
                 return
-            end
-            if self.viewerUnitGUID and UnitGUID then
-                local currentGUID = UnitGUID(unit)
-                if not currentGUID or currentGUID ~= self.viewerUnitGUID then
-                    self.viewerAuraUnit = nil
-                    self.viewerAuraInstanceID = nil
-                    self.viewerSpellID = nil
-                    self.viewerUnitGUID = nil
-                    self.Stacks:SetText("")
-                    self.Stacks:Hide()
-                    self.Cooldown:Hide()
-                    self.Glow:Hide()
-                    self:Hide()
-                    return
-                end
             end
             local duration = C_UnitAuras.GetAuraDuration(unit, auraInstanceID)
             if duration then
@@ -651,7 +629,6 @@ local function createActionButtonAuraOverlay(actionButton)
                 self.viewerAuraUnit = nil
                 self.viewerAuraInstanceID = nil
                 self.viewerSpellID = nil
-                self.viewerUnitGUID = nil
                 self.Stacks:SetText("")
                 self.Stacks:Hide()
                 self.Cooldown:Hide()
@@ -688,7 +665,6 @@ local function createActionButtonAuraOverlay(actionButton)
         self.viewerAuraUnit = nil
         self.viewerAuraInstanceID = nil
         self.viewerSpellID = nil
-        self.viewerUnitGUID = nil
         self.manualStart = GetTime()
         self.manualDuration = durationSeconds
         self:Update()
@@ -699,7 +675,6 @@ local function createActionButtonAuraOverlay(actionButton)
         self.viewerAuraUnit = nil
         self.viewerAuraInstanceID = nil
         self.viewerSpellID = nil
-        self.viewerUnitGUID = nil
         self.manualStart = startTime
         self.manualDuration = durationSeconds
         self:Update()
