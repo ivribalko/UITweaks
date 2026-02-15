@@ -45,6 +45,7 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 
 ### ConsolePort
 
+- Hide ConsolePort 'New Ability Available!' Frame — Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.
 - Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as "UITweaksProfile" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.
 - Open ConsolePort Designer — Open the ConsolePort action bar configuration window.
 

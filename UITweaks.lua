@@ -33,6 +33,7 @@ local defaults = {
         showReloadButtonBottomLeft = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
+        hideConsolePortTempAbilityFrame = false,
         consolePortBarSharing = false,
         skyridingBarSharing = false,
     },
@@ -1337,6 +1338,22 @@ function UITweaks:UpdateGroupLootHistoryVisibility()
     end
 end
 
+function UITweaks:UpdateConsolePortTempAbilityFrameVisibility()
+    local frame = _G.ConsolePortTempAbilityFrame
+    if not frame then return end
+    if self.db.profile.hideConsolePortTempAbilityFrame then
+        if not frame.UITweaksHooked then
+            frame:HookScript("OnShow", function(shownFrame)
+                if UITweaks.db and UITweaks.db.profile.hideConsolePortTempAbilityFrame then
+                    shownFrame:Hide()
+                end
+            end)
+            frame.UITweaksHooked = true
+        end
+        frame:Hide()
+    end
+end
+
 local function getMicroMenuButtons()
     local buttons = {}
     local function addButtonsFromParent(parent)
@@ -2053,6 +2070,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
     self:UpdateChatMenuButtonVisibility()
+    self:UpdateConsolePortTempAbilityFrameVisibility()
     self:UpdateGroupLootHistoryVisibility()
     self:UpdateMicroMenuVisibility()
     self:UpdateStanceButtonsVisibility()
@@ -2397,21 +2415,35 @@ function UITweaks:OnInitialize()
                 inline = true,
                 order = 4,
                 args = {
-                    consolePortBarSharing = toggleOption(
-                        "consolePortBarSharing",
-                        "Share ConsolePort Action Bar Settings For All Characters",
-                        "Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
+                    hideConsolePortTempAbilityFrame = toggleOption(
+                        "hideConsolePortTempAbilityFrame",
+                        "Hide ConsolePort 'New Ability Available!' Frame",
+                        "Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.",
                         1,
+                        function()
+                            self:UpdateConsolePortTempAbilityFrameVisibility()
+                        end,
                         function()
                             return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
                         end
                     ),
+                    consolePortBarSharing = toggleOption(
+                        "consolePortBarSharing",
+                        "Share ConsolePort Action Bar Settings For All Characters",
+                        "Warning: This will overwrite your ConsolePort UI settings. When enabled, UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
+                        3,
+                        function()
+                            return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
+                                and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
+                        end
+                    ),
+                    -- Keep this execute action last in the ConsolePort panel.
                     openConsolePortDesigner = {
                         type = "execute",
                         name = "Open ConsolePort Designer",
                         desc = "Open the ConsolePort action bar configuration window.",
-                        order = 2,
+                        order = 4,
                         width = "full",
                         func = function()
                             if not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
@@ -2619,6 +2651,7 @@ function UITweaks:ADDON_LOADED(event, addonName)
         or addonName == "ConsolePortGroupCrossbar"
         or addonName == "ConsolePort_GroupCrossbar"
     then
+        self:UpdateConsolePortTempAbilityFrameVisibility()
         if addonName == "ConsolePort" then
             self:RegisterConsolePortActionPageCallback()
         end

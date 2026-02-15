@@ -88,6 +88,7 @@ unpack = unpack
 ---@field ChatFrameMenuButton any
 ---@field ConsolePort any
 ---@field ConsolePortActionBarConfig any
+---@field ConsolePortTempAbilityFrame any
 ---@field CooldownViewerSettings any
 ---@field DamageMeter any
 ---@field GroupLootHistoryFrame any
