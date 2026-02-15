@@ -135,19 +135,25 @@ function UITweaks:PLAYER_TARGET_CHANGED()
 end
 
 function UITweaks:ACTIONBAR_SLOT_CHANGED()
-    self.auras.ACTIONBAR_SLOT_CHANGED(self)
+    self.auras.RequestActionButtonAuraRefresh(self)
 end
 
 function UITweaks:ACTIONBAR_PAGE_CHANGED()
-    self.auras.ACTIONBAR_PAGE_CHANGED(self)
+    self.auras.RequestActionButtonAuraRefresh(self, true)
+    self.auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
 end
 
 function UITweaks:MODIFIER_STATE_CHANGED()
-    self.auras.MODIFIER_STATE_CHANGED(self)
+    self.auras.RequestActionButtonAuraRefresh(self, true)
+    self.auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
 end
 
 function UITweaks:UNIT_AURA(_, unit)
-    self.auras.UNIT_AURA(self, nil, unit)
+    if unit ~= "player" and unit ~= "target" then return end
+    self.auras.RequestActionButtonAuraRefresh(self)
+    if unit == "player" then
+        self.auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
+    end
 end
 
 function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()

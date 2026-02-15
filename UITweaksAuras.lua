@@ -757,26 +757,4 @@ function Auras:ApplyActionButtonAuraTimers()
     Auras.ApplyCooldownViewerAlpha(self)
 end
 
-function Auras:ACTIONBAR_SLOT_CHANGED()
-    Auras.RequestActionButtonAuraRefresh(self)
-end
-
-function Auras:ACTIONBAR_PAGE_CHANGED()
-    Auras.RequestActionButtonAuraRefresh(self, true)
-    Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
-end
-
-function Auras:MODIFIER_STATE_CHANGED()
-    Auras.RequestActionButtonAuraRefresh(self, true)
-    Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
-end
-
-function Auras:UNIT_AURA(_, unit)
-    if unit ~= "player" and unit ~= "target" then return end
-    Auras.RequestActionButtonAuraRefresh(self)
-    if unit == "player" then
-        Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
-    end
-end
-
 return Auras
