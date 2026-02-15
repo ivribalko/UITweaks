@@ -101,6 +101,9 @@ end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
     self:ScheduleDelayedVisibilityUpdate()
+    if self.db.profile.showActionButtonAuraTimers then
+        self.auras.OnCombatEnded(self)
+    end
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
@@ -129,7 +132,7 @@ end
 function UITweaks:PLAYER_TARGET_CHANGED()
     self:UpdateTargetTooltip()
     self:UpdateTargetFrameVisibility()
-    if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
+    if self.db.profile.showActionButtonAuraTimers then
         self.auras.RequestActionButtonAuraRefresh(self)
     end
 end
@@ -274,7 +277,7 @@ function UITweaks:ApplyChatLineFade()
 end
 
 function UITweaks:HideHelpTips()
-    if self.db and self.db.profile.hideHelpTips and HelpTip then
+    if self.db.profile.hideHelpTips and HelpTip then
         if HelpTip.HideAllSystem then HelpTip:HideAllSystem() end
         if HelpTip.HideAll then HelpTip:HideAll(UIParent) end
     end

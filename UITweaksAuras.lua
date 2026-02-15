@@ -9,6 +9,10 @@ local hookedActionButtons = setmetatable({}, { __mode = "k" })
 local hookedAuraViewers = setmetatable({}, { __mode = "k" })
 local hookedAuraItems = setmetatable({}, { __mode = "k" })
 
+local function isInCombat()
+    return InCombatLockdown and InCombatLockdown()
+end
+
 local function isActionButtonFrame(frame)
     if not frame or type(frame) ~= "table" then return false end
     if not frame.GetObjectType then return false end
@@ -203,7 +207,7 @@ function Auras:BuildActionButtonCache()
         if isActionButtonFrame(frame) then
             if getActionSpellID(frame) then
                 addButton(frame)
-            elseif self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
+            elseif self.db.profile.showActionButtonAuraTimers then
                 local actionType = getActionInfoFromButton(frame)
                 if actionType then
                     addButton(frame)
@@ -228,11 +232,56 @@ function Auras:HookActionButtonUpdateAction(button)
                 overlay.manualStart = nil
                 overlay.manualDuration = nil
                 overlay.manualActionKey = nil
+                if isInCombat() then
+                    Auras.ApplyCachedManualHighlightForButton(self, button, overlay, currentKey)
+                end
                 if overlay.Update then overlay:Update() end
             end
         end
     end)
     hookedActionButtons[button] = true
+end
+
+function Auras:GetCachedManualAuraDuration(actionKey)
+    if not actionKey then return nil end
+    if not self.manualAuraDurationByActionKey then return nil end
+    local duration = self.manualAuraDurationByActionKey[actionKey]
+    if not duration or duration <= 0 then return nil end
+    return duration
+end
+
+function Auras:ApplyCachedManualHighlightForButton(button, overlay, actionKey)
+    if not button then return false end
+    local targetOverlay = overlay or Auras.GetActionButtonAuraOverlay(self, button)
+    if not targetOverlay then return false end
+    if targetOverlay.viewerAuraUnit and targetOverlay.viewerAuraInstanceID then return false end
+
+    local resolvedActionKey = actionKey or getActionKeyFromButton(button)
+    local duration = Auras.GetCachedManualAuraDuration(self, resolvedActionKey)
+    if not duration then return false end
+
+    if targetOverlay.manualActionKey == resolvedActionKey and targetOverlay.manualStart and targetOverlay.manualDuration and GetTime then
+        local now = GetTime()
+        if now < (targetOverlay.manualStart + targetOverlay.manualDuration) then
+            return true
+        end
+    end
+
+    targetOverlay.manualActionKey = resolvedActionKey
+    targetOverlay:SetManualCooldown(duration)
+    return true
+end
+
+function Auras:ApplyManualHighlightsFromCacheForCombat()
+    if not self.db.profile.showActionButtonAuraTimers then return end
+    if not self.actionButtonsCache or self.actionButtonsCacheDirty then
+        self.actionButtonsCacheDirty = nil
+        Auras.BuildActionButtonCache(self)
+    end
+    for _, button in ipairs(self.actionButtonsCache or {}) do
+        local overlay = Auras.GetActionButtonAuraOverlay(self, button)
+        Auras.ApplyCachedManualHighlightForButton(self, button, overlay)
+    end
 end
 
 function Auras:ResolveActionButtonInfo(button)
@@ -261,12 +310,18 @@ function Auras:ResolveActionButtonInfo(button)
 end
 
 function Auras:ReapplyManualHighlightsFromPlayerAuras()
-    if not self.db or not self.db.profile or not self.db.profile.showActionButtonAuraTimers then return end
-    if InCombatLockdown and InCombatLockdown() then return end
+    if not self.db.profile.showActionButtonAuraTimers then return end
+    if isInCombat() then
+        self.pendingReapplyPlayerAurasAfterCombat = true
+        Auras.ApplyManualHighlightsFromCacheForCombat(self)
+        return
+    end
+    self.pendingReapplyPlayerAurasAfterCombat = nil
     if not self.actionButtonsCache or self.actionButtonsCacheDirty then
         self.actionButtonsCacheDirty = nil
         Auras.BuildActionButtonCache(self)
     end
+    self.manualAuraDurationByActionKey = self.manualAuraDurationByActionKey or {}
     local auraBySpellID = {}
     local auraByName = {}
     if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
@@ -301,6 +356,9 @@ function Auras:ReapplyManualHighlightsFromPlayerAuras()
             if aura and aura.duration and aura.duration > 0 and aura.expirationTime then
                 local startTime = aura.expirationTime - aura.duration
                 overlay.manualActionKey = getActionKeyFromButton(button)
+                if overlay.manualActionKey then
+                    self.manualAuraDurationByActionKey[overlay.manualActionKey] = aura.duration
+                end
                 overlay:SetManualCooldownFromStart(startTime, aura.duration)
             elseif overlay.manualStart then
                 overlay.manualStart = nil
@@ -317,9 +375,23 @@ function Auras:ScheduleReapplyManualHighlightsFromPlayerAuras()
     self.pendingReapplyPlayerAuras = true
     local function run()
         self.pendingReapplyPlayerAuras = false
+        if isInCombat() then
+            self.pendingReapplyPlayerAurasAfterCombat = true
+            Auras.ApplyManualHighlightsFromCacheForCombat(self)
+            return
+        end
         Auras.ReapplyManualHighlightsFromPlayerAuras(self)
     end
     C_Timer.After(0.05, run)
+end
+
+function Auras:OnCombatEnded()
+    if not self.db.profile.showActionButtonAuraTimers then
+        self.pendingReapplyPlayerAurasAfterCombat = nil
+        return
+    end
+    Auras.RequestActionButtonAuraRefresh(self, true)
+    Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
 end
 
 function Auras:FindActionButtonsForSpellName(name)
@@ -616,7 +688,7 @@ function Auras:RefreshActionButtonAuraOverlays(rebuildCache)
 end
 
 function Auras:RequestActionButtonAuraRefresh(rebuildCache)
-    if not self.db or not self.db.profile or not self.db.profile.showActionButtonAuraTimers then
+    if not self.db.profile.showActionButtonAuraTimers then
         return
     end
     if rebuildCache then
@@ -627,7 +699,7 @@ function Auras:RequestActionButtonAuraRefresh(rebuildCache)
 
     local function run()
         self.pendingAuraRefresh = false
-        if not self.db or not self.db.profile or not self.db.profile.showActionButtonAuraTimers then
+        if not self.db.profile.showActionButtonAuraTimers then
             self.actionButtonsCacheDirty = nil
             return
         end

@@ -81,6 +81,7 @@ Exceptions:
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
+- Assume `self.db`, `self.auras`, and `self.options` always exist; do not add nil/existence guards for them.
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - Service panel is alpha-only and intentionally omitted from this README.
 - `refs/` contains addons and other files used strictly as references. Do not use or read anything in `refs/` unless explicitly instructed.
