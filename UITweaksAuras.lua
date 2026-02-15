@@ -1,5 +1,9 @@
-local addonName = ...
-local UITweaks = LibStub("AceAddon-3.0"):GetAddon(addonName)
+local _, addonTable = ...
+local Auras = {}
+
+if addonTable then
+    addonTable.Auras = Auras
+end
 
 local hookedActionButtons = setmetatable({}, { __mode = "k" })
 local hookedAuraViewers = setmetatable({}, { __mode = "k" })
@@ -175,7 +179,7 @@ local function getActionKeyFromButton(button)
     return tostring(actionType) .. ":" .. tostring(actionID)
 end
 
-function UITweaks:BuildActionButtonCache()
+function Auras:BuildActionButtonCache()
     local buttons = {}
     local seen = {}
     local function addButton(btn)
@@ -183,7 +187,7 @@ function UITweaks:BuildActionButtonCache()
         if isCustomBindingButton(btn) then return end
         seen[btn] = true
         table.insert(buttons, btn)
-        self:HookActionButtonUpdateAction(btn)
+        Auras.HookActionButtonUpdateAction(self, btn)
     end
 
     if ActionButtonUtil and ActionButtonUtil.ActionBarButtonNames then
@@ -212,11 +216,11 @@ function UITweaks:BuildActionButtonCache()
     self.actionButtonsCache = buttons
 end
 
-function UITweaks:HookActionButtonUpdateAction(button)
+function Auras:HookActionButtonUpdateAction(button)
     if not button or hookedActionButtons[button] then return end
     if type(button.UpdateAction) ~= "function" then return end
     hooksecurefunc(button, "UpdateAction", function()
-        self:RequestActionButtonAuraRefresh()
+        Auras.RequestActionButtonAuraRefresh(self)
         local overlay = self.actionButtonAuraOverlays and self.actionButtonAuraOverlays[button] or nil
         if overlay and overlay.manualActionKey then
             local currentKey = getActionKeyFromButton(button)
@@ -231,7 +235,7 @@ function UITweaks:HookActionButtonUpdateAction(button)
     hookedActionButtons[button] = true
 end
 
-function UITweaks:ResolveActionButtonInfo(button)
+function Auras:ResolveActionButtonInfo(button)
     local actionType, actionID = getActionInfoFromButton(button)
     if not actionType then return end
     local spellID
@@ -256,12 +260,12 @@ function UITweaks:ResolveActionButtonInfo(button)
     return spellID, spellName
 end
 
-function UITweaks:ReapplyManualHighlightsFromPlayerAuras()
+function Auras:ReapplyManualHighlightsFromPlayerAuras()
     if not self.db or not self.db.profile or not self.db.profile.showActionButtonAuraTimers then return end
     if InCombatLockdown and InCombatLockdown() then return end
     if not self.actionButtonsCache or self.actionButtonsCacheDirty then
         self.actionButtonsCacheDirty = nil
-        self:BuildActionButtonCache()
+        Auras.BuildActionButtonCache(self)
     end
     local auraBySpellID = {}
     local auraByName = {}
@@ -290,9 +294,9 @@ function UITweaks:ReapplyManualHighlightsFromPlayerAuras()
         end)
     end
     for _, button in ipairs(self.actionButtonsCache or {}) do
-        local overlay = self:GetActionButtonAuraOverlay(button)
+        local overlay = Auras.GetActionButtonAuraOverlay(self, button)
         if not overlay.viewerAuraUnit or not overlay.viewerAuraInstanceID then
-            local spellID, spellName = self:ResolveActionButtonInfo(button)
+            local spellID, spellName = Auras.ResolveActionButtonInfo(self, button)
             local aura = (spellID and auraBySpellID[spellID]) or (spellName and auraByName[spellName]) or nil
             if aura and aura.duration and aura.duration > 0 and aura.expirationTime then
                 local startTime = aura.expirationTime - aura.duration
@@ -308,19 +312,19 @@ function UITweaks:ReapplyManualHighlightsFromPlayerAuras()
     end
 end
 
-function UITweaks:ScheduleReapplyManualHighlightsFromPlayerAuras()
+function Auras:ScheduleReapplyManualHighlightsFromPlayerAuras()
     if self.pendingReapplyPlayerAuras then return end
     self.pendingReapplyPlayerAuras = true
     local function run()
         self.pendingReapplyPlayerAuras = false
-        self:ReapplyManualHighlightsFromPlayerAuras()
+        Auras.ReapplyManualHighlightsFromPlayerAuras(self)
     end
     C_Timer.After(0.05, run)
 end
 
-function UITweaks:FindActionButtonsForSpellName(name)
+function Auras:FindActionButtonsForSpellName(name)
     if not self.actionButtonsCache then
-        self:BuildActionButtonCache()
+        Auras.BuildActionButtonCache(self)
     end
     local matches = {}
     for _, btn in ipairs(self.actionButtonsCache) do
@@ -350,12 +354,12 @@ function UITweaks:FindActionButtonsForSpellName(name)
     return matches
 end
 
-function UITweaks:GetActionButtonList(spellID)
+function Auras:GetActionButtonList(spellID)
     local buttonList = {}
     local seen = {}
     local spellName = C_Spell.GetSpellName(spellID)
     if not spellName then return buttonList end
-    local buttons = self:FindActionButtonsForSpellName(spellName)
+    local buttons = Auras.FindActionButtonsForSpellName(self, spellName)
     for _, button in ipairs(buttons) do
         if not seen[button] then
             seen[button] = true
@@ -514,7 +518,7 @@ local function createActionButtonAuraOverlay(actionButton)
     return overlay
 end
 
-function UITweaks:ReportCooldownViewerMissing()
+function Auras:ReportCooldownViewerMissing()
     if self.cooldownViewerMissingReported then return end
     self.cooldownViewerMissingReported = true
 
@@ -530,7 +534,7 @@ function UITweaks:ReportCooldownViewerMissing()
     end
 end
 
-function UITweaks:IsCooldownViewerVisible(viewer)
+function Auras:IsCooldownViewerVisible(viewer)
     if not viewer or not viewer.GetAlpha then return false end
     local alpha = viewer:GetAlpha()
     if alpha and alpha <= 0 then return false end
@@ -540,7 +544,7 @@ function UITweaks:IsCooldownViewerVisible(viewer)
     return true
 end
 
-function UITweaks:GetActionButtonAuraOverlay(actionButton)
+function Auras:GetActionButtonAuraOverlay(actionButton)
     if not self.actionButtonAuraOverlays then
         self.actionButtonAuraOverlays = {}
     end
@@ -550,68 +554,68 @@ function UITweaks:GetActionButtonAuraOverlay(actionButton)
     return self.actionButtonAuraOverlays[actionButton]
 end
 
-function UITweaks:UpdateActionButtonAuraFromItem(item)
+function Auras:UpdateActionButtonAuraFromItem(item)
     if not self.db.profile.showActionButtonAuraTimers then return end
     if not item.cooldownID then return end
     if not item.auraDataUnit or not item.auraInstanceID then return end
     if not C_CooldownViewer or not C_CooldownViewer.GetCooldownViewerCooldownInfo then
-        self:ReportCooldownViewerMissing()
+        Auras.ReportCooldownViewerMissing(self)
         return
     end
 
     local cdInfo = C_CooldownViewer.GetCooldownViewerCooldownInfo(item.cooldownID)
     if cdInfo and cdInfo.spellID then
-        local buttonList = self:GetActionButtonList(cdInfo.spellID)
+        local buttonList = Auras.GetActionButtonList(self, cdInfo.spellID)
         for _, button in ipairs(buttonList) do
-            local overlay = self:GetActionButtonAuraOverlay(button)
+            local overlay = Auras.GetActionButtonAuraOverlay(self, button)
             overlay:SetViewerItem(item, cdInfo.spellID)
             overlay:Update()
         end
     end
 end
 
-function UITweaks:UpdateActionButtonAurasFromViewer(viewer)
+function Auras:UpdateActionButtonAurasFromViewer(viewer)
     if not viewer or not viewer.GetItemFrames then return end
     for _, itemFrame in ipairs(viewer:GetItemFrames()) do
         if itemFrame.cooldownID then
-            self:UpdateActionButtonAuraFromItem(itemFrame)
+            Auras.UpdateActionButtonAuraFromItem(self, itemFrame)
         end
     end
 end
 
-function UITweaks:HookActionButtonAuraViewer(viewer)
+function Auras:HookActionButtonAuraViewer(viewer)
     if not viewer or hookedAuraViewers[viewer] then return end
-    local hook = function(_, item) self:HookActionButtonAuraViewerItem(item) end
+    local hook = function(_, item) Auras.HookActionButtonAuraViewerItem(self, item) end
     hooksecurefunc(viewer, "OnAcquireItemFrame", hook)
     hookedAuraViewers[viewer] = true
 end
 
-function UITweaks:HookActionButtonAuraViewerItem(item)
+function Auras:HookActionButtonAuraViewerItem(item)
     if not item or hookedAuraItems[item] then return end
-    local hook = function() self:UpdateActionButtonAuraFromItem(item) end
+    local hook = function() Auras.UpdateActionButtonAuraFromItem(self, item) end
     hooksecurefunc(item, "RefreshData", hook)
     hookedAuraItems[item] = true
 end
 
-function UITweaks:RefreshActionButtonAuraOverlays(rebuildCache)
+function Auras:RefreshActionButtonAuraOverlays(rebuildCache)
     if not self.actionButtonAuraOverlays then return end
     if rebuildCache then
         self.actionButtonsCache = nil
-        self:BuildActionButtonCache()
+        Auras.BuildActionButtonCache(self)
     end
     for _, overlay in pairs(self.actionButtonAuraOverlays) do
         overlay:SetViewerItem(nil)
     end
-    self:UpdateActionButtonAurasFromViewer(BuffBarCooldownViewer)
-    self:UpdateActionButtonAurasFromViewer(BuffIconCooldownViewer)
-    self:UpdateActionButtonAurasFromViewer(EssentialCooldownViewer)
-    self:UpdateActionButtonAurasFromViewer(UtilityCooldownViewer)
+    Auras.UpdateActionButtonAurasFromViewer(self, BuffBarCooldownViewer)
+    Auras.UpdateActionButtonAurasFromViewer(self, BuffIconCooldownViewer)
+    Auras.UpdateActionButtonAurasFromViewer(self, EssentialCooldownViewer)
+    Auras.UpdateActionButtonAurasFromViewer(self, UtilityCooldownViewer)
     for _, overlay in pairs(self.actionButtonAuraOverlays) do
         overlay:Update()
     end
 end
 
-function UITweaks:RequestActionButtonAuraRefresh(rebuildCache)
+function Auras:RequestActionButtonAuraRefresh(rebuildCache)
     if not self.db or not self.db.profile or not self.db.profile.showActionButtonAuraTimers then
         return
     end
@@ -627,14 +631,14 @@ function UITweaks:RequestActionButtonAuraRefresh(rebuildCache)
             self.actionButtonsCacheDirty = nil
             return
         end
-        self:RefreshActionButtonAuraOverlays(self.actionButtonsCacheDirty)
+        Auras.RefreshActionButtonAuraOverlays(self, self.actionButtonsCacheDirty)
         self.actionButtonsCacheDirty = nil
     end
 
     C_Timer.After(0, run)
 end
 
-function UITweaks:ClearActionButtonAuraOverlays()
+function Auras:ClearActionButtonAuraOverlays()
     if not self.actionButtonAuraOverlays then return end
     for _, overlay in pairs(self.actionButtonAuraOverlays) do
         overlay:SetViewerItem(nil)
@@ -642,7 +646,7 @@ function UITweaks:ClearActionButtonAuraOverlays()
     end
 end
 
-function UITweaks:InitializeActionButtonAuraTimers()
+function Auras:InitializeActionButtonAuraTimers()
     if self.actionButtonAuraTimersInitialized then return end
     if not C_UnitAuras or not C_UnitAuras.GetAuraDuration then return end
     if not BuffBarCooldownViewer or not BuffIconCooldownViewer then
@@ -654,50 +658,46 @@ function UITweaks:InitializeActionButtonAuraTimers()
         UIParentLoadAddOn("Blizzard_CooldownViewer")
     end
     if not BuffBarCooldownViewer or not BuffIconCooldownViewer then
-        self:ReportCooldownViewerMissing()
+        Auras.ReportCooldownViewerMissing(self)
         return
     end
-    local buffBarVisible = self:IsCooldownViewerVisible(BuffBarCooldownViewer)
-    local buffIconVisible = self:IsCooldownViewerVisible(BuffIconCooldownViewer)
-    local essentialVisible = self:IsCooldownViewerVisible(EssentialCooldownViewer)
-    local utilityVisible = self:IsCooldownViewerVisible(UtilityCooldownViewer)
+    local buffBarVisible = Auras.IsCooldownViewerVisible(self, BuffBarCooldownViewer)
+    local buffIconVisible = Auras.IsCooldownViewerVisible(self, BuffIconCooldownViewer)
+    local essentialVisible = Auras.IsCooldownViewerVisible(self, EssentialCooldownViewer)
+    local utilityVisible = Auras.IsCooldownViewerVisible(self, UtilityCooldownViewer)
     if not buffBarVisible and not buffIconVisible and not essentialVisible and not utilityVisible then
-        self:ReportCooldownViewerMissing()
+        Auras.ReportCooldownViewerMissing(self)
         return
     end
     self.actionButtonAuraTimersInitialized = true
     self.actionButtonAuraOverlays = self.actionButtonAuraOverlays or {}
     self.actionButtonsCache = nil
 
-    self:HookActionButtonAuraViewer(BuffBarCooldownViewer)
-    self:HookActionButtonAuraViewer(BuffIconCooldownViewer)
-    self:HookActionButtonAuraViewer(EssentialCooldownViewer)
-    self:HookActionButtonAuraViewer(UtilityCooldownViewer)
+    Auras.HookActionButtonAuraViewer(self, BuffBarCooldownViewer)
+    Auras.HookActionButtonAuraViewer(self, BuffIconCooldownViewer)
+    Auras.HookActionButtonAuraViewer(self, EssentialCooldownViewer)
+    Auras.HookActionButtonAuraViewer(self, UtilityCooldownViewer)
 
-    self:BuildActionButtonCache()
-    self:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
-    self:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
-    self:RegisterEvent("MODIFIER_STATE_CHANGED")
-    self:RegisterEvent("UNIT_AURA")
-    self:RegisterConsolePortActionPageCallback()
+    Auras.BuildActionButtonCache(self)
+    Auras.RegisterConsolePortActionPageCallback(self)
 end
 
-function UITweaks:RegisterConsolePortActionPageCallback()
+function Auras:RegisterConsolePortActionPageCallback()
     if self.consolePortActionPageCallbackRegistered then return end
     local consolePort = _G.ConsolePort
     if not consolePort or not consolePort.GetData then return end
     local data = consolePort:GetData()
     if not data or not data.RegisterCallback then return end
-    data:RegisterCallback("OnActionPageChanged", self.ConsolePortActionPageChanged, self)
+    data:RegisterCallback("OnActionPageChanged", Auras.ConsolePortActionPageChanged, self)
     self.consolePortActionPageCallbackRegistered = true
 end
 
-function UITweaks:ConsolePortActionPageChanged()
-    self:RequestActionButtonAuraRefresh(true)
-    self:ScheduleReapplyManualHighlightsFromPlayerAuras()
+function Auras:ConsolePortActionPageChanged()
+    Auras.RequestActionButtonAuraRefresh(self, true)
+    Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
 end
 
-function UITweaks:ApplyCooldownViewerAlpha()
+function Auras:ApplyCooldownViewerAlpha()
     local shouldHide = self.db.profile.showActionButtonAuraTimers and self.db.profile.hideBlizzardCooldownViewer
     if shouldHide and UIParentLoadAddOn then
         if not BuffBarCooldownViewer or not BuffIconCooldownViewer then
@@ -747,34 +747,36 @@ function UITweaks:ApplyCooldownViewerAlpha()
     applyViewerTransform(UtilityCooldownViewer, "utility")
 end
 
-function UITweaks:ApplyActionButtonAuraTimers()
+function Auras:ApplyActionButtonAuraTimers()
     if self.db.profile.showActionButtonAuraTimers then
-        self:InitializeActionButtonAuraTimers()
-        self:RefreshActionButtonAuraOverlays()
+        Auras.InitializeActionButtonAuraTimers(self)
+        Auras.RefreshActionButtonAuraOverlays(self)
     else
-        self:ClearActionButtonAuraOverlays()
+        Auras.ClearActionButtonAuraOverlays(self)
     end
-    self:ApplyCooldownViewerAlpha()
+    Auras.ApplyCooldownViewerAlpha(self)
 end
 
-function UITweaks:ACTIONBAR_SLOT_CHANGED()
-    self:RequestActionButtonAuraRefresh()
+function Auras:ACTIONBAR_SLOT_CHANGED()
+    Auras.RequestActionButtonAuraRefresh(self)
 end
 
-function UITweaks:ACTIONBAR_PAGE_CHANGED()
-    self:RequestActionButtonAuraRefresh(true)
-    self:ScheduleReapplyManualHighlightsFromPlayerAuras()
+function Auras:ACTIONBAR_PAGE_CHANGED()
+    Auras.RequestActionButtonAuraRefresh(self, true)
+    Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
 end
 
-function UITweaks:MODIFIER_STATE_CHANGED()
-    self:RequestActionButtonAuraRefresh(true)
-    self:ScheduleReapplyManualHighlightsFromPlayerAuras()
+function Auras:MODIFIER_STATE_CHANGED()
+    Auras.RequestActionButtonAuraRefresh(self, true)
+    Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
 end
 
-function UITweaks:UNIT_AURA(_, unit)
+function Auras:UNIT_AURA(_, unit)
     if unit ~= "player" and unit ~= "target" then return end
-    self:RequestActionButtonAuraRefresh()
+    Auras.RequestActionButtonAuraRefresh(self)
     if unit == "player" then
-        self:ScheduleReapplyManualHighlightsFromPlayerAuras()
+        Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
     end
 end
+
+return Auras

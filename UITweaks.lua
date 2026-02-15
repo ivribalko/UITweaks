@@ -8,6 +8,7 @@ local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS or 10
 
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
+    self.auras = type(require) == "function" and require("UITweaksAuras") or addonTable.Auras
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
     options.OnInitialize(self)
 end
@@ -20,7 +21,7 @@ function UITweaks:OnEnable()
     self:HookHelpTipFrames()
     self:ApplyBuffFrameHide()
     if self.db.profile.showActionButtonAuraTimers then
-        self:ApplyActionButtonAuraTimers()
+        self.auras.ApplyActionButtonAuraTimers(self)
     end
     self:UpdateBottomLeftReloadButton()
     self:ApplyVisibilityState()
@@ -35,6 +36,10 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
+    self:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+    self:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+    self:RegisterEvent("MODIFIER_STATE_CHANGED")
+    self:RegisterEvent("UNIT_AURA")
     if self.db.profile.showOptionsOnReload then
         C_Timer.After(1, function() self:OpenOptionsPanel() end)
     end
@@ -1304,7 +1309,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameHide()
         if self.db.profile.showActionButtonAuraTimers then
-            self:ApplyActionButtonAuraTimers()
+            self.auras.ApplyActionButtonAuraTimers(self)
         end
         self:ApplyVisibilityState()
         self:ScheduleDelayedVisibilityUpdate(true)
@@ -1313,9 +1318,9 @@ function UITweaks:ADDON_LOADED(_, addonName)
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
         if self.db.profile.showActionButtonAuraTimers then
-            self:InitializeActionButtonAuraTimers()
+            self.auras.InitializeActionButtonAuraTimers(self)
         end
-        self:RequestActionButtonAuraRefresh(true)
+        self.auras.RequestActionButtonAuraRefresh(self, true)
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
     elseif addonName == "ConsolePort"
@@ -1326,12 +1331,12 @@ function UITweaks:ADDON_LOADED(_, addonName)
     then
         self:UpdateConsolePortTempAbilityFrameVisibility()
         if addonName == "ConsolePort" then
-            self:RegisterConsolePortActionPageCallback()
+            self.auras.RegisterConsolePortActionPageCallback(self)
         end
         if self.db.profile.showActionButtonAuraTimers then
-            self:InitializeActionButtonAuraTimers()
+            self.auras.InitializeActionButtonAuraTimers(self)
         end
-        self:RequestActionButtonAuraRefresh(true)
+        self.auras.RequestActionButtonAuraRefresh(self, true)
     end
 end
 
@@ -1367,7 +1372,7 @@ function UITweaks:PLAYER_ENTERING_WORLD()
         self:StartSkyridingBarMonitor()
     end
     if self.db.profile.showActionButtonAuraTimers then
-        C_Timer.After(0.3, function() self:ReapplyManualHighlightsFromPlayerAuras() end)
+        C_Timer.After(0.3, function() self.auras.ReapplyManualHighlightsFromPlayerAuras(self) end)
     end
 end
 
@@ -1390,8 +1395,24 @@ function UITweaks:PLAYER_TARGET_CHANGED()
     self:UpdateTargetTooltip()
     self:UpdateTargetFrameVisibility()
     if self.db and self.db.profile and self.db.profile.showActionButtonAuraTimers then
-        self:RequestActionButtonAuraRefresh()
+        self.auras.RequestActionButtonAuraRefresh(self)
     end
+end
+
+function UITweaks:ACTIONBAR_SLOT_CHANGED()
+    self.auras.ACTIONBAR_SLOT_CHANGED(self)
+end
+
+function UITweaks:ACTIONBAR_PAGE_CHANGED()
+    self.auras.ACTIONBAR_PAGE_CHANGED(self)
+end
+
+function UITweaks:MODIFIER_STATE_CHANGED()
+    self.auras.MODIFIER_STATE_CHANGED(self)
+end
+
+function UITweaks:UNIT_AURA(_, unit)
+    self.auras.UNIT_AURA(self, nil, unit)
 end
 
 function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()

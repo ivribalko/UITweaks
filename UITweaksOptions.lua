@@ -113,7 +113,7 @@ function Options.OnInitialize(self)
                         "Move Blizzard's Cooldown Viewer elements off-screen and shrink them to near-zero scale (Buff Bar, Buff Icon, Essential, Utility).",
                         1,
                         function()
-                            self:ApplyActionButtonAuraTimers()
+                            self.auras.ApplyActionButtonAuraTimers(self)
                         end,
                         "showActionButtonAuraTimers"
                     ),
@@ -136,7 +136,7 @@ function Options.OnInitialize(self)
                         "Show buffs and debuffs highlight and remaining duration on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars' then close the window to save it. Cooldown Viewer auras work in and out of combat. Additional highlights from untracked player buffs and items on the action bar only reapply out of combat.",
                         4,
                         function()
-                            self:ApplyActionButtonAuraTimers()
+                            self.auras.ApplyActionButtonAuraTimers(self)
                         end
                     ),
                     openCooldownViewerSettings = {
