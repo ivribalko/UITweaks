@@ -5,6 +5,9 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local SKYRIDING_BAR_SLOT_START = 121
 local SKYRIDING_BAR_SLOT_COUNT = 12
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS or 10
+local NEXT_QUEST_MACRO_NAME = "Next Quest"
+local NEXT_QUEST_MACRO_ICON = "INV_Misc_Note_01"
+local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
@@ -14,6 +17,7 @@ function UITweaks:OnInitialize()
 end
 
 function UITweaks:OnEnable()
+    self:RegisterChatCommand("uitnextquest", "HandleNextQuestSlashCommand")
     self:CacheDefaultChatWindowTimes()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
@@ -121,6 +125,10 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     if self.db.profile.showActionButtonAuraTimers then
         C_Timer.After(0.3, function() self.auras.ReapplyManualHighlightsFromPlayerAuras(self) end)
     end
+end
+
+function UITweaks:HandleNextQuestSlashCommand()
+    self:SelectNextTrackedQuest()
 end
 
 function UITweaks:PLAYER_LOGOUT()
@@ -975,6 +983,113 @@ function UITweaks:EnsureBottomLeftReloadButton()
 
     self.bottomLeftReloadButton = button
     return button
+end
+
+function UITweaks:GetWatchedQuestIDs()
+    local watchedQuestIDs = {}
+    local questLog = _G["C_QuestLog"]
+    if not (questLog and questLog.GetNumQuestWatches and questLog.GetQuestIDForQuestWatchIndex) then
+        return watchedQuestIDs
+    end
+    local watchCount = questLog.GetNumQuestWatches() or 0
+    for watchIndex = 1, watchCount do
+        local questID = questLog.GetQuestIDForQuestWatchIndex(watchIndex)
+        if questID then
+            watchedQuestIDs[#watchedQuestIDs + 1] = questID
+        end
+    end
+    return watchedQuestIDs
+end
+
+function UITweaks:GetSuperTrackedQuestID()
+    local superTrack = _G["C_SuperTrack"]
+    local getSuperTrackedQuestID = _G["GetSuperTrackedQuestID"]
+    if superTrack and superTrack.GetSuperTrackedQuestID then
+        return superTrack.GetSuperTrackedQuestID()
+    end
+    if getSuperTrackedQuestID then
+        return getSuperTrackedQuestID()
+    end
+end
+
+function UITweaks:SetSuperTrackedQuestID(questID)
+    local superTrack = _G["C_SuperTrack"]
+    local setSuperTrackedQuestID = _G["SetSuperTrackedQuestID"]
+    if superTrack and superTrack.SetSuperTrackedQuestID then
+        superTrack.SetSuperTrackedQuestID(questID)
+    elseif setSuperTrackedQuestID then
+        setSuperTrackedQuestID(questID)
+    end
+end
+
+function UITweaks:SelectNextTrackedQuest()
+    local watchedQuestIDs = self:GetWatchedQuestIDs()
+    if #watchedQuestIDs == 0 then
+        return
+    end
+    local activeQuestID = self:GetSuperTrackedQuestID()
+    local activeIndex
+    for index, questID in ipairs(watchedQuestIDs) do
+        if questID == activeQuestID then
+            activeIndex = index
+            break
+        end
+    end
+    local nextIndex = activeIndex and (activeIndex + 1) or 1
+    if nextIndex > #watchedQuestIDs then
+        nextIndex = 1
+    end
+    self:SetSuperTrackedQuestID(watchedQuestIDs[nextIndex])
+end
+
+function UITweaks:OpenMacroPanel()
+    local cAddOns = _G["C_AddOns"]
+    local isAddOnLoaded = _G["IsAddOnLoaded"]
+    local loadAddOn = (cAddOns and cAddOns.LoadAddOn) or _G["UIParentLoadAddOn"]
+    local loaded = (cAddOns and cAddOns.IsAddOnLoaded and cAddOns.IsAddOnLoaded("Blizzard_MacroUI"))
+        or (isAddOnLoaded and isAddOnLoaded("Blizzard_MacroUI"))
+    if not loaded and loadAddOn then
+        loadAddOn("Blizzard_MacroUI")
+    end
+
+    local macroFrame = _G["MacroFrame"]
+    local showUIPanel = _G["ShowUIPanel"]
+    if macroFrame and showUIPanel then
+        showUIPanel(macroFrame)
+    elseif macroFrame and macroFrame.Show then
+        macroFrame:Show()
+    end
+end
+
+function UITweaks:EnsureAddMacroForNextQuestInTracker()
+    local getMacroIndexByName = _G["GetMacroIndexByName"]
+    local createMacro = _G["CreateMacro"]
+    local editMacro = _G["EditMacro"]
+    local getMacroInfo = _G["GetMacroInfo"]
+    local getNumMacros = _G["GetNumMacros"]
+    if not (getMacroIndexByName and createMacro and editMacro and getMacroInfo and getNumMacros) then
+        return false
+    end
+
+    local existingMacroIndex = getMacroIndexByName(NEXT_QUEST_MACRO_NAME)
+    if existingMacroIndex and existingMacroIndex > 0 then
+        local _, _, macroBody = getMacroInfo(existingMacroIndex)
+        if macroBody ~= NEXT_QUEST_MACRO_BODY then
+            editMacro(existingMacroIndex, NEXT_QUEST_MACRO_NAME, NEXT_QUEST_MACRO_ICON, NEXT_QUEST_MACRO_BODY)
+        end
+        self:OpenMacroPanel()
+        return true
+    end
+
+    local globalMacroCount = select(1, getNumMacros()) or 0
+    local maxGlobalMacros = _G["MAX_ACCOUNT_MACROS"] or 120
+    if globalMacroCount >= maxGlobalMacros then
+        return false
+    end
+
+    createMacro(NEXT_QUEST_MACRO_NAME, NEXT_QUEST_MACRO_ICON, NEXT_QUEST_MACRO_BODY, false)
+    self:OpenMacroPanel()
+    return true
 end
 
 function UITweaks:UpdateBottomLeftReloadButton()

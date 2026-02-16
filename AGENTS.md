@@ -51,6 +51,7 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 
 ### Other
 
+- Add Next Quest Macro — Pressing this button creates or updates a macro named Next Quest that runs /uitnextquest, then opens the Macro menu. The macro selects the next tracked quest in the objective tracker, or the first tracked quest if none is currently selected.
 - Auto-Hide Bags Bar — Auto-Hide the Blizzard Bags Bar until you mouse over it.
 - Auto-Hide Buff Frame — Auto-Hide the Blizzard player buff frame until you mouse over it.
 - Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.

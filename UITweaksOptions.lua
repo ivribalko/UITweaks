@@ -418,11 +418,21 @@ function Options.OnInitialize(self)
                 inline = true,
                 order = 5,
                 args = {
+                    addMacroForNextQuestInTracker = {
+                        type = "execute",
+                        name = "Add Next Quest Macro",
+                        desc = "Pressing this button creates or updates a macro named Next Quest that runs /uitnextquest, then opens the Macro menu. The macro selects the next tracked quest in the objective tracker, or the first tracked quest if none is currently selected.",
+                        order = 1,
+                        width = "full",
+                        func = function()
+                            self:EnsureAddMacroForNextQuestInTracker()
+                        end,
+                    },
                     hideBackpackButton = toggleOption(
                         "hideBackpackButton",
                         "Auto-Hide Bags Bar",
                         "Auto-Hide the Blizzard Bags Bar until you mouse over it.",
-                        1,
+                        2,
                         function()
                             self:UpdateBackpackButtonVisibility()
                         end
@@ -431,7 +441,7 @@ function Options.OnInitialize(self)
                         "hideBuffFrame",
                         "Auto-Hide Buff Frame",
                         "Auto-Hide the Blizzard player buff frame until you mouse over it.",
-                        2,
+                        3,
                         function()
                             self:ApplyBuffFrameHide()
                         end
@@ -440,7 +450,7 @@ function Options.OnInitialize(self)
                         "hideStanceButtons",
                         "Auto-Hide Stance Bar",
                         "Auto-Hide the Blizzard stance bar until you mouse over it.",
-                        3,
+                        4,
                         function()
                             self:UpdateStanceButtonsVisibility()
                         end
@@ -449,7 +459,7 @@ function Options.OnInitialize(self)
                         "hideGroupLootHistoryFrame",
                         "Hide Group Loot History",
                         "Hide the group loot history frame.",
-                        4,
+                        5,
                         function()
                             self:UpdateGroupLootHistoryVisibility()
                         end
@@ -458,7 +468,7 @@ function Options.OnInitialize(self)
                         "hideHelpTips",
                         "Hide Help Tips",
                         "Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.",
-                        5,
+                        6,
                         function()
                             self:HookHelpTipFrames()
                         end
@@ -467,7 +477,7 @@ function Options.OnInitialize(self)
                         "hideMicroMenuButtons",
                         "Hide Micro Menu Buttons",
                         "Hide all micro menu buttons except the Dungeon Finder eye.",
-                        6,
+                        7,
                         function()
                             self:UpdateMicroMenuVisibility()
                         end
