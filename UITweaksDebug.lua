@@ -1,5 +1,6 @@
 local addonName, addonTable = ...
 local Debug = {}
+local TOP_BAR_BUTTON_HEIGHT = 22
 
 if addonTable then
     addonTable.Debug = Debug
@@ -103,6 +104,7 @@ function Debug.GetBlockedActionDebugInfo(self)
         string.format("player=%s-%s", tostring(playerName), tostring(realmName)),
         string.format("inCombat=%s", inCombat),
         string.format("scriptErrors=%s", tostring(getCVar and getCVar("scriptErrors") or "unknown")),
+        string.format("scriptProfile=%s", tostring(getCVar and getCVar("scriptProfile") or "unknown")),
         string.format("taintLog=%s", tostring(getCVar and getCVar("taintLog") or "unknown")),
         string.format("wowVersion=%s", tostring(wowVersion)),
         string.format("build=%s", tostring(buildNumber)),
@@ -240,7 +242,7 @@ function Debug.EnsureBlockedActionCounterFrame(self)
     local frame = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
     frame:SetFrameStrata("TOOLTIP")
     frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
-    frame:SetSize(240, 20)
+    frame:SetSize(240, TOP_BAR_BUTTON_HEIGHT)
     frame:EnableMouse(true)
     frame:SetScript("OnClick", function()
         self:ShowBlockedActionDebugCopyDialog()
@@ -340,7 +342,7 @@ function Debug.EnsureReloadButtonForFrame(self, parent)
 
     local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     button:SetText("Reload")
-    button:SetSize(120, 22)
+    button:SetSize(120, TOP_BAR_BUTTON_HEIGHT)
     button:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -16, -16)
     button:SetScript("OnClick", function() ReloadUI() end)
     button:SetScript("OnEnter", function()
@@ -389,7 +391,7 @@ function Debug.EnsureBottomLeftReloadButton(self)
 
     local button = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
     button:SetText("Reload")
-    button:SetSize(120, 22)
+    button:SetSize(120, TOP_BAR_BUTTON_HEIGHT)
     button:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 16, -16)
     button:SetScript("OnClick", function() ReloadUI() end)
     button:SetScript("OnEnter", function()
@@ -454,20 +456,59 @@ function Debug.BuildDebugOptions(self, toggleOption)
                 "Re-open the Stock UI Tweaks options panel after /reload or login (useful for development).",
                 3
             ),
+            showScriptErrors = {
+                type = "toggle",
+                name = "Enable Lua Script Errors",
+                desc = "When enabled, Blizzard shows Lua runtime error popups with stack traces and addon/file details; when disabled, those popups are suppressed. Useful while troubleshooting addon code, but can be noisy in regular play if any addon is erroring.",
+                order = 4,
+                get = function()
+                    return _G["GetCVar"]("scriptErrors") == "1"
+                end,
+                set = function(_, val)
+                    _G["SetCVar"]("scriptErrors", val and "1" or "0")
+                end,
+                width = "full",
+            },
+            showScriptProfile = {
+                type = "toggle",
+                name = "Enable Script Profiling",
+                desc = "When enabled, WoW collects Lua CPU usage stats used by profiling APIs and performance diagnostics. This adds overhead and can reduce performance, so keep it off unless actively measuring script cost. Requires /reload to fully apply after toggling.",
+                order = 5,
+                get = function()
+                    return _G["GetCVar"]("scriptProfile") == "1"
+                end,
+                set = function(_, val)
+                    _G["SetCVar"]("scriptProfile", val and "1" or "0")
+                end,
+                width = "full",
+            },
+            showTaintLog = {
+                type = "toggle",
+                name = "Enable Taint Log",
+                desc = "When enabled, WoW records secure execution taint diagnostics that help identify blocked actions caused by addon taint. Logging can be verbose and may affect performance, so use only during taint investigations and disable afterward.",
+                order = 6,
+                get = function()
+                    return _G["GetCVar"]("taintLog") ~= "0"
+                end,
+                set = function(_, val)
+                    _G["SetCVar"]("taintLog", val and "1" or "0")
+                end,
+                width = "full",
+            },
             showBlockedInterfaceActionCount = toggleOption(
                 "showBlockedInterfaceActionCount",
-                "Show On-Screen Blocked Interface Action Count (UITweaks Only)",
+                "Show Blocked Events Count",
                 "Show a live on-screen count of blocked interface actions reported for this addon only.",
-                4,
+                7,
                 function()
                     self:UpdateBlockedActionCounterTracking()
                 end
             ),
             showReloadButtonBottomLeft = toggleOption(
                 "showReloadButtonBottomLeft",
-                "Show Reload Button in Top Left Corner",
+                "Show Reload Button",
                 "Show a Reload button in the top-left corner of the screen.",
-                5,
+                8,
                 function()
                     self:UpdateBottomLeftReloadButton()
                 end
