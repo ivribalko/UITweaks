@@ -1,6 +1,7 @@
 local addonName, addonTable = ...
 local Debug = {}
 local TOP_BAR_BUTTON_HEIGHT = 22
+local TOP_BAR_DEBUG_BUTTON_WIDTH = 240
 
 if addonTable then
     addonTable.Debug = Debug
@@ -9,9 +10,11 @@ end
 function Debug.OnEnable(self)
     self.blockedInterfaceActionCount = 0
     self.blockedActionEventDetails = {}
+    self.addonTaintLogCount = 0
     self:UpdateBottomLeftReloadButton()
     self:UpdateBlockedActionCounterTracking()
     self:UpdateAddonCpuUsageTracking()
+    self:UpdateTaintLogButtonTracking()
 end
 
 function Debug.SerializeBlockedActionEventArg(value)
@@ -110,12 +113,14 @@ function Debug.GetBlockedActionDebugInfo(self)
         "filter=UITweaks only",
         string.format("showCounter=%s", self.db.profile.showBlockedInterfaceActionCount and "true" or "false"),
         string.format("showCpuUsage=%s", self.db.profile.showAddonCpuUsage and "true" or "false"),
+        string.format("showTaintButton=%s", self.db.profile.showTaintLogButton and "true" or "false"),
         string.format("showReloadButton=%s", self.db.profile.showReloadButtonBottomLeft and "true" or "false"),
         string.format("player=%s-%s", tostring(playerName), tostring(realmName)),
         string.format("inCombat=%s", inCombat),
         string.format("scriptErrors=%s", tostring(getCVar and getCVar("scriptErrors") or "unknown")),
         string.format("scriptProfile=%s", tostring(getCVar and getCVar("scriptProfile") or "unknown")),
         string.format("taintLog=%s", tostring(getCVar and getCVar("taintLog") or "unknown")),
+        string.format("taintCount=%d", self.addonTaintLogCount or 0),
         string.format("addonCpuMs=%s", cpuUsage),
         string.format("wowVersion=%s", tostring(wowVersion)),
         string.format("build=%s", tostring(buildNumber)),
@@ -253,7 +258,7 @@ function Debug.EnsureBlockedActionCounterFrame(self)
     local frame = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
     frame:SetFrameStrata("TOOLTIP")
     frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
-    frame:SetSize(240, TOP_BAR_BUTTON_HEIGHT)
+    frame:SetSize(TOP_BAR_DEBUG_BUTTON_WIDTH, TOP_BAR_BUTTON_HEIGHT)
     frame:EnableMouse(true)
     frame:SetScript("OnClick", function()
         self:ShowBlockedActionDebugCopyDialog()
@@ -296,13 +301,23 @@ end
 function Debug.UpdateBlockedActionCounterText(self)
     local frame = self:EnsureBlockedActionCounterFrame()
     if not frame then return end
-    frame:SetText(string.format("Blocked Events Count: %d", self.blockedInterfaceActionCount or 0))
+    frame:SetText(string.format("UITweaks Events Blocked: %d", self.blockedInterfaceActionCount or 0))
+end
+
+function Debug.UpdateBlockedActionEventTracking(self)
+    local shouldTrack = self.db.profile.showBlockedInterfaceActionCount or self.db.profile.showTaintLogButton
+    if shouldTrack then
+        self:RegisterEvent("ADDON_ACTION_BLOCKED")
+        self:RegisterEvent("ADDON_ACTION_FORBIDDEN")
+    else
+        self:UnregisterEvent("ADDON_ACTION_BLOCKED")
+        self:UnregisterEvent("ADDON_ACTION_FORBIDDEN")
+    end
 end
 
 function Debug.UpdateBlockedActionCounterTracking(self)
+    self:UpdateBlockedActionEventTracking()
     if self.db.profile.showBlockedInterfaceActionCount then
-        self:RegisterEvent("ADDON_ACTION_BLOCKED")
-        self:RegisterEvent("ADDON_ACTION_FORBIDDEN")
         self:UpdateBlockedActionCounterText()
         self:UpdateBlockedActionCounterAnchor()
         local frame = self:EnsureBlockedActionCounterFrame()
@@ -311,8 +326,6 @@ function Debug.UpdateBlockedActionCounterTracking(self)
         end
         self:UpdateAddonCpuUsageAnchor()
     else
-        self:UnregisterEvent("ADDON_ACTION_BLOCKED")
-        self:UnregisterEvent("ADDON_ACTION_FORBIDDEN")
         if self.blockedActionCounterFrame then
             self.blockedActionCounterFrame:Hide()
         end
@@ -329,7 +342,7 @@ function Debug.EnsureAddonCpuUsageFrame(self)
     local frame = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
     frame:SetFrameStrata("TOOLTIP")
     frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
-    frame:SetSize(240, TOP_BAR_BUTTON_HEIGHT)
+    frame:SetSize(TOP_BAR_DEBUG_BUTTON_WIDTH, TOP_BAR_BUTTON_HEIGHT)
     frame:EnableMouse(true)
     frame:SetScript("OnClick", function()
         local enabled = _G["GetCVar"]("scriptProfile") == "1"
@@ -380,6 +393,7 @@ function Debug.UpdateAddonCpuUsageAnchor(self)
     else
         frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
     end
+    self:UpdateTaintLogButtonAnchor()
 end
 
 function Debug.UpdateAddonCpuUsageText(self)
@@ -457,6 +471,7 @@ function Debug.UpdateAddonCpuUsageTracking(self)
         self.addonCpuUsageTicker = C_Timer.NewTicker(1, function()
             self:UpdateAddonCpuUsageText()
         end)
+        self:UpdateTaintLogButtonAnchor()
     else
         if self.addonCpuUsageTicker then
             self.addonCpuUsageTicker:Cancel()
@@ -469,6 +484,103 @@ function Debug.UpdateAddonCpuUsageTracking(self)
         if self.addonCpuUsageFrame then
             self.addonCpuUsageFrame:Hide()
         end
+        self:UpdateTaintLogButtonAnchor()
+    end
+end
+
+function Debug.EnsureTaintLogButtonFrame(self)
+    if self.taintLogButtonFrame then
+        return self.taintLogButtonFrame
+    end
+    if not CreateFrame then return end
+
+    local frame = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
+    frame:SetFrameStrata("TOOLTIP")
+    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
+    frame:SetSize(TOP_BAR_DEBUG_BUTTON_WIDTH, TOP_BAR_BUTTON_HEIGHT)
+    frame:EnableMouse(true)
+    frame:SetScript("OnClick", function()
+        local enabled = _G["GetCVar"]("taintLog") ~= "0"
+        _G["SetCVar"]("taintLog", enabled and "0" or "1")
+        if not enabled then
+            self.addonTaintLogCount = 0
+        end
+        self:UpdateTaintLogButtonText()
+    end)
+    frame:SetScript("OnEnter", function(button)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(button, "ANCHOR_BOTTOMRIGHT")
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine("UITweaks Taint Log")
+        GameTooltip:AddLine("Shows blocked-action taint count for this addon only.", 1, 1, 1, true)
+        GameTooltip:AddLine("Click to toggle taint logging on/off.", 1, 1, 1, true)
+        GameTooltip:AddLine(string.format("Current count: %d", self.addonTaintLogCount or 0), 0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    end)
+    frame:SetScript("OnLeave", function()
+        if GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+    frame:Hide()
+
+    self.taintLogButtonFrame = frame
+    return frame
+end
+
+function Debug.UpdateTaintLogButtonAnchor(self)
+    local frame = self:EnsureTaintLogButtonFrame()
+    if not frame then return end
+
+    frame:ClearAllPoints()
+    if self.db.profile.showAddonCpuUsage then
+        local cpuFrame = self:EnsureAddonCpuUsageFrame()
+        if cpuFrame then
+            frame:SetPoint("LEFT", cpuFrame, "RIGHT", 8, 0)
+            return
+        end
+    end
+    if self.db.profile.showBlockedInterfaceActionCount then
+        local blockedFrame = self:EnsureBlockedActionCounterFrame()
+        if blockedFrame then
+            frame:SetPoint("LEFT", blockedFrame, "RIGHT", 8, 0)
+            return
+        end
+    end
+
+    local reloadButton = self:EnsureBottomLeftReloadButton()
+    if reloadButton then
+        frame:SetPoint("LEFT", reloadButton, "RIGHT", 8, 0)
+    else
+        frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
+    end
+end
+
+function Debug.UpdateTaintLogButtonText(self)
+    local frame = self:EnsureTaintLogButtonFrame()
+    if not frame then return end
+
+    local enabled = _G["GetCVar"]("taintLog") ~= "0"
+    if enabled then
+        frame:SetText(string.format("UITweaks Taint Log: %d", self.addonTaintLogCount or 0))
+    else
+        frame:SetText("UITweaks Taint Log: Off")
+    end
+end
+
+function Debug.UpdateTaintLogButtonTracking(self)
+    self:UpdateBlockedActionEventTracking()
+    if self.db.profile.showTaintLogButton then
+        self:UpdateTaintLogButtonAnchor()
+        self:UpdateTaintLogButtonText()
+        local frame = self:EnsureTaintLogButtonFrame()
+        if frame then
+            frame:Show()
+        end
+    else
+        if self.taintLogButtonFrame then
+            self.taintLogButtonFrame:Hide()
+        end
     end
 end
 
@@ -477,6 +589,10 @@ function Debug.HandleBlockedActionEvent(self, eventName, sourceAddonName, ...)
         return
     end
     self.blockedInterfaceActionCount = (self.blockedInterfaceActionCount or 0) + 1
+    if _G["GetCVar"]("taintLog") ~= "0" then
+        self.addonTaintLogCount = (self.addonTaintLogCount or 0) + 1
+        self:UpdateTaintLogButtonText()
+    end
     self:AddBlockedActionEventDetail(eventName, sourceAddonName, ...)
     self:UpdateBlockedActionCounterText()
 end
@@ -588,6 +704,7 @@ function Debug.UpdateBottomLeftReloadButton(self)
     end
     self:UpdateBlockedActionCounterAnchor()
     self:UpdateAddonCpuUsageAnchor()
+    self:UpdateTaintLogButtonAnchor()
 end
 
 function Debug.BuildDebugOptions(self, toggleOption)
@@ -636,19 +753,15 @@ function Debug.BuildDebugOptions(self, toggleOption)
                 end,
                 width = "full",
             },
-            showTaintLog = {
-                type = "toggle",
-                name = "Enable Taint Log",
-                desc = "When enabled, WoW records secure execution taint diagnostics that help identify blocked actions caused by addon taint. Logging can be verbose and may affect performance, so use only during taint investigations and disable afterward.",
-                order = 5,
-                get = function()
-                    return _G["GetCVar"]("taintLog") ~= "0"
-                end,
-                set = function(_, val)
-                    _G["SetCVar"]("taintLog", val and "1" or "0")
-                end,
-                width = "full",
-            },
+            showTaintLogButton = toggleOption(
+                "showTaintLogButton",
+                "Show Taint Log",
+                "Show an on-screen taint control button for this addon only. Click that button to toggle taint logging and view the current count.",
+                5,
+                function()
+                    self:UpdateTaintLogButtonTracking()
+                end
+            ),
             showBlockedInterfaceActionCount = toggleOption(
                 "showBlockedInterfaceActionCount",
                 "Show Blocked Events Count",

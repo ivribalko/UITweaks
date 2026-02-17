@@ -91,6 +91,10 @@ function UITweaks:UpdateBlockedActionCounterText()
     return self.debug.UpdateBlockedActionCounterText(self)
 end
 
+function UITweaks:UpdateBlockedActionEventTracking()
+    return self.debug.UpdateBlockedActionEventTracking(self)
+end
+
 function UITweaks:UpdateBlockedActionCounterTracking()
     return self.debug.UpdateBlockedActionCounterTracking(self)
 end
@@ -109,6 +113,22 @@ end
 
 function UITweaks:UpdateAddonCpuUsageTracking()
     return self.debug.UpdateAddonCpuUsageTracking(self)
+end
+
+function UITweaks:EnsureTaintLogButtonFrame()
+    return self.debug.EnsureTaintLogButtonFrame(self)
+end
+
+function UITweaks:UpdateTaintLogButtonAnchor()
+    return self.debug.UpdateTaintLogButtonAnchor(self)
+end
+
+function UITweaks:UpdateTaintLogButtonText()
+    return self.debug.UpdateTaintLogButtonText(self)
+end
+
+function UITweaks:UpdateTaintLogButtonTracking()
+    return self.debug.UpdateTaintLogButtonTracking(self)
 end
 
 function UITweaks:HandleBlockedActionEvent(eventName, sourceAddonName, ...)
