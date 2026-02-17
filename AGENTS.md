@@ -62,10 +62,10 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 
 ## Settings Rules
 
-Keep the Available Settings section above in sync with `UITweaks.Options.lua`.
+Keep the Available Settings section above in sync with `UITweaksOptions.lua`.
 Each setting must use the exact in-code description string.
 
-Keep panels and items sorted alphabetically (by display name) in both `UITweaks.Options.lua` and this README.
+Keep panels and items sorted alphabetically (by display name) in both `UITweaksOptions.lua` and this README.
 
 Exceptions:
 
@@ -73,18 +73,18 @@ Exceptions:
 - Combat: Delay After Combat Seconds stays first.
 - Chat: keep checkboxes together with their respective ranges for Auto-Hide Chat Messages, Fade After Seconds and such.
 - Action Bars: Open Advanced Cooldown Settings stays last.
-- Service panel stays last.
+- Debug panel stays last.
 
 ## Dev Notes
 
 - Addon files live in the repository root.
-- Main addon files are split as: `UITweaks.lua` (core), `UITweaks.Options.lua` (defaults + options), `UITweaks.Auras.lua` (action button aura logic).
+- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksAuras.lua` (action button aura logic), `UITweaksDebug.lua` (debug tools/UI).
 - Add new Lua files in the repository root and list them in `UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
-- Assume `self.db`, `self.auras`, and `self.options` always exist; do not add nil/existence guards for them.
+- Assume `self.db`, `self.auras`, `self.debug`, and `self.options` always exist; do not add nil/existence guards for them.
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
-- Service panel is alpha-only and intentionally omitted from this README.
+- Debug panel is alpha-only and intentionally omitted from this README.
 - `refs/` contains addons and other files used strictly as references. Do not use or read anything in `refs/` unless explicitly instructed.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.

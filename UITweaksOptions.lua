@@ -33,6 +33,7 @@ Options.defaults = {
         hideBlizzardCooldownViewer = false,
         showOptionsOnReload = false,
         showReloadButtonBottomLeft = false,
+        showBlockedInterfaceActionCount = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
         hideConsolePortTempAbilityFrame = false,
@@ -497,49 +498,7 @@ function Options.OnInitialize(self)
                 },
             },
             --@alpha@
-            service = {
-                type = "group",
-                name = "Service",
-                inline = true,
-                order = 6,
-                args = {
-                    forceSaveSkyridingBarLayout = {
-                        type = "execute",
-                        name = "Force Save Skyriding Bar Layout",
-                        desc = "Save the current Skyriding action bar (bonus bar 5) layout immediately.",
-                        order = 1,
-                        width = "full",
-                        func = function()
-                            self:SaveSkyridingBarLayout()
-                        end,
-                    },
-                    forceRestoreSkyridingBarLayout = {
-                        type = "execute",
-                        name = "Force Restore Skyriding Bar Layout",
-                        desc = "Restore the saved Skyriding action bar (bonus bar 5) layout immediately.",
-                        order = 2,
-                        width = "full",
-                        func = function()
-                            self:RestoreSkyridingBarLayout()
-                        end,
-                    },
-                    showOptionsOnReload = toggleOption(
-                        "showOptionsOnReload",
-                        "Open This Settings Menu on Reload/Login",
-                        "Re-open the Stock UI Tweaks options panel after /reload or login (useful for development).",
-                        3
-                    ),
-                    showReloadButtonBottomLeft = toggleOption(
-                        "showReloadButtonBottomLeft",
-                        "Show Reload Button in Top Left Corner",
-                        "Show a Reload button in the top-left corner of the screen.",
-                        4,
-                        function()
-                            self:UpdateBottomLeftReloadButton()
-                        end
-                    ),
-                },
-            },
+            debug = self.debug.BuildDebugOptions(self, toggleOption),
             --@end-alpha@
         },
     }

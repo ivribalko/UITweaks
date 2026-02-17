@@ -14,6 +14,7 @@ local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
     self.auras = type(require) == "function" and require("UITweaksAuras") or addonTable.Auras
+    self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
     options.OnInitialize(self)
 end
@@ -31,7 +32,7 @@ function UITweaks:OnEnable()
     if self.db.profile.showActionButtonAuraTimers then
         self.auras.ApplyActionButtonAuraTimers(self)
     end
-    self:UpdateBottomLeftReloadButton()
+    self.debug.OnEnable(self)
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
@@ -52,6 +53,58 @@ function UITweaks:OnEnable()
     if self.db.profile.showOptionsOnReload then
         C_Timer.After(1, function() self:OpenOptionsPanel() end)
     end
+end
+
+function UITweaks:SerializeBlockedActionEventArg(value)
+    return self.debug.SerializeBlockedActionEventArg(value)
+end
+
+function UITweaks:AddBlockedActionEventDetail(eventName, sourceAddonName, ...)
+    return self.debug.AddBlockedActionEventDetail(self, eventName, sourceAddonName, ...)
+end
+
+function UITweaks:GetBlockedActionEventDetailsText()
+    return self.debug.GetBlockedActionEventDetailsText(self)
+end
+
+function UITweaks:GetBlockedActionDebugInfo()
+    return self.debug.GetBlockedActionDebugInfo(self)
+end
+
+function UITweaks:EnsureBlockedActionDebugCopyFrame()
+    return self.debug.EnsureBlockedActionDebugCopyFrame(self)
+end
+
+function UITweaks:ShowBlockedActionDebugCopyDialog()
+    return self.debug.ShowBlockedActionDebugCopyDialog(self)
+end
+
+function UITweaks:EnsureBlockedActionCounterFrame()
+    return self.debug.EnsureBlockedActionCounterFrame(self)
+end
+
+function UITweaks:UpdateBlockedActionCounterAnchor()
+    return self.debug.UpdateBlockedActionCounterAnchor(self)
+end
+
+function UITweaks:UpdateBlockedActionCounterText()
+    return self.debug.UpdateBlockedActionCounterText(self)
+end
+
+function UITweaks:UpdateBlockedActionCounterTracking()
+    return self.debug.UpdateBlockedActionCounterTracking(self)
+end
+
+function UITweaks:HandleBlockedActionEvent(eventName, sourceAddonName, ...)
+    return self.debug.HandleBlockedActionEvent(self, eventName, sourceAddonName, ...)
+end
+
+function UITweaks:ADDON_ACTION_BLOCKED(_, sourceAddonName, ...)
+    return self.debug.ADDON_ACTION_BLOCKED(self, _, sourceAddonName, ...)
+end
+
+function UITweaks:ADDON_ACTION_FORBIDDEN(_, sourceAddonName, ...)
+    return self.debug.ADDON_ACTION_FORBIDDEN(self, _, sourceAddonName, ...)
 end
 
 function UITweaks:NAVIGATION_FRAME_CREATED()
@@ -948,92 +1001,15 @@ function UITweaks:OpenOptionsPanel()
 end
 
 function UITweaks:EnsureReloadButtonForFrame(parent)
-    if type(parent) == "table" then
-        if parent.frame and parent.frame.GetObjectType then
-            parent = parent.frame
-        elseif parent.content and parent.content.GetObjectType then
-            parent = parent.content
-        end
-    end
-
-    if not (parent and parent.GetObjectType and parent:IsObjectType("Frame")) then
-        return
-    end
-    if not parent or not CreateFrame then return end
-
-    self.reloadButtons = self.reloadButtons or {}
-    if self.reloadButtons[parent] then return self.reloadButtons[parent] end
-
-    local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-    button:SetText("Reload")
-    button:SetSize(120, 22)
-    button:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -16, -16)
-    button:SetScript("OnClick", function() ReloadUI() end)
-    button:SetScript("OnEnter", function()
-        if GameTooltip then
-            GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-            GameTooltip:SetText("Reload the interface to immediately apply changes.")
-            GameTooltip:Show()
-        end
-    end)
-    button:SetScript("OnLeave", function()
-        if GameTooltip then
-            GameTooltip:Hide()
-        end
-    end)
-    button:Hide()
-
-    self.reloadButtons[parent] = button
-    parent:HookScript("OnShow", function() button:Show() end)
-    parent:HookScript("OnHide", function() button:Hide() end)
-    if parent:IsShown() then
-        button:Show()
-    end
-
-    return button
+    return self.debug.EnsureReloadButtonForFrame(self, parent)
 end
 
 function UITweaks:EnsureReloadButton()
-    local parent = InterfaceOptionsFramePanelContainer or InterfaceOptionsFrame or self.optionsFrame
-    local button = self:EnsureReloadButtonForFrame(parent)
-    if not (button and self.optionsFrame) then return end
-
-    self.optionsFrame:HookScript("OnShow", function() button:Show() end)
-    self.optionsFrame:HookScript("OnHide", function() button:Hide() end)
-    if self.optionsFrame:IsShown() then
-        button:Show()
-    else
-        button:Hide()
-    end
+    return self.debug.EnsureReloadButton(self)
 end
 
 function UITweaks:EnsureBottomLeftReloadButton()
-    if self.bottomLeftReloadButton then
-        return self.bottomLeftReloadButton
-    end
-    if not CreateFrame then return end
-
-    local button = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
-    button:SetText("Reload")
-    button:SetSize(120, 22)
-    button:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 16, -16)
-    button:SetScript("OnClick", function() ReloadUI() end)
-    button:SetScript("OnEnter", function()
-        if GameTooltip then
-            GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-            GameTooltip:SetText("Reload the interface to immediately apply changes.")
-            GameTooltip:Show()
-        end
-    end)
-    button:SetScript("OnLeave", function()
-        if GameTooltip then
-            GameTooltip:Hide()
-        end
-    end)
-    button:Hide()
-
-    self.bottomLeftReloadButton = button
-    return button
+    return self.debug.EnsureBottomLeftReloadButton(self)
 end
 
 function UITweaks:GetWatchedQuestIDs()
@@ -1171,13 +1147,7 @@ function UITweaks:EnsureAddMacroForNextQuestInTracker()
 end
 
 function UITweaks:UpdateBottomLeftReloadButton()
-    local button = self:EnsureBottomLeftReloadButton()
-    if not button then return end
-    if self.db.profile.showReloadButtonBottomLeft then
-        button:Show()
-    else
-        button:Hide()
-    end
+    return self.debug.UpdateBottomLeftReloadButton(self)
 end
 
 function UITweaks:GetConsolePortBarEnv()
