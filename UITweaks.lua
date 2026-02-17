@@ -95,6 +95,22 @@ function UITweaks:UpdateBlockedActionCounterTracking()
     return self.debug.UpdateBlockedActionCounterTracking(self)
 end
 
+function UITweaks:EnsureAddonCpuUsageFrame()
+    return self.debug.EnsureAddonCpuUsageFrame(self)
+end
+
+function UITweaks:UpdateAddonCpuUsageAnchor()
+    return self.debug.UpdateAddonCpuUsageAnchor(self)
+end
+
+function UITweaks:UpdateAddonCpuUsageText()
+    return self.debug.UpdateAddonCpuUsageText(self)
+end
+
+function UITweaks:UpdateAddonCpuUsageTracking()
+    return self.debug.UpdateAddonCpuUsageTracking(self)
+end
+
 function UITweaks:HandleBlockedActionEvent(eventName, sourceAddonName, ...)
     return self.debug.HandleBlockedActionEvent(self, eventName, sourceAddonName, ...)
 end

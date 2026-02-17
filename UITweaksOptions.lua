@@ -34,6 +34,7 @@ Options.defaults = {
         showOptionsOnReload = false,
         showReloadButtonBottomLeft = false,
         showBlockedInterfaceActionCount = false,
+        showAddonCpuUsage = false,
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
         hideConsolePortTempAbilityFrame = false,

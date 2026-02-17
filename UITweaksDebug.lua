@@ -11,6 +11,7 @@ function Debug.OnEnable(self)
     self.blockedActionEventDetails = {}
     self:UpdateBottomLeftReloadButton()
     self:UpdateBlockedActionCounterTracking()
+    self:UpdateAddonCpuUsageTracking()
 end
 
 function Debug.SerializeBlockedActionEventArg(value)
@@ -92,6 +93,14 @@ function Debug.GetBlockedActionDebugInfo(self)
     local playerName = unitName and unitName("player") or "unknown"
     local realmName = getRealmName and getRealmName() or "unknown"
     local inCombat = InCombatLockdown and InCombatLockdown() and "true" or "false"
+    local cpuUsage = "unknown"
+    if _G["UpdateAddOnCPUUsage"] and _G["GetAddOnCPUUsage"] then
+        _G["UpdateAddOnCPUUsage"]()
+        local value = _G["GetAddOnCPUUsage"](addonName)
+        if type(value) == "number" then
+            cpuUsage = string.format("%.2f", value)
+        end
+    end
     local lines = {
         "Stock UI Tweaks blocked actions debug",
         string.format("timestamp=%s", now),
@@ -100,12 +109,14 @@ function Debug.GetBlockedActionDebugInfo(self)
         string.format("blockedCount=%d", self.blockedInterfaceActionCount or 0),
         "filter=UITweaks only",
         string.format("showCounter=%s", self.db.profile.showBlockedInterfaceActionCount and "true" or "false"),
+        string.format("showCpuUsage=%s", self.db.profile.showAddonCpuUsage and "true" or "false"),
         string.format("showReloadButton=%s", self.db.profile.showReloadButtonBottomLeft and "true" or "false"),
         string.format("player=%s-%s", tostring(playerName), tostring(realmName)),
         string.format("inCombat=%s", inCombat),
         string.format("scriptErrors=%s", tostring(getCVar and getCVar("scriptErrors") or "unknown")),
         string.format("scriptProfile=%s", tostring(getCVar and getCVar("scriptProfile") or "unknown")),
         string.format("taintLog=%s", tostring(getCVar and getCVar("taintLog") or "unknown")),
+        string.format("addonCpuMs=%s", cpuUsage),
         string.format("wowVersion=%s", tostring(wowVersion)),
         string.format("build=%s", tostring(buildNumber)),
         string.format("buildDate=%s", tostring(buildDate)),
@@ -134,7 +145,7 @@ function Debug.EnsureBlockedActionDebugCopyFrame(self)
 
     local hint = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     hint:SetPoint("TOPLEFT", frame, "TOPLEFT", 12, -28)
-    hint:SetText("Press Ctrl+C to copy, then paste into chat.")
+    hint:SetText("Copy, then paste into chat.")
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 12, -48)
@@ -279,6 +290,7 @@ function Debug.UpdateBlockedActionCounterAnchor(self)
     else
         frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
     end
+    self:UpdateAddonCpuUsageAnchor()
 end
 
 function Debug.UpdateBlockedActionCounterText(self)
@@ -297,11 +309,165 @@ function Debug.UpdateBlockedActionCounterTracking(self)
         if frame then
             frame:Show()
         end
+        self:UpdateAddonCpuUsageAnchor()
     else
         self:UnregisterEvent("ADDON_ACTION_BLOCKED")
         self:UnregisterEvent("ADDON_ACTION_FORBIDDEN")
         if self.blockedActionCounterFrame then
             self.blockedActionCounterFrame:Hide()
+        end
+        self:UpdateAddonCpuUsageAnchor()
+    end
+end
+
+function Debug.EnsureAddonCpuUsageFrame(self)
+    if self.addonCpuUsageFrame then
+        return self.addonCpuUsageFrame
+    end
+    if not CreateFrame then return end
+
+    local frame = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
+    frame:SetFrameStrata("TOOLTIP")
+    frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
+    frame:SetSize(240, TOP_BAR_BUTTON_HEIGHT)
+    frame:EnableMouse(true)
+    frame:SetScript("OnClick", function()
+        local enabled = _G["GetCVar"]("scriptProfile") == "1"
+        _G["SetCVar"]("scriptProfile", enabled and "0" or "1")
+        self.addonCpuUsageStartTime = nil
+        self.addonCpuUsageStartValue = nil
+        self.addonCpuUsageLastTime = nil
+        self.addonCpuUsageLastValue = nil
+        self:UpdateAddonCpuUsageText()
+    end)
+    frame:SetScript("OnEnter", function(button)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(button, "ANCHOR_BOTTOMRIGHT")
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine("UITweaks CPU Usage")
+        GameTooltip:AddLine("Shows CPU time used by this addon only.", 1, 1, 1, true)
+        GameTooltip:AddLine("Click to toggle Script Profiling on/off.", 1, 1, 1, true)
+        GameTooltip:AddLine("/reload is required for profiling changes to fully apply.", 0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    end)
+    frame:SetScript("OnLeave", function()
+        if GameTooltip then
+            GameTooltip:Hide()
+        end
+    end)
+    frame:Hide()
+
+    self.addonCpuUsageFrame = frame
+    return frame
+end
+
+function Debug.UpdateAddonCpuUsageAnchor(self)
+    local frame = self:EnsureAddonCpuUsageFrame()
+    if not frame then return end
+
+    frame:ClearAllPoints()
+    if self.db.profile.showBlockedInterfaceActionCount then
+        local blockedFrame = self:EnsureBlockedActionCounterFrame()
+        if blockedFrame then
+            frame:SetPoint("LEFT", blockedFrame, "RIGHT", 8, 0)
+            return
+        end
+    end
+
+    local reloadButton = self:EnsureBottomLeftReloadButton()
+    if reloadButton then
+        frame:SetPoint("LEFT", reloadButton, "RIGHT", 8, 0)
+    else
+        frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 144, -16)
+    end
+end
+
+function Debug.UpdateAddonCpuUsageText(self)
+    local frame = self:EnsureAddonCpuUsageFrame()
+    if not frame then return end
+    local text = frame.GetFontString and frame:GetFontString() or nil
+
+    if _G["GetCVar"]("scriptProfile") ~= "1" then
+        frame:SetText("UITweaks CPU: Profiling Off")
+        if text and text.SetTextColor then
+            text:SetTextColor(1, 1, 1)
+        end
+        self.addonCpuUsageStartTime = nil
+        self.addonCpuUsageStartValue = nil
+        self.addonCpuUsageLastTime = nil
+        self.addonCpuUsageLastValue = nil
+        return
+    end
+
+    _G["UpdateAddOnCPUUsage"]()
+    local usageMilliseconds = _G["GetAddOnCPUUsage"](addonName) or 0
+    local now = (_G["GetTime"] and _G["GetTime"]()) or 0
+
+    if not self.addonCpuUsageStartTime then
+        self.addonCpuUsageStartTime = now
+        self.addonCpuUsageStartValue = usageMilliseconds
+        self.addonCpuUsageLastTime = now
+        self.addonCpuUsageLastValue = usageMilliseconds
+    end
+
+    local currentRate = 0
+    local elapsedSinceLast = now - (self.addonCpuUsageLastTime or now)
+    if elapsedSinceLast > 0 then
+        currentRate = (usageMilliseconds - (self.addonCpuUsageLastValue or usageMilliseconds)) / elapsedSinceLast
+    end
+    if currentRate < 0 then currentRate = 0 end
+
+    local averageRate = 0
+    local elapsedSinceStart = now - (self.addonCpuUsageStartTime or now)
+    if elapsedSinceStart > 0 then
+        averageRate = (usageMilliseconds - (self.addonCpuUsageStartValue or usageMilliseconds)) / elapsedSinceStart
+    end
+    if averageRate < 0 then averageRate = 0 end
+
+    self.addonCpuUsageLastTime = now
+    self.addonCpuUsageLastValue = usageMilliseconds
+    frame:SetText(string.format("UITweaks CPU C: %.2f A: %.2f ms/s", currentRate, averageRate))
+    if text and text.SetTextColor then
+        if currentRate < 10 then
+            text:SetTextColor(0.2, 1, 0.2)
+        elseif currentRate < 20 then
+            text:SetTextColor(1, 0.9, 0.2)
+        else
+            text:SetTextColor(1, 0.2, 0.2)
+        end
+    end
+end
+
+function Debug.UpdateAddonCpuUsageTracking(self)
+    if self.db.profile.showAddonCpuUsage then
+        self.addonCpuUsageStartTime = nil
+        self.addonCpuUsageStartValue = nil
+        self.addonCpuUsageLastTime = nil
+        self.addonCpuUsageLastValue = nil
+        self:UpdateAddonCpuUsageAnchor()
+        self:UpdateAddonCpuUsageText()
+        local frame = self:EnsureAddonCpuUsageFrame()
+        if frame then
+            frame:Show()
+        end
+        if self.addonCpuUsageTicker then
+            self.addonCpuUsageTicker:Cancel()
+            self.addonCpuUsageTicker = nil
+        end
+        self.addonCpuUsageTicker = C_Timer.NewTicker(1, function()
+            self:UpdateAddonCpuUsageText()
+        end)
+    else
+        if self.addonCpuUsageTicker then
+            self.addonCpuUsageTicker:Cancel()
+            self.addonCpuUsageTicker = nil
+        end
+        self.addonCpuUsageStartTime = nil
+        self.addonCpuUsageStartValue = nil
+        self.addonCpuUsageLastTime = nil
+        self.addonCpuUsageLastValue = nil
+        if self.addonCpuUsageFrame then
+            self.addonCpuUsageFrame:Hide()
         end
     end
 end
@@ -421,6 +587,7 @@ function Debug.UpdateBottomLeftReloadButton(self)
         button:Hide()
     end
     self:UpdateBlockedActionCounterAnchor()
+    self:UpdateAddonCpuUsageAnchor()
 end
 
 function Debug.BuildDebugOptions(self, toggleOption)
@@ -469,24 +636,11 @@ function Debug.BuildDebugOptions(self, toggleOption)
                 end,
                 width = "full",
             },
-            showScriptProfile = {
-                type = "toggle",
-                name = "Enable Script Profiling",
-                desc = "When enabled, WoW collects Lua CPU usage stats used by profiling APIs and performance diagnostics. This adds overhead and can reduce performance, so keep it off unless actively measuring script cost. Requires /reload to fully apply after toggling.",
-                order = 5,
-                get = function()
-                    return _G["GetCVar"]("scriptProfile") == "1"
-                end,
-                set = function(_, val)
-                    _G["SetCVar"]("scriptProfile", val and "1" or "0")
-                end,
-                width = "full",
-            },
             showTaintLog = {
                 type = "toggle",
                 name = "Enable Taint Log",
                 desc = "When enabled, WoW records secure execution taint diagnostics that help identify blocked actions caused by addon taint. Logging can be verbose and may affect performance, so use only during taint investigations and disable afterward.",
-                order = 6,
+                order = 5,
                 get = function()
                     return _G["GetCVar"]("taintLog") ~= "0"
                 end,
@@ -499,9 +653,18 @@ function Debug.BuildDebugOptions(self, toggleOption)
                 "showBlockedInterfaceActionCount",
                 "Show Blocked Events Count",
                 "Show a live on-screen count of blocked interface actions reported for this addon only.",
-                7,
+                6,
                 function()
                     self:UpdateBlockedActionCounterTracking()
+                end
+            ),
+            showAddonCpuUsage = toggleOption(
+                "showAddonCpuUsage",
+                "Show CPU Usage",
+                "Show a live CPU usage readout for this addon only. Click the CPU button to toggle Script Profiling on/off.",
+                7,
+                function()
+                    self:UpdateAddonCpuUsageTracking()
                 end
             ),
             showReloadButtonBottomLeft = toggleOption(
