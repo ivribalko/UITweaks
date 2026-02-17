@@ -420,8 +420,8 @@ function Options.OnInitialize(self)
                 args = {
                     addMacroForNextQuestInTracker = {
                         type = "execute",
-                        name = "Add Next Quest Macro",
-                        desc = "Pressing this button creates or updates a macro named Next Quest that runs /uitnextquest, then opens the Macro menu. The macro selects the next tracked quest in the objective tracker, or the first tracked quest if none is currently selected.",
+                        name = "Add Quest Prev/Next Macros",
+                        desc = "Pressing this button creates or updates macros named Quest Next and Quest Prev, then opens the Macro menu. Quest Next runs /uitnextquest and selects the next tracked quest (or the first if none is selected). Quest Prev runs /uitprevquest and selects the previous tracked quest (or the last if none is selected).",
                         order = 1,
                         width = "full",
                         func = function()

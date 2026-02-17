@@ -5,9 +5,11 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local SKYRIDING_BAR_SLOT_START = 121
 local SKYRIDING_BAR_SLOT_COUNT = 12
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS or 10
-local NEXT_QUEST_MACRO_NAME = "Next Quest"
+local NEXT_QUEST_MACRO_NAME = "Quest Next"
+local PREVIOUS_QUEST_MACRO_NAME = "Quest Prev"
 local NEXT_QUEST_MACRO_ICON = "INV_Misc_Note_01"
 local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
+local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
@@ -18,6 +20,7 @@ end
 
 function UITweaks:OnEnable()
     self:RegisterChatCommand("uitnextquest", "HandleNextQuestSlashCommand")
+    self:RegisterChatCommand("uitprevquest", "HandlePreviousQuestSlashCommand")
     self:CacheDefaultChatWindowTimes()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
@@ -129,6 +132,10 @@ end
 
 function UITweaks:HandleNextQuestSlashCommand()
     self:SelectNextTrackedQuest()
+end
+
+function UITweaks:HandlePreviousQuestSlashCommand()
+    self:SelectPreviousTrackedQuest()
 end
 
 function UITweaks:PLAYER_LOGOUT()
@@ -1042,6 +1049,26 @@ function UITweaks:SelectNextTrackedQuest()
     self:SetSuperTrackedQuestID(watchedQuestIDs[nextIndex])
 end
 
+function UITweaks:SelectPreviousTrackedQuest()
+    local watchedQuestIDs = self:GetWatchedQuestIDs()
+    if #watchedQuestIDs == 0 then
+        return
+    end
+    local activeQuestID = self:GetSuperTrackedQuestID()
+    local activeIndex
+    for index, questID in ipairs(watchedQuestIDs) do
+        if questID == activeQuestID then
+            activeIndex = index
+            break
+        end
+    end
+    local previousIndex = activeIndex and (activeIndex - 1) or #watchedQuestIDs
+    if previousIndex < 1 then
+        previousIndex = #watchedQuestIDs
+    end
+    self:SetSuperTrackedQuestID(watchedQuestIDs[previousIndex])
+end
+
 function UITweaks:OpenMacroPanel()
     local cAddOns = _G["C_AddOns"]
     local isAddOnLoaded = _G["IsAddOnLoaded"]
@@ -1071,25 +1098,32 @@ function UITweaks:EnsureAddMacroForNextQuestInTracker()
         return false
     end
 
-    local existingMacroIndex = getMacroIndexByName(NEXT_QUEST_MACRO_NAME)
-    if existingMacroIndex and existingMacroIndex > 0 then
-        local _, _, macroBody = getMacroInfo(existingMacroIndex)
-        if macroBody ~= NEXT_QUEST_MACRO_BODY then
-            editMacro(existingMacroIndex, NEXT_QUEST_MACRO_NAME, NEXT_QUEST_MACRO_ICON, NEXT_QUEST_MACRO_BODY)
+    local function ensureMacro(name, body)
+        local existingMacroIndex = getMacroIndexByName(name)
+        if existingMacroIndex and existingMacroIndex > 0 then
+            local _, _, macroBody = getMacroInfo(existingMacroIndex)
+            if macroBody ~= body then
+                editMacro(existingMacroIndex, name, NEXT_QUEST_MACRO_ICON, body)
+            end
+            return true
         end
-        self:OpenMacroPanel()
+
+        local globalMacroCount = select(1, getNumMacros()) or 0
+        local maxGlobalMacros = _G["MAX_ACCOUNT_MACROS"] or 120
+        if globalMacroCount >= maxGlobalMacros then
+            return false
+        end
+
+        createMacro(name, NEXT_QUEST_MACRO_ICON, body, false)
         return true
     end
 
-    local globalMacroCount = select(1, getNumMacros()) or 0
-    local maxGlobalMacros = _G["MAX_ACCOUNT_MACROS"] or 120
-    if globalMacroCount >= maxGlobalMacros then
-        return false
+    local hasNextMacro = ensureMacro(NEXT_QUEST_MACRO_NAME, NEXT_QUEST_MACRO_BODY)
+    local hasPreviousMacro = ensureMacro(PREVIOUS_QUEST_MACRO_NAME, PREVIOUS_QUEST_MACRO_BODY)
+    if hasNextMacro or hasPreviousMacro then
+        self:OpenMacroPanel()
     end
-
-    createMacro(NEXT_QUEST_MACRO_NAME, NEXT_QUEST_MACRO_ICON, NEXT_QUEST_MACRO_BODY, false)
-    self:OpenMacroPanel()
-    return true
+    return hasNextMacro and hasPreviousMacro
 end
 
 function UITweaks:UpdateBottomLeftReloadButton()
