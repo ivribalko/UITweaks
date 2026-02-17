@@ -848,13 +848,11 @@ local function setStanceAlpha(alpha)
     for _, stanceBar in ipairs(getStanceBars()) do
         if stanceBar then
             stanceBar:SetAlpha(alpha)
-            stanceBar:Show()
         end
     end
     for _, button in ipairs(getStanceButtons()) do
         if button then
             button:SetAlpha(alpha)
-            button:Show()
         end
     end
 end
