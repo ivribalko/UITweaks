@@ -12,11 +12,13 @@ BuffFrame = BuffFrame
 BuffIconCooldownViewer = BuffIconCooldownViewer
 C_AddOns = C_AddOns
 C_CooldownViewer = C_CooldownViewer
+C_Navigation = C_Navigation
 C_EquipmentSet = C_EquipmentSet
 C_Item = C_Item
 C_Spell = C_Spell
 C_Timer = C_Timer
 C_UnitAuras = C_UnitAuras
+AbbreviateNumbers = AbbreviateNumbers
 ClearAction = ClearAction
 ClearCursor = ClearCursor
 CreateFrame = CreateFrame
@@ -65,12 +67,14 @@ RegisterStateDriver = RegisterStateDriver
 ReloadUI = ReloadUI
 SetChatWindowAlpha = SetChatWindowAlpha
 StanceBar = StanceBar
+SuperTrackedFrame = SuperTrackedFrame
 UIErrorsFrame = UIErrorsFrame
 UIParent = UIParent
 UIParentLoadAddOn = UIParentLoadAddOn
 UnitGUID = UnitGUID
 UnitExists = UnitExists
 UtilityCooldownViewer = UtilityCooldownViewer
+IN_GAME_NAVIGATION_RANGE = IN_GAME_NAVIGATION_RANGE
 hooksecurefunc = hooksecurefunc
 ipairs = ipairs
 next = next
@@ -97,4 +101,5 @@ unpack = unpack
 ---@field MicroMenuContainer any
 ---@field ShapeshiftBarFrame any
 ---@field StanceBar any
+---@field SuperTrackedFrame any
 ---@field TargetFrame any

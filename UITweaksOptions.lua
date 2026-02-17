@@ -38,6 +38,7 @@ Options.defaults = {
         hideConsolePortTempAbilityFrame = false,
         consolePortBarSharing = false,
         skyridingBarSharing = false,
+        alwaysShowQuestMarkerDistance = false,
     },
     global = {
         skyridingBarLayout = {},
@@ -428,11 +429,22 @@ function Options.OnInitialize(self)
                             self:EnsureAddMacroForNextQuestInTracker()
                         end,
                     },
+                    alwaysShowQuestMarkerDistance = toggleOption(
+                        "alwaysShowQuestMarkerDistance",
+                        "Always Show Quest Marker Distance",
+                        "Always show the built-in quest marker distance, even when not facing the objective.",
+                        2,
+                        function(val)
+                            if val then
+                                self:ApplyQuestMarkerDistanceSetting()
+                            end
+                        end
+                    ),
                     hideBackpackButton = toggleOption(
                         "hideBackpackButton",
                         "Auto-Hide Bags Bar",
                         "Auto-Hide the Blizzard Bags Bar until you mouse over it.",
-                        2,
+                        3,
                         function()
                             self:UpdateBackpackButtonVisibility()
                         end
@@ -441,7 +453,7 @@ function Options.OnInitialize(self)
                         "hideBuffFrame",
                         "Auto-Hide Buff Frame",
                         "Auto-Hide the Blizzard player buff frame until you mouse over it.",
-                        3,
+                        4,
                         function()
                             self:ApplyBuffFrameHide()
                         end
@@ -450,7 +462,7 @@ function Options.OnInitialize(self)
                         "hideStanceButtons",
                         "Auto-Hide Stance Bar",
                         "Auto-Hide the Blizzard stance bar until you mouse over it.",
-                        4,
+                        5,
                         function()
                             self:UpdateStanceButtonsVisibility()
                         end
@@ -459,7 +471,7 @@ function Options.OnInitialize(self)
                         "hideGroupLootHistoryFrame",
                         "Hide Group Loot History",
                         "Hide the group loot history frame.",
-                        5,
+                        6,
                         function()
                             self:UpdateGroupLootHistoryVisibility()
                         end
@@ -468,7 +480,7 @@ function Options.OnInitialize(self)
                         "hideHelpTips",
                         "Hide Help Tips",
                         "Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.",
-                        6,
+                        7,
                         function()
                             self:HookHelpTipFrames()
                         end
@@ -477,7 +489,7 @@ function Options.OnInitialize(self)
                         "hideMicroMenuButtons",
                         "Hide Micro Menu Buttons",
                         "Hide all micro menu buttons except the Dungeon Finder eye.",
-                        7,
+                        8,
                         function()
                             self:UpdateMicroMenuVisibility()
                         end

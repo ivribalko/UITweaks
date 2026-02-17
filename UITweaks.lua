@@ -21,6 +21,7 @@ end
 function UITweaks:OnEnable()
     self:RegisterChatCommand("uitnextquest", "HandleNextQuestSlashCommand")
     self:RegisterChatCommand("uitprevquest", "HandlePreviousQuestSlashCommand")
+    self:ApplyQuestMarkerDistanceSetting()
     self:CacheDefaultChatWindowTimes()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
@@ -47,9 +48,14 @@ function UITweaks:OnEnable()
     self:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
     self:RegisterEvent("MODIFIER_STATE_CHANGED")
     self:RegisterEvent("UNIT_AURA")
+    self:RegisterEvent("NAVIGATION_FRAME_CREATED")
     if self.db.profile.showOptionsOnReload then
         C_Timer.After(1, function() self:OpenOptionsPanel() end)
     end
+end
+
+function UITweaks:NAVIGATION_FRAME_CREATED()
+    self:EnsureAlwaysShowQuestDistanceHook()
 end
 
 function UITweaks:ADDON_LOADED(_, addonName)
@@ -274,6 +280,44 @@ function UITweaks:ApplyChatBackgroundAlpha()
                 SetChatWindowAlpha(i, alpha <= 1 and alpha * 100 or alpha)
             end
         end
+    end
+end
+
+function UITweaks:ApplyQuestMarkerDistanceSetting()
+    self:EnsureAlwaysShowQuestDistanceHook()
+    if self.db.profile.alwaysShowQuestMarkerDistance then
+        self:ForceQuestDistanceText(rawget(_G, "SuperTrackedFrame"))
+    end
+end
+
+function UITweaks:ForceQuestDistanceText(navFrame)
+    if not self.db.profile.alwaysShowQuestMarkerDistance then return end
+    if not navFrame or not navFrame.DistanceText then return end
+    if not (C_Navigation and C_Navigation.GetDistance) then return end
+
+    local distance = math.floor(C_Navigation.GetDistance() + 0.5)
+    local displayDistance = distance
+    if AbbreviateNumbers and distance >= 1000 then
+        displayDistance = AbbreviateNumbers(distance)
+    end
+
+    local text = tostring(displayDistance)
+    if IN_GAME_NAVIGATION_RANGE then
+        local ok, formatted = pcall(string.format, IN_GAME_NAVIGATION_RANGE, text)
+        if ok then text = formatted end
+    end
+
+    navFrame.DistanceText:SetText(text)
+    navFrame.DistanceText:SetShown(true)
+end
+
+function UITweaks:EnsureAlwaysShowQuestDistanceHook()
+    local superTrackedFrame = rawget(_G, "SuperTrackedFrame")
+    if superTrackedFrame and not self.alwaysShowQuestDistanceFrameHooked and superTrackedFrame.HookScript then
+        superTrackedFrame:HookScript("OnUpdate", function(navFrame)
+            UITweaks:ForceQuestDistanceText(navFrame)
+        end)
+        self.alwaysShowQuestDistanceFrameHooked = true
     end
 end
 
