@@ -10,6 +10,17 @@ local PREVIOUS_QUEST_MACRO_NAME = "Quest Prev"
 local NEXT_QUEST_MACRO_ICON = "INV_Misc_Note_01"
 local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
+local gameTooltipUnitColor = rawget(_G, "GameTooltip_UnitColor")
+
+local function applyTooltipUnitNameColor(unit)
+    if not gameTooltipUnitColor then return end
+    local r, g, b = gameTooltipUnitColor(unit)
+    if not r then return end
+    local nameLine = rawget(_G, "GameTooltipTextLeft1")
+    if nameLine and nameLine.GetText and nameLine:GetText() then
+        nameLine:SetTextColor(r, g, b)
+    end
+end
 
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
@@ -1074,6 +1085,7 @@ function UITweaks:UpdateTargetTooltip(forceHide)
     if not GameTooltip then
         return
     end
+
     if forceHide
         or not self.db.profile.showSoftTargetTooltipOutOfCombat
         or (InCombatLockdown and InCombatLockdown())
@@ -1086,6 +1098,7 @@ function UITweaks:UpdateTargetTooltip(forceHide)
     if unit then
         GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
         GameTooltip:SetUnit(unit)
+        applyTooltipUnitNameColor(unit)
     else
         GameTooltip:Hide()
     end
