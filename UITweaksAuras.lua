@@ -769,6 +769,157 @@ function Auras:ConsolePortActionPageChanged()
     Auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
 end
 
+local function getFrameText(frame)
+    if not frame then return nil end
+    if frame.GetText then return frame:GetText() end
+    local textRegion = frame.Text or frame.Label or frame.Title
+    if textRegion and textRegion.GetText then
+        return textRegion:GetText()
+    end
+    return nil
+end
+
+local function traverseFrames(root, visitor)
+    if not root or not root.GetChildren then return end
+    local children = { root:GetChildren() }
+    for _, child in ipairs(children) do
+        if visitor(child) then return true end
+        if traverseFrames(child, visitor) then return true end
+    end
+    return false
+end
+
+function Auras:FindCooldownViewerPanelByTitle(root, title)
+    local match = nil
+    traverseFrames(root, function(frame)
+        local text = getFrameText(frame)
+        if text == title then
+            match = frame:GetParent()
+            return true
+        end
+        return false
+    end)
+    return match
+end
+
+function Auras:ClickCooldownViewerButtonsByLabel(root, labels)
+    local clicked = 0
+    traverseFrames(root, function(frame)
+        if clicked > 200 then return true end
+        if frame.GetObjectType and frame:GetObjectType() == "Button" and frame.Click then
+            local text = getFrameText(frame)
+            if text and labels[text] then
+                if frame.IsEnabled and not frame:IsEnabled() then
+                    return false
+                end
+                frame:Click()
+                clicked = clicked + 1
+            end
+        end
+        return false
+    end)
+    return clicked
+end
+
+function Auras:SelectCooldownViewerBuffsTab()
+    local settingsFrame = _G.CooldownViewerSettings
+    if not settingsFrame then return end
+    local tab = settingsFrame.AurasTab
+    if not settingsFrame.SetDisplayMode then return end
+    settingsFrame:SetDisplayMode((tab and tab.displayMode) or "auras")
+    if settingsFrame.UpdateTabs then settingsFrame:UpdateTabs() end
+end
+
+function Auras:MoveCooldownViewerNotDisplayedToTracked()
+    local settingsFrame = _G.CooldownViewerSettings
+    if not settingsFrame then return end
+
+    Auras.SelectCooldownViewerBuffsTab(self)
+
+    local dataProvider = settingsFrame.GetDataProvider and settingsFrame:GetDataProvider()
+    local enumTable = rawget(_G, "Enum")
+    if dataProvider and dataProvider.GetOrderedCooldownIDs and dataProvider.GetCooldownInfoForID and dataProvider.SetCooldownToCategory and enumTable and enumTable.CooldownViewerCategory then
+        local movedAny = false
+        local targetCategory = enumTable.CooldownViewerCategory.TrackedBuff
+        local sourceCategory = enumTable.CooldownViewerCategory.HiddenAura
+        local successStatus = enumTable.CooldownLayoutStatus and enumTable.CooldownLayoutStatus.Success
+
+        for _, cooldownID in ipairs(dataProvider:GetOrderedCooldownIDs()) do
+            local info = dataProvider:GetCooldownInfoForID(cooldownID)
+            if info and info.category == sourceCategory then
+                local status = dataProvider:SetCooldownToCategory(cooldownID, targetCategory)
+                if successStatus == nil or status == successStatus then
+                    movedAny = true
+                end
+            end
+        end
+
+        if movedAny then
+            if settingsFrame.SaveCurrentLayout then
+                settingsFrame:SaveCurrentLayout()
+            end
+            if settingsFrame.RefreshLayout then
+                settingsFrame:RefreshLayout()
+            end
+            return
+        end
+    end
+
+    local notDisplayedPanel = Auras.FindCooldownViewerPanelByTitle(self, settingsFrame, "Not Displayed")
+    if not notDisplayedPanel then return end
+
+    local clicked = Auras.ClickCooldownViewerButtonsByLabel(self, notDisplayedPanel, {
+        ["Track"] = true,
+        ["Add"] = true,
+        ["Move"] = true,
+        ["Display"] = true,
+        ["Track All"] = true,
+        ["Add All"] = true,
+    })
+    return clicked > 0
+end
+
+function Auras:EnsureCooldownViewerMoveAllButton()
+    local settingsFrame = _G.CooldownViewerSettings
+    if not settingsFrame then return end
+
+    local button = settingsFrame.UITweaksMoveAllButton
+    if not button then
+        local template = "UIPanelButtonNoTooltipTemplate, UIButtonTemplate"
+        button = CreateFrame("Button", nil, settingsFrame, template)
+        button:SetSize(96, 22)
+        button:SetPoint("RIGHT", settingsFrame.UndoButton, "LEFT", -6, 0)
+
+        button:SetScript("OnClick", function()
+            Auras.MoveCooldownViewerNotDisplayedToTracked(self)
+        end)
+
+        button.tooltipTitle = "Move all Not Displayed auras to Tracked Buffs"
+        button.disabledTooltip = "Enable Show Action Button Aura Timers in Stock UI Tweaks to use this button."
+
+        settingsFrame.UITweaksMoveAllButton = button
+    end
+
+    button:SetText("Track All")
+    button:SetSize(math.max(96, button:GetTextWidth() + 24), 22)
+
+    local enabled = self.db.profile.showActionButtonAuraTimers
+    button:SetShown(enabled)
+    button:SetEnabled(enabled)
+end
+
+function Auras:EnsureCooldownViewerSettingsHooked()
+    if self.cooldownViewerSettingsHooked then return end
+    local settingsFrame = _G.CooldownViewerSettings
+    if not settingsFrame or not settingsFrame.HookScript then return end
+    settingsFrame:HookScript("OnShow", function()
+        Auras.SelectCooldownViewerBuffsTab(self)
+        Auras.EnsureCooldownViewerMoveAllButton(self)
+    end)
+    Auras.EnsureCooldownViewerMoveAllButton(self)
+    self.cooldownViewerSettingsHooked = true
+end
+
 function Auras:ApplyCooldownViewerAlpha()
     local shouldHide = self.db.profile.showActionButtonAuraTimers and self.db.profile.hideBlizzardCooldownViewer
     if shouldHide and UIParentLoadAddOn then

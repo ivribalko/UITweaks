@@ -1578,115 +1578,29 @@ function UITweaks:OpenCooldownViewerSettings()
     end
     local settingsFrame = _G.CooldownViewerSettings
     if settingsFrame and settingsFrame.Show then
-        settingsFrame:Show()
         self:EnsureCooldownViewerSettingsHooked()
-        self:QueueCooldownViewerSettingsMove()
+        settingsFrame:Show()
+        self.auras.SelectCooldownViewerBuffsTab(self)
+        C_Timer.After(0, function()
+            self.auras.SelectCooldownViewerBuffsTab(self)
+        end)
     end
-end
-
-local function getFrameText(frame)
-    if not frame then return nil end
-    if frame.GetText then return frame:GetText() end
-    local textRegion = frame.Text or frame.Label or frame.Title
-    if textRegion and textRegion.GetText then
-        return textRegion:GetText()
-    end
-    return nil
-end
-
-local function traverseFrames(root, visitor)
-    if not root or not root.GetChildren then return end
-    local children = { root:GetChildren() }
-    for _, child in ipairs(children) do
-        if visitor(child) then return true end
-        if traverseFrames(child, visitor) then return true end
-    end
-    return false
-end
-
-function UITweaks:FindCooldownViewerPanelByTitle(root, title)
-    local match = nil
-    traverseFrames(root, function(frame)
-        local text = getFrameText(frame)
-        if text == title then
-            match = frame:GetParent()
-            return true
-        end
-        return false
-    end)
-    return match
-end
-
-function UITweaks:ClickCooldownViewerButtonsByLabel(root, labels)
-    local clicked = 0
-    traverseFrames(root, function(frame)
-        if clicked > 200 then return true end
-        if frame.GetObjectType and frame:GetObjectType() == "Button" and frame.Click then
-            local text = getFrameText(frame)
-            if text and labels[text] then
-                if frame.IsEnabled and not frame:IsEnabled() then
-                    return false
-                end
-                frame:Click()
-                clicked = clicked + 1
-            end
-        end
-        return false
-    end)
-    return clicked
 end
 
 function UITweaks:SelectCooldownViewerBuffsTab()
-    local settingsFrame = _G.CooldownViewerSettings
-    if not settingsFrame then return end
-    local tab = settingsFrame.AurasTab
-    if not settingsFrame.SetDisplayMode then return end
-    settingsFrame:SetDisplayMode((tab and tab.displayMode) or "auras")
-    if settingsFrame.UpdateTabs then settingsFrame:UpdateTabs() end
+    return self.auras.SelectCooldownViewerBuffsTab(self)
+end
+
+function UITweaks:EnsureCooldownViewerMoveAllButton()
+    return self.auras.EnsureCooldownViewerMoveAllButton(self)
 end
 
 function UITweaks:MoveCooldownViewerNotDisplayedToTracked()
-    local settingsFrame = _G.CooldownViewerSettings
-    if not settingsFrame then return end
-
-    self:SelectCooldownViewerBuffsTab()
-
-    local notDisplayedPanel = self:FindCooldownViewerPanelByTitle(settingsFrame, "Not Displayed")
-    if not notDisplayedPanel then return end
-
-    local clicked = self:ClickCooldownViewerButtonsByLabel(notDisplayedPanel, {
-        ["Track"] = true,
-        ["Add"] = true,
-        ["Move"] = true,
-        ["Display"] = true,
-        ["Track All"] = true,
-        ["Add All"] = true,
-    })
-    if clicked > 0 then
-        self.cooldownViewerNotDisplayedMoved = true
-    end
-end
-
-function UITweaks:QueueCooldownViewerSettingsMove()
-    if self.cooldownViewerNotDisplayedMoved then return end
-    C_Timer.After(0, function()
-        self:SelectCooldownViewerBuffsTab()
-        self:MoveCooldownViewerNotDisplayedToTracked()
-    end)
+    return self.auras.MoveCooldownViewerNotDisplayedToTracked(self)
 end
 
 function UITweaks:EnsureCooldownViewerSettingsHooked()
-    if self.cooldownViewerSettingsHooked then return end
-    local settingsFrame = _G.CooldownViewerSettings
-    if not settingsFrame or not settingsFrame.HookScript then return end
-    settingsFrame:HookScript("OnShow", function()
-        self:SelectCooldownViewerBuffsTab()
-        self:QueueCooldownViewerSettingsMove()
-    end)
-    settingsFrame:HookScript("OnHide", function()
-        self.cooldownViewerSettingsOpened = false
-    end)
-    self.cooldownViewerSettingsHooked = true
+    return self.auras.EnsureCooldownViewerSettingsHooked(self)
 end
 
 function UITweaks:ApplyVisibilityState()

@@ -137,15 +137,16 @@ function Options.OnInitialize(self)
                     showActionButtonAuraTimers = toggleOption(
                         "showActionButtonAuraTimers",
                         "Show Action Button Aura Timers",
-                        "Show buffs and debuffs highlight and remaining duration on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, move abilities from 'Not Displayed' to 'Tracked Buffs' or 'Tracked Bars' then close the window to save it. Cooldown Viewer auras work in and out of combat. Additional highlights from untracked player buffs and items on the action bar only reapply out of combat.",
+                        "Show buffs and debuffs highlight and remaining duration on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. In Cooldown Manager, use the new 'Track All' button at the bottom to move all items from 'Not Displayed' to 'Tracked Buffs', then close the window to save it. Cooldown Viewer auras work in and out of combat. Additional highlights from untracked player buffs and items on the action bar only reapply out of combat.",
                         4,
                         function()
                             self.auras.ApplyActionButtonAuraTimers(self)
+                            self:EnsureCooldownViewerMoveAllButton()
                         end
                     ),
                     openCooldownViewerSettings = {
                         type = "execute",
-                        name = "Open Advanced Cooldown Settings",
+                        name = "Open Cooldown Settings",
                         desc = "Open the Cooldown Viewer settings window on Buffs tab.",
                         order = 99,
                         width = "full",
