@@ -324,7 +324,7 @@ function Options.OnInitialize(self)
                     hidePlayerFrameOutOfCombat = toggleOption(
                         "hidePlayerFrameOutOfCombat",
                         "Hide Player Frame Out of Combat",
-                        "Hide the player unit frame outside combat.",
+                        "Fade out the player unit frame outside combat and show it on mouse over.",
                         4,
                         function()
                             self:UpdatePlayerFrameVisibility()

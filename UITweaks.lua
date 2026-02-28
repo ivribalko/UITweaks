@@ -186,6 +186,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
 end
 
 function UITweaks:PLAYER_REGEN_DISABLED()
+    self.inCombat = true
     if self:ShouldCollapseObjectiveTracker() then
         self:CollapseTrackerIfNeeded()
     end
@@ -201,6 +202,7 @@ function UITweaks:PLAYER_REGEN_DISABLED()
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
+    self.inCombat = false
     self:ScheduleDelayedVisibilityUpdate()
     if self.db.profile.showActionButtonAuraTimers then
         self.auras.OnCombatEnded(self)
@@ -208,6 +210,7 @@ function UITweaks:PLAYER_REGEN_ENABLED()
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
+    self.inCombat = false
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate(true)
@@ -643,8 +646,64 @@ local function UpdateCombatFrameVisibility(frame, profileKey, stateDriver, delay
     end
 end
 
+local function setPlayerFrameAlpha(alpha)
+    if not PlayerFrame then return end
+    PlayerFrame:SetAlpha(alpha)
+    PlayerFrame:Show()
+end
+
+function UITweaks:SetPlayerFrameHoverPolling(enabled)
+    if self.playerFrameHoverTicker then
+        self.playerFrameHoverTicker:Cancel()
+        self.playerFrameHoverTicker = nil
+    end
+    if not enabled then return end
+    self.playerFrameHoverTicker = C_Timer.NewTicker(0.1, function()
+        if not (UITweaks.db and UITweaks.db.profile.hidePlayerFrameOutOfCombat and PlayerFrame) then return end
+        if UITweaks.inCombat then return end
+        if UITweaks.visibilityDelayActive then
+            setPlayerFrameAlpha(1)
+            return
+        end
+        if PlayerFrame:IsMouseOver() then
+            setPlayerFrameAlpha(1)
+        else
+            setPlayerFrameAlpha(0)
+        end
+    end)
+end
+
 function UITweaks:UpdatePlayerFrameVisibility()
-    UpdateCombatFrameVisibility(PlayerFrame, "hidePlayerFrameOutOfCombat", "[combat] show; hide", "show")
+    if not PlayerFrame then return end
+    if self.db.profile.hidePlayerFrameOutOfCombat then
+        if not PlayerFrame.UITweaksPlayerFrameHooked then
+            PlayerFrame:HookScript("OnShow", function(frame)
+                if not (UITweaks.db and UITweaks.db.profile.hidePlayerFrameOutOfCombat) then return end
+                if UITweaks.inCombat or UITweaks.visibilityDelayActive or frame:IsMouseOver() then
+                    frame:SetAlpha(1)
+                else
+                    frame:SetAlpha(0)
+                end
+            end)
+            PlayerFrame.UITweaksPlayerFrameHooked = true
+        end
+        if RegisterStateDriver then
+            RegisterStateDriver(PlayerFrame, "visibility", "show")
+        end
+        self:SetPlayerFrameHoverPolling(true)
+        if self.inCombat then
+            setPlayerFrameAlpha(1)
+        elseif self.visibilityDelayActive then
+            setPlayerFrameAlpha(1)
+        elseif PlayerFrame:IsMouseOver() then
+            setPlayerFrameAlpha(1)
+        else
+            setPlayerFrameAlpha(0)
+        end
+    else
+        self:SetPlayerFrameHoverPolling(false)
+        setPlayerFrameAlpha(1)
+    end
 end
 
 function UITweaks:UpdateTargetFrameVisibility()
