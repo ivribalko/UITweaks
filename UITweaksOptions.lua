@@ -191,7 +191,7 @@ function Options.OnInitialize(self)
                     hideChatTabs = toggleOption(
                         "hideChatTabs",
                         "Auto-Hide Chat Tabs",
-                        "Auto-Hide chat tab titles until you mouse over them.",
+                        "Auto-Hide chat tab titles until you mouse over them. Set Options -> Social -> New Whispers: In-line to prevent new tabs from appearing.",
                         3,
                         function()
                             self:UpdateChatTabsVisibility()

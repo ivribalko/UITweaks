@@ -25,7 +25,7 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 
 - Auto-Hide Chat Messages — Auto-Hide chat messages after a custom duration and reveal them on mouse over.
 - Fade After Seconds — Number of seconds a chat message stays before fading when the override is enabled.
-- Auto-Hide Chat Tabs — Auto-Hide chat tab titles until you mouse over them.
+- Auto-Hide Chat Tabs — Auto-Hide chat tab titles until you mouse over them. Set Options -> Social -> New Whispers: In-line to prevent new tabs from appearing.
 - Set Chat Font Size — Enable a custom chat window font size for all tabs.
 - Font Size — Font size to use when the override is enabled.
 - Hide Chat Bubble Button — Hide the chat button with the speech bubble icon.
