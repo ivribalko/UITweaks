@@ -2,7 +2,7 @@
 ## Title: Stock UI Tweaks
 ## Notes: Various Stock UI Tweaks
 ## Author: Me
-## Version: 1.5
+## Version: 1.6
 ## IconTexture: Interface\AddOns\UITweaks\icon64.tga
 ## SavedVariables: UITweaksDB
 
