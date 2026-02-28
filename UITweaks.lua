@@ -280,10 +280,28 @@ function UITweaks:PLAYER_SOFT_INTERACT_CHANGED()
 end
 
 function UITweaks:LOOT_OPENED()
+    self.lootTargetGUIDToClear = nil
+    local targetGuid = UnitGUID and UnitGUID("target")
+    if targetGuid and UnitIsDead and UnitIsDead("target") then
+        self.lootTargetGUIDToClear = targetGuid
+    end
     self:UpdateTargetTooltip(true)
 end
 
 function UITweaks:LOOT_CLOSED()
+    local targetGuidToClear = self.lootTargetGUIDToClear
+    self.lootTargetGUIDToClear = nil
+
+    if targetGuidToClear
+        and UnitGUID and UnitGUID("target") == targetGuidToClear
+        and UnitIsDead and UnitIsDead("target")
+        and not (InCombatLockdown and InCombatLockdown())
+        and ClearTarget
+    then
+        ClearTarget()
+    end
+
+    self:UpdateTargetFrameVisibility()
     self:UpdateTargetTooltip()
 end
 
