@@ -359,10 +359,65 @@ function UITweaks:ApplyQuestMarkerDistanceSetting()
     end
 end
 
+local function cacheDistanceTextPoints(navFrame)
+    if navFrame.uitOriginalDistanceTextPoints then return end
+    local distanceText = navFrame.DistanceText
+    local points = {}
+    local numPoints = distanceText:GetNumPoints() or 0
+    for index = 1, numPoints do
+        local point, relativeTo, relativePoint, xOfs, yOfs = distanceText:GetPoint(index)
+        points[index] = {
+            point = point,
+            relativeTo = relativeTo,
+            relativePoint = relativePoint,
+            xOfs = xOfs,
+            yOfs = yOfs,
+        }
+    end
+    navFrame.uitOriginalDistanceTextPoints = points
+end
+
+local function restoreDistanceTextPoints(navFrame)
+    local points = navFrame.uitOriginalDistanceTextPoints
+    if not points then return end
+
+    local distanceText = navFrame.DistanceText
+    distanceText:ClearAllPoints()
+    for _, pointData in ipairs(points) do
+        distanceText:SetPoint(pointData.point, pointData.relativeTo, pointData.relativePoint, pointData.xOfs, pointData.yOfs)
+    end
+end
+
+function UITweaks:UpdateQuestDistanceTextAnchor(navFrame)
+    if not navFrame or not navFrame.DistanceText then return end
+
+    cacheDistanceTextPoints(navFrame)
+
+    local shouldMoveUp = false
+    if navFrame.isClamped then
+        local _, markerY = navFrame:GetCenter()
+        local screenHalfY = (UIParent and UIParent:GetHeight() or 0) * 0.5
+        shouldMoveUp = markerY and markerY < screenHalfY
+    end
+
+    if shouldMoveUp then
+        if not navFrame.uitDistanceTextMovedUp then
+            navFrame.DistanceText:ClearAllPoints()
+            navFrame.DistanceText:SetPoint("BOTTOM", navFrame, "TOP", 0, -30)
+            navFrame.uitDistanceTextMovedUp = true
+        end
+    elseif navFrame.uitDistanceTextMovedUp then
+        restoreDistanceTextPoints(navFrame)
+        navFrame.uitDistanceTextMovedUp = false
+    end
+end
+
 function UITweaks:ForceQuestDistanceText(navFrame)
     if not self.db.profile.alwaysShowQuestMarkerDistance then return end
     if not navFrame or not navFrame.DistanceText then return end
     if not (C_Navigation and C_Navigation.GetDistance) then return end
+
+    self:UpdateQuestDistanceTextAnchor(navFrame)
 
     local distance = math.floor(C_Navigation.GetDistance() + 0.5)
     local displayDistance = distance
