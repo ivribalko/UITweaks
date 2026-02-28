@@ -86,5 +86,5 @@ Exceptions:
 - Assume `self.db`, `self.auras`, `self.debug`, and `self.options` always exist; do not add nil/existence guards for them.
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - Debug panel is alpha-only and intentionally omitted from this README.
-- `refs/` contains addons and other files used strictly as references. Do not use or read anything in `refs/` unless explicitly instructed.
+- `AddOns/` contains addons and other files used strictly as references. Do not use or read anything in `AddOns/` unless explicitly instructed.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.
