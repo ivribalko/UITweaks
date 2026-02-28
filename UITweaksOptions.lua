@@ -17,7 +17,6 @@ Options.defaults = {
         hideBackpackButton = false,
         hideDamageMeter = false,
         hideTargetFrameOutOfCombat = false,
-        replaceTargetFrameWithTooltip = false,
         showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideChatMenuButton = false,
@@ -342,22 +341,11 @@ function Options.OnInitialize(self)
                             self:ScheduleDelayedVisibilityUpdate()
                         end
                     ),
-                    replaceTargetFrameWithTooltip = toggleOption(
-                        "replaceTargetFrameWithTooltip",
-                        "Replace Target Frame With Tooltip Out of Combat",
-                        "Show the target tooltip when the target frame is not shown out of combat (useful for quest info like how many to kill).",
-                        6,
-                        function(val)
-                            if not val then
-                                GameTooltip:Hide()
-                            end
-                        end
-                    ),
                     showSoftTargetTooltipOutOfCombat = toggleOption(
                         "showSoftTargetTooltipOutOfCombat",
                         "Show Tooltip For Soft (Action) Target Out of Combat",
-                        "Also display the ConsolePort soft (action) target's tooltip while out of combat.",
-                        7,
+                        "Display the ConsolePort soft (action) target's tooltip while out of combat.",
+                        6,
                         function(val)
                             if not val then
                                 GameTooltip:Hide()

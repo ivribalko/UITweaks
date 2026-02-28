@@ -193,7 +193,7 @@ function UITweaks:PLAYER_REGEN_DISABLED()
     self:UpdatePlayerFrameVisibility()
     self:UpdateTargetFrameVisibility()
     self:UpdateDamageMeterVisibility()
-    if self.db.profile.replaceTargetFrameWithTooltip then GameTooltip:Hide() end
+    if self.db.profile.showSoftTargetTooltipOutOfCombat then GameTooltip:Hide() end
     if self.visibilityTimer then
         self.visibilityTimer:Cancel()
         self.visibilityTimer = nil
@@ -1062,8 +1062,7 @@ end
 
 function UITweaks:GetTargetTooltipUnit()
     local unit
-    if UnitExists("target") then unit = "target" end
-    if not unit and self.db.profile.showSoftTargetTooltipOutOfCombat then
+    if self.db.profile.showSoftTargetTooltipOutOfCombat then
         if UnitExists("softenemy") then unit = "softenemy" end
         if not unit and UnitExists("softfriend") then unit = "softfriend" end
         if not unit and UnitExists("softinteract") then unit = "softinteract" end
@@ -1072,19 +1071,23 @@ function UITweaks:GetTargetTooltipUnit()
 end
 
 function UITweaks:UpdateTargetTooltip(forceHide)
-    if GameTooltip and self.db.profile.replaceTargetFrameWithTooltip then
-        if forceHide then
-            GameTooltip:Hide()
-            return
-        end
-        local unit = self:GetTargetTooltipUnit()
-        local targetFrameShown = _G.TargetFrame and _G.TargetFrame.IsShown and _G.TargetFrame:IsShown()
-        if unit and not targetFrameShown then
-            GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-            GameTooltip:SetUnit(unit)
-        elseif forceHide or not unit or targetFrameShown then
-            GameTooltip:Hide()
-        end
+    if not GameTooltip then
+        return
+    end
+    if forceHide
+        or not self.db.profile.showSoftTargetTooltipOutOfCombat
+        or (InCombatLockdown and InCombatLockdown())
+    then
+        GameTooltip:Hide()
+        return
+    end
+
+    local unit = self:GetTargetTooltipUnit()
+    if unit then
+        GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
+        GameTooltip:SetUnit(unit)
+    else
+        GameTooltip:Hide()
     end
 end
 
@@ -1093,7 +1096,7 @@ function UITweaks:HasDelayedVisibilityFeatures()
         or self.db.profile.hidePlayerFrameOutOfCombat
         or self.db.profile.hideTargetFrameOutOfCombat
         or self:ShouldCollapseObjectiveTracker()
-        or self.db.profile.replaceTargetFrameWithTooltip
+        or self.db.profile.showSoftTargetTooltipOutOfCombat
 end
 
 function UITweaks:ApplyDelayedVisibility()
@@ -1103,7 +1106,7 @@ function UITweaks:ApplyDelayedVisibility()
     if self.db.profile.hidePlayerFrameOutOfCombat then self:UpdatePlayerFrameVisibility() end
     if self.db.profile.hideTargetFrameOutOfCombat then self:UpdateTargetFrameVisibility() end
     if self:ShouldCollapseObjectiveTracker() then self:ExpandTrackerIfNeeded(true) end
-    if self.db.profile.replaceTargetFrameWithTooltip then self:UpdateTargetTooltip() end
+    if self.db.profile.showSoftTargetTooltipOutOfCombat then self:UpdateTargetTooltip() end
 end
 
 function UITweaks:ScheduleDelayedVisibilityUpdate(skipDelay)
