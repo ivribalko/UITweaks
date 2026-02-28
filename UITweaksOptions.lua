@@ -344,7 +344,7 @@ function Options.OnInitialize(self)
                     showSoftTargetTooltipOutOfCombat = toggleOption(
                         "showSoftTargetTooltipOutOfCombat",
                         "Show Tooltip For Soft (Action) Target Out of Combat",
-                        "Display the ConsolePort soft (action) target's tooltip while out of combat.",
+                        "Display the ConsolePort soft (action) target's tooltip while out of combat. Useful to check if the target is related to any active quests.",
                         6,
                         function(val)
                             if not val then
