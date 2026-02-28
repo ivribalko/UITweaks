@@ -293,25 +293,33 @@ local function getChatFrames()
     return frames
 end
 
-local function hookChatFrameHover(frame)
-    if frame.UITweaksHoverHooked then return end
-    frame:HookScript("OnEnter", function(chatFrame)
-        if UITweaks.db and UITweaks.db.profile.chatMessageFadeAfterOverride then
-            if chatFrame.SetFading then chatFrame:SetFading(false) end
-            if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
+local function getMainChatFrame()
+    return _G.DEFAULT_CHAT_FRAME or _G["ChatFrame1"]
+end
+
+local function isCursorInsideFrame(frame)
+    if not frame or not frame.IsVisible or not frame:IsVisible() then return false end
+    if not frame.IsMouseOver then return false end
+    return frame:IsMouseOver()
+end
+
+function UITweaks:SetChatFadeHoverPolling(enabled)
+    if self.chatFadeHoverTicker then
+        self.chatFadeHoverTicker:Cancel()
+        self.chatFadeHoverTicker = nil
+    end
+    self.mainChatFrameHovered = nil
+    if not enabled then return end
+    self.chatFadeHoverTicker = C_Timer.NewTicker(0.1, function()
+        local frame = getMainChatFrame()
+        if not frame then return end
+        local isCursorInside = isCursorInsideFrame(frame)
+        if UITweaks.mainChatFrameHovered ~= isCursorInside then
+            if frame.SetFading then frame:SetFading(not isCursorInside) end
+            if frame.ResetFadeTimer then frame:ResetFadeTimer() end
+            UITweaks.mainChatFrameHovered = isCursorInside
         end
     end)
-    frame:HookScript("OnLeave", function(chatFrame)
-        if UITweaks.db and UITweaks.db.profile.chatMessageFadeAfterOverride then
-            -- Defer fade reset to avoid rapid OnLeave/OnEnter churn from hyperlink hover.
-            C_Timer.After(0, function()
-                if chatFrame.IsMouseOver and chatFrame:IsMouseOver() then return end
-                if chatFrame.SetFading then chatFrame:SetFading(true) end
-                if chatFrame.ResetFadeTimer then chatFrame:ResetFadeTimer() end
-            end)
-        end
-    end)
-    frame.UITweaksHoverHooked = true
 end
 
 function UITweaks:ApplyChatFontSize()
@@ -383,15 +391,14 @@ function UITweaks:EnsureAlwaysShowQuestDistanceHook()
 end
 
 function UITweaks:ApplyChatLineFade()
-    local frames = getChatFrames()
+    local frame = getMainChatFrame()
+    self:SetChatFadeHoverPolling(self.db.profile.chatMessageFadeAfterOverride)
     if self.db.profile.chatMessageFadeAfterOverride then
         local seconds = self.db.profile.chatMessageFadeAfterSeconds
-        for _, frame in ipairs(frames) do
-            if frame.SetTimeVisible then frame:SetTimeVisible(seconds) end
-            if frame.SetFading then frame:SetFading(true) end
-            if frame.ResetFadeTimer then frame:ResetFadeTimer() end
-            hookChatFrameHover(frame)
-        end
+        if not frame then return end
+        if frame.SetTimeVisible then frame:SetTimeVisible(seconds) end
+        if frame.SetFading then frame:SetFading(true) end
+        if frame.ResetFadeTimer then frame:ResetFadeTimer() end
     end
 end
 
