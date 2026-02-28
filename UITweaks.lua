@@ -23,7 +23,6 @@ function UITweaks:OnEnable()
     self:RegisterChatCommand("uitnextquest", "HandleNextQuestSlashCommand")
     self:RegisterChatCommand("uitprevquest", "HandlePreviousQuestSlashCommand")
     self:ApplyQuestMarkerDistanceSetting()
-    self:CacheDefaultChatWindowTimes()
     self:ApplyChatLineFade()
     self:ApplyChatFontSize()
     self:ApplyChatBackgroundAlpha()
@@ -315,41 +314,14 @@ local function hookChatFrameHover(frame)
     frame.UITweaksHoverHooked = true
 end
 
-function UITweaks:CacheDefaultChatWindowTimes()
-    if not self.defaultChatWindowTimeVisible then
-        self.defaultChatWindowTimeVisible = {}
-        for index, frame in ipairs(getChatFrames()) do
-            if frame.GetTimeVisible then self.defaultChatWindowTimeVisible[index] = frame:GetTimeVisible() end
-        end
-    end
-end
-
-function UITweaks:CacheDefaultChatFonts()
-    if not self.defaultChatFonts then
-        self.defaultChatFonts = {}
-        for index, frame in ipairs(getChatFrames()) do
-            if frame.GetFont then
-                local font, size, flags = frame:GetFont()
-                self.defaultChatFonts[index] = {
-                    font = font,
-                    size = size,
-                    flags = flags,
-                }
-            end
-        end
-    end
-end
-
 function UITweaks:ApplyChatFontSize()
-    self:CacheDefaultChatFonts()
     local frames = getChatFrames()
     if self.db.profile.chatFontOverrideEnabled then
         local size = self.db.profile.chatFontSize
-        for index, frame in ipairs(frames) do
+        for _, frame in ipairs(frames) do
             if frame.SetFont then
-                local defaultFont = self.defaultChatFonts[index]
-                local font = defaultFont and defaultFont.font or (frame.GetFont and select(1, frame:GetFont()))
-                local flags = defaultFont and defaultFont.flags or (frame.GetFont and select(3, frame:GetFont()))
+                local font = frame.GetFont and select(1, frame:GetFont())
+                local flags = frame.GetFont and select(3, frame:GetFont())
                 if font then frame:SetFont(font, size, flags) end
             end
         end
@@ -413,7 +385,6 @@ end
 function UITweaks:ApplyChatLineFade()
     local frames = getChatFrames()
     if self.db.profile.chatMessageFadeAfterOverride then
-        self:CacheDefaultChatWindowTimes()
         local seconds = self.db.profile.chatMessageFadeAfterSeconds
         for _, frame in ipairs(frames) do
             if frame.SetTimeVisible then frame:SetTimeVisible(seconds) end
