@@ -38,7 +38,7 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 - In Raids — Collapse the objective tracker in combat while in raid instances.
 - In Dungeons — Collapse the objective tracker in combat while in dungeon instances.
 - Everywhere Else — Collapse the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).
-- Hide Player Frame Out of Combat — Fade out the player unit frame outside combat and show it on mouse over.
+- Hide Player Frame Out of Combat — Hide the player unit frame outside combat.
 - Hide Target Frame Out of Combat — Hide the target unit frame outside combat.
 - Show Tooltip For Soft (Action) Target Out of Combat — Display the ConsolePort soft (action) target's tooltip while out of combat. Useful to check if the target is related to any active quests.
 
