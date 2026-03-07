@@ -72,6 +72,7 @@ RegisterStateDriver = RegisterStateDriver
 ReloadUI = ReloadUI
 SetChatWindowAlpha = SetChatWindowAlpha
 StanceBar = StanceBar
+TotemFrame = TotemFrame
 SuperTrackedFrame = SuperTrackedFrame
 UIErrorsFrame = UIErrorsFrame
 UIParent = UIParent
@@ -114,3 +115,4 @@ unpack = unpack
 ---@field StanceBar any
 ---@field SuperTrackedFrame any
 ---@field TargetFrame any
+---@field TotemFrame any

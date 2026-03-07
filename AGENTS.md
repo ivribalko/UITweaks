@@ -58,6 +58,7 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 - Hide Group Loot History — Hide the group loot history frame.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
+- Hide Totem Frame — Hide the totem frame, including warlock pets.
 
 ## Settings Rules
 

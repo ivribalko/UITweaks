@@ -23,6 +23,7 @@ Options.defaults = {
         transparentChatBackground = false,
         hideGroupLootHistoryFrame = false,
         hideStanceButtons = false,
+        hideTotemFrame = false,
         hideMicroMenuButtons = false,
         collapseObjectiveTrackerInRaids = false,
         collapseObjectiveTrackerInDungeons = false,
@@ -484,6 +485,15 @@ function Options.OnInitialize(self)
                         8,
                         function()
                             self:UpdateMicroMenuVisibility()
+                        end
+                    ),
+                    hideTotemFrame = toggleOption(
+                        "hideTotemFrame",
+                        "Hide Totem Frame",
+                        "Hide the totem frame, including warlock pets.",
+                        9,
+                        function()
+                            self:UpdateTotemFrameVisibility()
                         end
                     ),
                 },

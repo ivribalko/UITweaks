@@ -179,6 +179,8 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self.auras.RequestActionButtonAuraRefresh(self, true)
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
+    elseif addonName == "Blizzard_TotemBar" then
+        self:UpdateTotemFrameVisibility()
     elseif addonName == "ConsolePort"
         or addonName == "ConsolePort_ActionBar"
         or addonName == "ConsolePortActionBar"
@@ -905,6 +907,36 @@ function UITweaks:UpdateMicroMenuVisibility()
     end
 end
 
+local function ensureTotemBarLoaded()
+    if _G.TotemFrame then return true end
+    local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
+    if loadAddOn then
+        local isLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Blizzard_TotemBar"))
+            or (IsAddOnLoaded and IsAddOnLoaded("Blizzard_TotemBar"))
+        if not isLoaded then
+            loadAddOn("Blizzard_TotemBar")
+        end
+    end
+    return _G.TotemFrame ~= nil
+end
+
+function UITweaks:UpdateTotemFrameVisibility()
+    if not ensureTotemBarLoaded() then return end
+    local frame = _G.TotemFrame
+    if not frame then return end
+    if self.db.profile.hideTotemFrame then
+        if not frame.UITweaksHooked then
+            frame:HookScript("OnShow", function(shownFrame)
+                if UITweaks.db and UITweaks.db.profile.hideTotemFrame then
+                    shownFrame:Hide()
+                end
+            end)
+            frame.UITweaksHooked = true
+        end
+        frame:Hide()
+    end
+end
+
 local function getStanceBars()
     local bars = {}
     if _G.StanceBar then bars[#bars + 1] = _G.StanceBar end
@@ -1553,6 +1585,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateGroupLootHistoryVisibility()
     self:UpdateMicroMenuVisibility()
     self:UpdateStanceButtonsVisibility()
+    self:UpdateTotemFrameVisibility()
     self:UpdateBackpackButtonVisibility()
 end
 
