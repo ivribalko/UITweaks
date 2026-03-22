@@ -57,6 +57,7 @@ Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforg
 - Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.
 - Hide Group Loot History — Hide the group loot history frame.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
+- Hide Minimap Addon Icons — Hide addon minimap icons, except the AddOn Compartment button.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
 - Hide Totem Frame — Hide the totem frame, including warlock pets.
 

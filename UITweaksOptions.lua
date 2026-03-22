@@ -12,6 +12,7 @@ Options.defaults = {
         chatMessageFadeAfterOverride = false,
         chatMessageFadeAfterSeconds = 10,
         hideHelpTips = false,
+        hideAddonMinimapIcons = false,
         hideBuffFrame = false,
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
@@ -478,11 +479,20 @@ function Options.OnInitialize(self)
                             self:HookHelpTipFrames()
                         end
                     ),
+                    hideAddonMinimapIcons = toggleOption(
+                        "hideAddonMinimapIcons",
+                        "Hide Minimap Addon Icons",
+                        "Hide addon minimap icons, except the AddOn Compartment button.",
+                        8,
+                        function()
+                            self:UpdateAddonMinimapIconsVisibility()
+                        end
+                    ),
                     hideMicroMenuButtons = toggleOption(
                         "hideMicroMenuButtons",
                         "Hide Micro Menu Buttons",
                         "Hide all micro menu buttons except the Dungeon Finder eye.",
-                        8,
+                        9,
                         function()
                             self:UpdateMicroMenuVisibility()
                         end
@@ -491,7 +501,7 @@ function Options.OnInitialize(self)
                         "hideTotemFrame",
                         "Hide Totem Frame",
                         "Hide the totem frame, including warlock pets.",
-                        9,
+                        10,
                         function()
                             self:UpdateTotemFrameVisibility()
                         end
