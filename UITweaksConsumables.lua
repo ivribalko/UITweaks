@@ -26,27 +26,40 @@ local function getHelpfulAuras()
     local auraBySpellID = {}
     local auraByName = {}
 
+    local function is_valid_key(key)
+        local t = type(key)
+        return key ~= nil and (t == "string" or t == "number")
+    end
+
+    local function safe_assign(tbl, key, value, context)
+        if type(tbl) ~= "table" then return end
+        if is_valid_key(key) then
+            local ok = pcall(function()
+                if tbl[key] == nil then
+                    tbl[key] = value
+                end
+            end)
+            -- silently ignore errors
+        end
+        -- silently skip invalid keys
+    end
+
+    if type(auraBySpellID) ~= "table" then auraBySpellID = {} end
+    if type(auraByName) ~= "table" then auraByName = {} end
+
     if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         local index = 1
         while true do
             local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
             if not aura then break end
-            if aura.spellId and not auraBySpellID[aura.spellId] then
-                auraBySpellID[aura.spellId] = aura
-            end
-            if aura.name and not auraByName[aura.name] then
-                auraByName[aura.name] = aura
-            end
+            safe_assign(auraBySpellID, aura.spellId, aura, "auraBySpellID at index " .. tostring(index))
+            safe_assign(auraByName, aura.name, aura, "auraByName at index " .. tostring(index))
             index = index + 1
         end
     elseif AuraUtil and AuraUtil.ForEachAura then
         AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
-            if aura.spellId and not auraBySpellID[aura.spellId] then
-                auraBySpellID[aura.spellId] = aura
-            end
-            if aura.name and not auraByName[aura.name] then
-                auraByName[aura.name] = aura
-            end
+            safe_assign(auraBySpellID, aura.spellId, aura, "auraBySpellID in AuraUtil")
+            safe_assign(auraByName, aura.name, aura, "auraByName in AuraUtil")
         end)
     end
 
