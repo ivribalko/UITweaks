@@ -41,6 +41,7 @@ end
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
     self.auras = type(require) == "function" and require("UITweaksAuras") or addonTable.Auras
+    self.consumables = type(require) == "function" and require("UITweaksConsumables") or addonTable.Consumables
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
     options.OnInitialize(self)
@@ -58,6 +59,7 @@ function UITweaks:OnEnable()
     if self.db.profile.showActionButtonAuraTimers then
         self.auras.ApplyActionButtonAuraTimers(self)
     end
+    self.consumables.ApplyInventoryConsumableHighlights(self)
     self.debug.OnEnable(self)
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
@@ -73,9 +75,12 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
     self:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
     self:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+    self:RegisterEvent("BAG_UPDATE_DELAYED")
     self:RegisterEvent("MODIFIER_STATE_CHANGED")
+    self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
     self:RegisterEvent("UNIT_AURA")
     self:RegisterEvent("NAVIGATION_FRAME_CREATED")
+    self:RegisterEvent("WEAPON_ENCHANT_CHANGED")
     if self.db.profile.showOptionsOnReload then
         C_Timer.After(1, function() self:OpenOptionsPanel() end)
     end
@@ -241,6 +246,7 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate(true)
+    self.consumables.RequestInventoryConsumableRefresh(self, true)
     if self.db.profile.consolePortBarSharing then
         self:RestoreConsolePortActionBarProfile()
     end
@@ -252,6 +258,15 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     if self.db.profile.showActionButtonAuraTimers then
         C_Timer.After(0.3, function() self.auras.ReapplyManualHighlightsFromPlayerAuras(self) end)
     end
+    C_Timer.After(0.5, function() self.consumables.RequestInventoryConsumableRefresh(self, true) end)
+end
+
+function UITweaks:BAG_UPDATE_DELAYED()
+    self.consumables.RequestInventoryConsumableRefresh(self, true)
+end
+
+function UITweaks:PLAYER_EQUIPMENT_CHANGED()
+    self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
 
 function UITweaks:HandleNextQuestSlashCommand()
@@ -295,7 +310,12 @@ function UITweaks:UNIT_AURA(_, unit)
     self.auras.RequestActionButtonAuraRefresh(self)
     if unit == "player" then
         self.auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
+        self.consumables.RequestInventoryConsumableRefresh(self)
     end
+end
+
+function UITweaks:WEAPON_ENCHANT_CHANGED()
+    self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
 
 function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()

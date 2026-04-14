@@ -43,6 +43,7 @@ Options.defaults = {
         consolePortBarSharing = false,
         skyridingBarSharing = false,
         alwaysShowQuestMarkerDistance = false,
+        highlightActiveConsumablesInInventory = false,
     },
     global = {
         skyridingBarLayout = {},
@@ -504,6 +505,15 @@ function Options.OnInitialize(self)
                         10,
                         function()
                             self:UpdateTotemFrameVisibility()
+                        end
+                    ),
+                    highlightActiveConsumablesInInventory = toggleOption(
+                        "highlightActiveConsumablesInInventory",
+                        "Highlight Active Consumables In Inventory",
+                        "Highlight inventory consumables with a green frame and remaining buff time when their player aura or weapon enchant is active. Supports flasks, food, oils, and other consumables that apply a helpful aura or temporary weapon enchant. If a Well Fed buff is active, all food items are highlighted with that buff's remaining time. Cases where a consumable applies an aura with a different name than the item spell are not supported (except Well Fed food).",
+                        11,
+                        function()
+                            self.consumables.ApplyInventoryConsumableHighlights(self)
                         end
                     ),
                 },

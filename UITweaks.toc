@@ -20,3 +20,4 @@ UITweaks.lua
 UITweaksDebug.lua
 UITweaksOptions.lua
 UITweaksAuras.lua
+UITweaksConsumables.lua
