@@ -279,6 +279,7 @@ function Consumables:RefreshInventoryConsumableHighlights()
         Consumables.ClearInventoryConsumableHighlights(self)
         return
     end
+    if InCombatLockdown() then return end
 
     local auraBySpellID, auraByName = getHelpfulAuras()
     local weaponEnchantStates = buildWeaponEnchantTooltipCache()
@@ -317,6 +318,7 @@ end
 function Consumables:StartInventoryConsumableTicker()
     if self.inventoryConsumableTicker then return end
     self.inventoryConsumableTicker = C_Timer.NewTicker(UPDATE_INTERVAL_SECONDS, function()
+        if InCombatLockdown() then return end
         Consumables.RefreshInventoryConsumableHighlights(self)
         if not self.inventoryConsumableOverlays then return end
         for _, overlay in pairs(self.inventoryConsumableOverlays) do
@@ -335,13 +337,8 @@ end
 
 function Consumables:RequestInventoryConsumableRefresh(forceRescan)
     if not self.db.profile.highlightActiveConsumablesInInventory then return end
-    if self.pendingInventoryConsumableRefresh then return end
-
-    self.pendingInventoryConsumableRefresh = true
-    C_Timer.After(0, function()
-        self.pendingInventoryConsumableRefresh = nil
-        Consumables.RefreshInventoryConsumableHighlights(self)
-    end)
+    if InCombatLockdown() then return end
+    Consumables.RefreshInventoryConsumableHighlights(self)
 end
 
 function Consumables:ApplyInventoryConsumableHighlights()

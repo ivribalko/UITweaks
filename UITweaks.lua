@@ -240,6 +240,7 @@ function UITweaks:PLAYER_REGEN_ENABLED()
     if self.db.profile.showActionButtonAuraTimers then
         self.auras.OnCombatEnded(self)
     end
+    self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
