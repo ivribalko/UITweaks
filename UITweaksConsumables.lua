@@ -254,7 +254,12 @@ function Consumables:FindConsumableAuraForButton(button, auraBySpellID, auraByNa
     local spellID, spellName = getItemSpellInfo(itemID, itemLink)
     if not spellID and not spellName then return end
 
-    local aura = (spellID and auraBySpellID[spellID]) or (spellName and auraByName[spellName]) or nil
+    local aura = nil
+    if spellID then
+        aura = auraBySpellID[spellID]
+    elseif spellName then
+        aura = auraByName[spellName]
+    end
     if aura and aura.expirationTime then
         return aura
     end
