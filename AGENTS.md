@@ -4,7 +4,7 @@ Options for WoW's stock UI to reduce on-screen elements.
 
 Aimed at [ConsolePort addon](https://www.curseforge.com/wow/addons/console-port) users, but fully usable without it.
 
-Recommended to be used together with [EnhanceQoL](https://www.curseforge.com/wow/addons/eqol).
+Recommended to be used together with [EnhanceQoL addon](https://www.curseforge.com/wow/addons/eqol).
 
 By default, nothing is enabled, so installing the addon only adds the settings menu.
 
