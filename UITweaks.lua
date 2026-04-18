@@ -287,6 +287,13 @@ local function isCursorInsideFrame(frame)
     return frame:IsMouseOver()
 end
 
+local function addUniqueFrame(frames, seen, frame)
+    if not frame or seen[frame] then return end
+    if not frame.IsObjectType or not frame:IsObjectType("Frame") then return end
+    seen[frame] = true
+    frames[#frames + 1] = frame
+end
+
 local function shouldAutoHideChatControlButtons(self)
     return self.db.profile.hideChatMenuButton
         or self.db.profile.hideChatChannelsButton
@@ -301,6 +308,104 @@ function UITweaks:AreChatControlButtonsHovered()
     return isCursorInsideFrame(_G.ChatFrameMenuButton)
         or isCursorInsideFrame(_G.ChatFrameChannelButton)
         or isCursorInsideFrame(_G.QuickJoinToastButton)
+end
+
+function UITweaks:RefreshDamageMeterFrames()
+    local frames = {}
+    local seen = {}
+    addUniqueFrame(frames, seen, _G.DamageMeter)
+    for globalName, frame in pairs(_G) do
+        if type(globalName) == "string" and globalName:match("^DamageMeter") then
+            addUniqueFrame(frames, seen, frame)
+        end
+    end
+    self.damageMeterFrames = frames
+    return frames
+end
+
+function UITweaks:GetDamageMeterFrames()
+    if not self.damageMeterFrames or #self.damageMeterFrames == 0 then
+        return self:RefreshDamageMeterFrames()
+    end
+    return self.damageMeterFrames
+end
+
+function UITweaks:SetDamageMeterAlpha(alpha)
+    for _, frame in ipairs(self:GetDamageMeterFrames()) do
+        frame:SetAlpha(alpha)
+    end
+end
+
+function UITweaks:IsDamageMeterHovered()
+    for _, frame in ipairs(self:GetDamageMeterFrames()) do
+        if isCursorInsideFrame(frame) then
+            return true
+        end
+    end
+    return false
+end
+
+function UITweaks:ScheduleDamageMeterHoverStateUpdate()
+    if self.damageMeterLeaveTimer then
+        self.damageMeterLeaveTimer:Cancel()
+    end
+    self.damageMeterLeaveTimer = C_Timer.NewTimer(0, function()
+        UITweaks.damageMeterLeaveTimer = nil
+        UITweaks:UpdateDamageMeterAlphaState()
+    end)
+end
+
+function UITweaks:UpdateDamageMeterAlphaState()
+    if not _G.DamageMeter then return end
+
+    if InCombatLockdown and InCombatLockdown() then
+        self.damageMeterHovered = false
+        self:SetDamageMeterAlpha(1)
+        _G.DamageMeter:Show()
+        return
+    end
+
+    if self.visibilityDelayActive then
+        self.damageMeterHovered = false
+        self:SetDamageMeterAlpha(1)
+        _G.DamageMeter:Show()
+        return
+    end
+
+    if not self.db.profile.hideDamageMeter then
+        self.damageMeterHovered = false
+        self:SetDamageMeterAlpha(1)
+        _G.DamageMeter:Show()
+        return
+    end
+
+    self.damageMeterHovered = self:IsDamageMeterHovered()
+    self:SetDamageMeterAlpha(self.damageMeterHovered and 1 or 0)
+    _G.DamageMeter:Show()
+end
+
+function UITweaks:HookDamageMeterFrames()
+    for _, frame in ipairs(self:GetDamageMeterFrames()) do
+        if not frame.UITweaksHooked then
+            frame:HookScript("OnShow", function(shownFrame)
+                UITweaks:RefreshDamageMeterFrames()
+                UITweaks:HookDamageMeterFrames()
+                UITweaks:UpdateDamageMeterAlphaState()
+            end)
+            frame:HookScript("OnEnter", function()
+                if UITweaks.damageMeterLeaveTimer then
+                    UITweaks.damageMeterLeaveTimer:Cancel()
+                    UITweaks.damageMeterLeaveTimer = nil
+                end
+                UITweaks.damageMeterHovered = true
+                UITweaks:UpdateDamageMeterAlphaState()
+            end)
+            frame:HookScript("OnLeave", function()
+                UITweaks:ScheduleDamageMeterHoverStateUpdate()
+            end)
+            frame.UITweaksHooked = true
+        end
+    end
 end
 
 function UITweaks:SetChatControlButtonsHoverPolling(enabled)
@@ -704,9 +809,9 @@ function UITweaks:UpdateBackpackButtonVisibility()
 end
 
 function UITweaks:UpdateDamageMeterVisibility(retry)
-    if self.damageMeterHoverTicker then
-        self.damageMeterHoverTicker:Cancel()
-        self.damageMeterHoverTicker = nil
+    if self.damageMeterLeaveTimer then
+        self.damageMeterLeaveTimer:Cancel()
+        self.damageMeterLeaveTimer = nil
     end
     if not _G.DamageMeter then
         if not retry then
@@ -714,50 +819,9 @@ function UITweaks:UpdateDamageMeterVisibility(retry)
         end
         return
     end
-    if InCombatLockdown and InCombatLockdown() then
-        _G.DamageMeter:SetAlpha(1)
-        _G.DamageMeter:Show()
-        return
-    end
-    if self.visibilityDelayActive then
-        _G.DamageMeter:SetAlpha(1)
-        _G.DamageMeter:Show()
-        return
-    end
-    if not self.db.profile.hideDamageMeter then
-        _G.DamageMeter:SetAlpha(1)
-        _G.DamageMeter:Show()
-        return
-    end
-    if not _G.DamageMeter.UITweaksHooked then
-        _G.DamageMeter:HookScript("OnShow", function(frame)
-            if UITweaks.db and UITweaks.db.profile.hideDamageMeter
-                and not (InCombatLockdown and InCombatLockdown()) then
-                frame:SetAlpha(0)
-            end
-        end)
-        _G.DamageMeter.UITweaksHooked = true
-    end
-    _G.DamageMeter:SetAlpha(0)
-    _G.DamageMeter:Show()
-    if _G.DamageMeter then
-        self.damageMeterHoverTicker = C_Timer.NewTicker(0.1, function()
-            if not (UITweaks.db and UITweaks.db.profile.hideDamageMeter and _G.DamageMeter) then return end
-            if InCombatLockdown and InCombatLockdown() then
-                _G.DamageMeter:SetAlpha(1)
-                return
-            end
-            if UITweaks.visibilityDelayActive then
-                _G.DamageMeter:SetAlpha(1)
-                return
-            end
-            if _G.DamageMeter:IsMouseOver() then
-                _G.DamageMeter:SetAlpha(1)
-            else
-                _G.DamageMeter:SetAlpha(0)
-            end
-        end)
-    end
+    self:RefreshDamageMeterFrames()
+    self:HookDamageMeterFrames()
+    self:UpdateDamageMeterAlphaState()
 end
 
 function UITweaks:UpdateChatTabsVisibility()

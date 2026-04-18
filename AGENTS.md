@@ -78,6 +78,7 @@ Exceptions:
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
 - Assume `self.db`, `self.debug`, and `self.options` always exist; do not add nil/existence guards for them.
+- Prefer frame `OnEnter`/`OnLeave` hooks or other event-driven updates over high-frequency `C_Timer.NewTicker` polling for hover-driven UI visibility; repeated scans in 0.1s tickers can cause large CPU spikes.
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - Debug panel is alpha-only and intentionally omitted from this README.
 - `AddOns/` contains addons and other files used strictly as references. Do not use or read anything in `AddOns/` unless explicitly instructed.
