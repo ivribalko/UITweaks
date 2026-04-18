@@ -23,9 +23,9 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Auto-Hide Chat Messages — Auto-Hide chat messages after a custom duration and reveal them on mouse over.
 - Fade After Seconds — Number of seconds a chat message stays before fading when the override is enabled.
 - Auto-Hide Chat Tabs — Auto-Hide chat tab titles until you mouse over them. Set Options -> Social -> New Whispers: In-line to prevent new tabs from appearing.
-- Hide Chat Bubble Button — Hide the chat button with the speech bubble icon.
-- Hide Chat Channels Button — Hide the chat button that opens the channel list.
-- Hide Social Button — Hide the social button next to the chat frame.
+- Hide Chat Bubble Button — Auto-hide the chat button with the speech bubble icon until you mouse over the chat buttons area.
+- Hide Chat Channels Button — Auto-hide the chat button that opens the channel list until you mouse over the chat buttons area.
+- Hide Social Button — Auto-hide the social button next to the chat frame until you mouse over the chat buttons area.
 - Set Chat Font Size — Enable a custom chat window font size for all tabs.
 - Font Size — Font size to use when the override is enabled.
 - Transparent Chat Background — Set the chat background alpha to zero.

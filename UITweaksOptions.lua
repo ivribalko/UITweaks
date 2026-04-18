@@ -201,28 +201,28 @@ function Options.OnInitialize(self)
                     hideChatMenuButton = toggleOption(
                         "hideChatMenuButton",
                         "Hide Chat Bubble Button",
-                        "Hide the chat button with the speech bubble icon.",
+                        "Auto-hide the chat button with the speech bubble icon until you mouse over the chat buttons area.",
                         6,
                         function()
-                            self:UpdateChatMenuButtonVisibility()
+                            self:UpdateChatControlButtonsVisibility()
                         end
                     ),
                     hideChatChannelsButton = toggleOption(
                         "hideChatChannelsButton",
                         "Hide Chat Channels Button",
-                        "Hide the chat button that opens the channel list.",
+                        "Auto-hide the chat button that opens the channel list until you mouse over the chat buttons area.",
                         7,
                         function()
-                            self:UpdateChatChannelsButtonVisibility()
+                            self:UpdateChatControlButtonsVisibility()
                         end
                     ),
                     hideSocialButton = toggleOption(
                         "hideSocialButton",
                         "Hide Social Button",
-                        "Hide the social button next to the chat frame.",
+                        "Auto-hide the social button next to the chat frame until you mouse over the chat buttons area.",
                         8,
                         function()
-                            self:UpdateSocialButtonVisibility()
+                            self:UpdateChatControlButtonsVisibility()
                         end
                     ),
                     transparentChatBackground = toggleOption(

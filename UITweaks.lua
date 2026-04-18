@@ -305,6 +305,12 @@ local function isCursorInsideFrame(frame)
     return frame:IsMouseOver()
 end
 
+local function shouldAutoHideChatControlButtons(self)
+    return self.db.profile.hideChatMenuButton
+        or self.db.profile.hideChatChannelsButton
+        or self.db.profile.hideSocialButton
+end
+
 function UITweaks:SetChatFadeHoverPolling(enabled)
     if self.chatFadeHoverTicker then
         self.chatFadeHoverTicker:Cancel()
@@ -322,6 +328,70 @@ function UITweaks:SetChatFadeHoverPolling(enabled)
             UITweaks.mainChatFrameHovered = isCursorInside
         end
     end)
+end
+
+function UITweaks:AreChatControlButtonsHovered()
+    local frame = getMainChatFrame()
+    if frame and isCursorInsideFrame(frame.buttonFrame) then
+        return true
+    end
+    return isCursorInsideFrame(_G.ChatFrameMenuButton)
+        or isCursorInsideFrame(_G.ChatFrameChannelButton)
+        or isCursorInsideFrame(_G.QuickJoinToastButton)
+end
+
+function UITweaks:SetChatControlButtonsHoverPolling(enabled)
+    if self.chatControlButtonsHoverTicker then
+        self.chatControlButtonsHoverTicker:Cancel()
+        self.chatControlButtonsHoverTicker = nil
+    end
+    self.chatControlButtonsHovered = enabled and self:AreChatControlButtonsHovered() or nil
+    if not enabled then return end
+    self.chatControlButtonsHoverTicker = C_Timer.NewTicker(0.1, function()
+        local isHovered = UITweaks:AreChatControlButtonsHovered()
+        if UITweaks.chatControlButtonsHovered ~= isHovered then
+            UITweaks.chatControlButtonsHovered = isHovered
+            UITweaks:UpdateChatControlButtonsVisibility()
+        end
+    end)
+end
+
+local function updateChatControlButtonVisibility(self, button, profileKey)
+    if not button then return end
+    if self.db.profile[profileKey] then
+        if not button.UITweaksHooked then
+            button:HookScript("OnShow", function()
+                UITweaks:UpdateChatControlButtonsVisibility()
+            end)
+            button.UITweaksHooked = true
+        end
+        if self.chatControlButtonsHovered then
+            button:Show()
+        else
+            button:Hide()
+        end
+    end
+end
+
+local function updateSocialButtonVisibility(self, button)
+    if not button then return end
+    if self.db.profile.hideSocialButton then
+        if not button.UITweaksHooked then
+            button:HookScript("OnShow", function()
+                UITweaks:UpdateChatControlButtonsVisibility()
+            end)
+            button.UITweaksHooked = true
+        end
+        if self.chatControlButtonsHovered then
+            button:SetAlpha(1)
+            if button.EnableMouse then button:EnableMouse(true) end
+        else
+            -- Keep the frame shown so its associated toasts can still anchor and update.
+            if button.Show then button:Show() end
+            button:SetAlpha(0)
+            if button.EnableMouse then button:EnableMouse(false) end
+        end
+    end
 end
 
 function UITweaks:ApplyChatFontSize()
@@ -797,53 +867,24 @@ end
 
 function UITweaks:UpdateChatMenuButtonVisibility()
     local button = _G.ChatFrameMenuButton
-    if not button then return end
-    if self.db.profile.hideChatMenuButton then
-        if not button.UITweaksHooked then
-            -- Keep the menu button hidden even when UI code shows it.
-            button:HookScript("OnShow", function(frame)
-                if UITweaks.db and UITweaks.db.profile.hideChatMenuButton then
-                    frame:Hide()
-                end
-            end)
-            button.UITweaksHooked = true
-        end
-        button:Hide()
-    end
+    updateChatControlButtonVisibility(self, button, "hideChatMenuButton")
 end
 
 function UITweaks:UpdateChatChannelsButtonVisibility()
     local button = _G.ChatFrameChannelButton
-    if not button then return end
-    if self.db.profile.hideChatChannelsButton then
-        if not button.UITweaksHooked then
-            -- Keep the channels button hidden even when UI code shows it.
-            button:HookScript("OnShow", function(frame)
-                if UITweaks.db and UITweaks.db.profile.hideChatChannelsButton then
-                    frame:Hide()
-                end
-            end)
-            button.UITweaksHooked = true
-        end
-        button:Hide()
-    end
+    updateChatControlButtonVisibility(self, button, "hideChatChannelsButton")
 end
 
 function UITweaks:UpdateSocialButtonVisibility()
     local button = _G.QuickJoinToastButton
-    if not button then return end
-    if self.db.profile.hideSocialButton then
-        if not button.UITweaksHooked then
-            -- Keep the social button hidden even when UI code shows it.
-            button:HookScript("OnShow", function(frame)
-                if UITweaks.db and UITweaks.db.profile.hideSocialButton then
-                    frame:Hide()
-                end
-            end)
-            button.UITweaksHooked = true
-        end
-        button:Hide()
-    end
+    updateSocialButtonVisibility(self, button)
+end
+
+function UITweaks:UpdateChatControlButtonsVisibility()
+    self:SetChatControlButtonsHoverPolling(shouldAutoHideChatControlButtons(self))
+    self:UpdateChatMenuButtonVisibility()
+    self:UpdateChatChannelsButtonVisibility()
+    self:UpdateSocialButtonVisibility()
 end
 
 local function ensureGroupLootHistoryLoaded()
@@ -1624,9 +1665,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
-    self:UpdateChatChannelsButtonVisibility()
-    self:UpdateChatMenuButtonVisibility()
-    self:UpdateSocialButtonVisibility()
+    self:UpdateChatControlButtonsVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()
     self:UpdateGroupLootHistoryVisibility()
     self:UpdateAddonMinimapIconsVisibility()
