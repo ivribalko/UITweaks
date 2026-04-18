@@ -10,16 +10,11 @@ In game, go to `Options -> AddOns -> Stock UI Tweaks` to enable features.
 
 After changing any setting, use the **Reload** button (or run `/reload`).
 
-Action Button Auras are inspired by [CDMButtonAuras addon](https://www.curseforge.com/wow/addons/cdmbuttonauras).
-
 ## Available Settings
 
 ### Action Bars
 
-- Hide Blizzard Cooldown Viewers — Move Blizzard's Cooldown Viewer elements off-screen and shrink them to near-zero scale (Buff Bar, Buff Icon, Essential, Utility).
 - Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
-- Show Action Button Aura Timers — Show buffs and debuffs highlight and remaining duration on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. Click 'Open Cooldown Settings' button, and use the new 'Track All' button at the bottom to move all items from 'Not Displayed' to 'Tracked Buffs', then close the window to save it. Cooldown Viewer auras work in and out of combat. Additional highlights from untracked player buffs and items on the action bar only reapply out of combat.
-- Open Cooldown Settings — Open the Cooldown Viewer settings window on Buffs tab.
 
 ### Chat
 
@@ -74,18 +69,17 @@ Exceptions:
 - Objective tracker toggles stay in this order: In Raids, In Dungeons, Everywhere Else.
 - Combat: Delay After Combat Seconds stays first.
 - Chat: keep checkboxes together with their respective ranges for Auto-Hide Chat Messages, Fade After Seconds and such.
-- Action Bars: Open Cooldown Settings stays last.
 - Debug panel stays last.
 
 ## Dev Notes
 
 - Addon files live in the repository root.
-- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksAuras.lua` (action button aura logic), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksDebug.lua` (debug tools/UI).
+- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksDebug.lua` (debug tools/UI).
 - Add new Lua files in the repository root and list them in `UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
-- Assume `self.db`, `self.auras`, `self.debug`, and `self.options` always exist; do not add nil/existence guards for them.
+- Assume `self.db`, `self.debug`, and `self.options` always exist; do not add nil/existence guards for them.
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - Debug panel is alpha-only and intentionally omitted from this README.
 - `AddOns/` contains addons and other files used strictly as references. Do not use or read anything in `AddOns/` unless explicitly instructed.

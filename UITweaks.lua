@@ -40,7 +40,6 @@ end
 
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
-    self.auras = type(require) == "function" and require("UITweaksAuras") or addonTable.Auras
     self.consumables = type(require) == "function" and require("UITweaksConsumables") or addonTable.Consumables
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
@@ -56,9 +55,6 @@ function UITweaks:OnEnable()
     self:ApplyChatBackgroundAlpha()
     self:HookHelpTipFrames()
     self:ApplyBuffFrameHide()
-    if self.db.profile.showActionButtonAuraTimers then
-        self.auras.ApplyActionButtonAuraTimers(self)
-    end
     self.consumables.ApplyInventoryConsumableHighlights(self)
     self.debug.OnEnable(self)
     self:ApplyVisibilityState()
@@ -73,10 +69,7 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
-    self:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
-    self:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
     self:RegisterEvent("BAG_UPDATE_DELAYED")
-    self:RegisterEvent("MODIFIER_STATE_CHANGED")
     self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
     self:RegisterEvent("UNIT_AURA")
     self:RegisterEvent("NAVIGATION_FRAME_CREATED")
@@ -181,23 +174,14 @@ end
 function UITweaks:ADDON_LOADED(_, addonName)
     if addonName == "Blizzard_HelpTip" then
         self:HookHelpTipFrames()
-    elseif addonName == "Blizzard_CooldownViewer" then
-        self:EnsureCooldownViewerSettingsHooked()
     elseif addonName == "Blizzard_BuffFrame" then
         self:ApplyBuffFrameHide()
-        if self.db.profile.showActionButtonAuraTimers then
-            self.auras.ApplyActionButtonAuraTimers(self)
-        end
         self:ApplyVisibilityState()
         self:ScheduleDelayedVisibilityUpdate(true)
     elseif addonName == "Blizzard_GroupLootHistory" then
         self:UpdateGroupLootHistoryVisibility()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
-        if self.db.profile.showActionButtonAuraTimers then
-            self.auras.InitializeActionButtonAuraTimers(self)
-        end
-        self.auras.RequestActionButtonAuraRefresh(self, true)
     elseif addonName == "Blizzard_ObjectiveTracker" then
         self:UpdateObjectiveTrackerState()
     elseif addonName == "Blizzard_TotemBar" then
@@ -209,13 +193,6 @@ function UITweaks:ADDON_LOADED(_, addonName)
         or addonName == "ConsolePort_GroupCrossbar"
     then
         self:UpdateConsolePortTempAbilityFrameVisibility()
-        if addonName == "ConsolePort" then
-            self.auras.RegisterConsolePortActionPageCallback(self)
-        end
-        if self.db.profile.showActionButtonAuraTimers then
-            self.auras.InitializeActionButtonAuraTimers(self)
-        end
-        self.auras.RequestActionButtonAuraRefresh(self, true)
     end
     self:UpdateAddonMinimapIconsVisibility()
 end
@@ -237,9 +214,6 @@ end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
     self:ScheduleDelayedVisibilityUpdate()
-    if self.db.profile.showActionButtonAuraTimers then
-        self.auras.OnCombatEnded(self)
-    end
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
 
@@ -255,9 +229,6 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     if self.db.profile.skyridingBarSharing then
         C_Timer.After(2, function() self:RestoreSkyridingBarLayout() end)
         self:StartSkyridingBarMonitor()
-    end
-    if self.db.profile.showActionButtonAuraTimers then
-        C_Timer.After(0.3, function() self.auras.ReapplyManualHighlightsFromPlayerAuras(self) end)
     end
     C_Timer.After(0.5, function() self.consumables.RequestInventoryConsumableRefresh(self, true) end)
 end
@@ -287,30 +258,10 @@ end
 function UITweaks:PLAYER_TARGET_CHANGED()
     self:UpdateTargetTooltip()
     self:UpdateTargetFrameVisibility()
-    if self.db.profile.showActionButtonAuraTimers then
-        self.auras.RequestActionButtonAuraRefresh(self)
-    end
-end
-
-function UITweaks:ACTIONBAR_SLOT_CHANGED()
-    self.auras.RequestActionButtonAuraRefresh(self)
-end
-
-function UITweaks:ACTIONBAR_PAGE_CHANGED()
-    self.auras.RequestActionButtonAuraRefresh(self, true)
-    self.auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
-end
-
-function UITweaks:MODIFIER_STATE_CHANGED()
-    self.auras.RequestActionButtonAuraRefresh(self, true)
-    self.auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
 end
 
 function UITweaks:UNIT_AURA(_, unit)
-    if unit ~= "player" and unit ~= "target" then return end
-    self.auras.RequestActionButtonAuraRefresh(self)
     if unit == "player" then
-        self.auras.ScheduleReapplyManualHighlightsFromPlayerAuras(self)
         self.consumables.RequestInventoryConsumableRefresh(self)
     end
 end
@@ -1631,42 +1582,6 @@ function UITweaks:RestoreSkyridingBarLayout()
             placeActionIntoSlot(slot, entry)
         end
     end
-end
-
-function UITweaks:OpenCooldownViewerSettings()
-    local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
-    if loadAddOn then
-        local isLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Blizzard_CooldownViewer"))
-            or (IsAddOnLoaded and IsAddOnLoaded("Blizzard_CooldownViewer"))
-        if not isLoaded then
-            loadAddOn("Blizzard_CooldownViewer")
-        end
-    end
-    local settingsFrame = _G.CooldownViewerSettings
-    if settingsFrame and settingsFrame.Show then
-        self:EnsureCooldownViewerSettingsHooked()
-        settingsFrame:Show()
-        self.auras.SelectCooldownViewerBuffsTab(self)
-        C_Timer.After(0, function()
-            self.auras.SelectCooldownViewerBuffsTab(self)
-        end)
-    end
-end
-
-function UITweaks:SelectCooldownViewerBuffsTab()
-    return self.auras.SelectCooldownViewerBuffsTab(self)
-end
-
-function UITweaks:EnsureCooldownViewerMoveAllButton()
-    return self.auras.EnsureCooldownViewerMoveAllButton(self)
-end
-
-function UITweaks:MoveCooldownViewerNotDisplayedToTracked()
-    return self.auras.MoveCooldownViewerNotDisplayedToTracked(self)
-end
-
-function UITweaks:EnsureCooldownViewerSettingsHooked()
-    return self.auras.EnsureCooldownViewerSettingsHooked(self)
 end
 
 function UITweaks:ApplyVisibilityState()

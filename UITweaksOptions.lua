@@ -30,8 +30,6 @@ Options.defaults = {
         collapseObjectiveTrackerInDungeons = false,
         collapseObjectiveTrackerEverywhereElse = false,
         combatVisibilityDelaySeconds = 5,
-        showActionButtonAuraTimers = false,
-        hideBlizzardCooldownViewer = false,
         showOptionsOnReload = false,
         showReloadButtonBottomLeft = false,
         showBlockedInterfaceActionCount = false,
@@ -113,16 +111,6 @@ function Options.OnInitialize(self)
                 inline = true,
                 order = 1,
                 args = {
-                    hideBlizzardCooldownViewer = toggleOption(
-                        "hideBlizzardCooldownViewer",
-                        "Hide Blizzard Cooldown Viewers",
-                        "Move Blizzard's Cooldown Viewer elements off-screen and shrink them to near-zero scale (Buff Bar, Buff Icon, Essential, Utility).",
-                        1,
-                        function()
-                            self.auras.ApplyActionButtonAuraTimers(self)
-                        end,
-                        "showActionButtonAuraTimers"
-                    ),
                     skyridingBarSharing = toggleOption(
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",
@@ -136,26 +124,7 @@ function Options.OnInitialize(self)
                             end
                         end
                     ),
-                    showActionButtonAuraTimers = toggleOption(
-                        "showActionButtonAuraTimers",
-                        "Show Action Button Aura Timers",
-                        "Show buffs and debuffs highlight and remaining duration on action buttons. Requires Blizzard Cooldown Manager: Options -> Gameplay Enhancements -> Enable Cooldown Manager. Click 'Open Cooldown Settings' button, and use the new 'Track All' button at the bottom to move all items from 'Not Displayed' to 'Tracked Buffs', then close the window to save it. Cooldown Viewer auras work in and out of combat. Additional highlights from untracked player buffs and items on the action bar only reapply out of combat.",
-                        4,
-                        function()
-                            self.auras.ApplyActionButtonAuraTimers(self)
-                            self:EnsureCooldownViewerMoveAllButton()
-                        end
-                    ),
-                    openCooldownViewerSettings = {
-                        type = "execute",
-                        name = "Open Cooldown Settings",
-                        desc = "Open the Cooldown Viewer settings window on Buffs tab.",
-                        order = 99,
-                        width = "full",
-                        func = function()
-                            self:OpenCooldownViewerSettings()
-                        end,
-                    },
+
                 },
             },
             chatSettings = {
