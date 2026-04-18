@@ -20,8 +20,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Chat
 
-- Auto-Hide Chat Messages — Auto-Hide chat messages after a custom duration and reveal them on mouse over.
-- Fade After Seconds — Number of seconds a chat message stays before fading when the override is enabled.
 - Auto-Hide Chat Tabs — Auto-Hide chat tab titles until you mouse over them. Set Options -> Social -> New Whispers: In-line to prevent new tabs from appearing.
 - Hide Chat Bubble Button — Auto-hide the chat button with the speech bubble icon until you mouse over the chat buttons area.
 - Hide Chat Channels Button — Auto-hide the chat button that opens the channel list until you mouse over the chat buttons area.
@@ -72,7 +70,7 @@ Exceptions:
 
 - Objective tracker toggles stay in this order: In Raids, In Dungeons, Everywhere Else.
 - Combat: Delay After Combat Seconds stays first.
-- Chat: keep checkboxes together with their respective ranges for Auto-Hide Chat Messages, Fade After Seconds and such.
+- Chat: keep checkboxes together with their respective ranges, such as Set Chat Font Size and Font Size.
 - Debug panel stays last.
 
 ## Dev Notes
@@ -87,5 +85,5 @@ Exceptions:
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - Debug panel is alpha-only and intentionally omitted from this README.
 - `AddOns/` contains addons and other files used strictly as references. Do not use or read anything in `AddOns/` unless explicitly instructed.
-- Check WoW UI source at https://github.com/Gethe/wow-ui-source if Blizzard UI behavior or implementation details need verification.
+- Check WoW UI source at [https://github.com/Gethe/wow-ui-source](https://github.com/Gethe/wow-ui-source) if Blizzard UI behavior or implementation details need verification.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.

@@ -50,7 +50,6 @@ function UITweaks:OnEnable()
     self:RegisterChatCommand("uitnextquest", "HandleNextQuestSlashCommand")
     self:RegisterChatCommand("uitprevquest", "HandlePreviousQuestSlashCommand")
     self:ApplyQuestMarkerDistanceSetting()
-    self:ApplyChatLineFade()
     self:ApplyChatFontSize()
     self:ApplyChatBackgroundAlpha()
     self:HookHelpTipFrames()
@@ -311,25 +310,6 @@ local function shouldAutoHideChatControlButtons(self)
         or self.db.profile.hideSocialButton
 end
 
-function UITweaks:SetChatFadeHoverPolling(enabled)
-    if self.chatFadeHoverTicker then
-        self.chatFadeHoverTicker:Cancel()
-        self.chatFadeHoverTicker = nil
-    end
-    self.mainChatFrameHovered = nil
-    if not enabled then return end
-    self.chatFadeHoverTicker = C_Timer.NewTicker(0.1, function()
-        local frame = getMainChatFrame()
-        if not frame then return end
-        local isCursorInside = isCursorInsideFrame(frame)
-        if UITweaks.mainChatFrameHovered ~= isCursorInside then
-            if frame.SetFading then frame:SetFading(not isCursorInside) end
-            if frame.ResetFadeTimer then frame:ResetFadeTimer() end
-            UITweaks.mainChatFrameHovered = isCursorInside
-        end
-    end)
-end
-
 function UITweaks:AreChatControlButtonsHovered()
     local frame = getMainChatFrame()
     if frame and isCursorInsideFrame(frame.buttonFrame) then
@@ -514,18 +494,6 @@ function UITweaks:EnsureAlwaysShowQuestDistanceHook()
             UITweaks:ForceQuestDistanceText(navFrame)
         end)
         self.alwaysShowQuestDistanceFrameHooked = true
-    end
-end
-
-function UITweaks:ApplyChatLineFade()
-    local frame = getMainChatFrame()
-    self:SetChatFadeHoverPolling(self.db.profile.chatMessageFadeAfterOverride)
-    if self.db.profile.chatMessageFadeAfterOverride then
-        local seconds = self.db.profile.chatMessageFadeAfterSeconds
-        if not frame then return end
-        if frame.SetTimeVisible then frame:SetTimeVisible(seconds) end
-        if frame.SetFading then frame:SetFading(true) end
-        if frame.ResetFadeTimer then frame:ResetFadeTimer() end
     end
 end
 

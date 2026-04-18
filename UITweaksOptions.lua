@@ -9,8 +9,6 @@ end
 
 Options.defaults = {
     profile = {
-        chatMessageFadeAfterOverride = false,
-        chatMessageFadeAfterSeconds = 10,
         hideHelpTips = false,
         hideAddonMinimapIcons = false,
         hideBuffFrame = false,
@@ -135,38 +133,11 @@ function Options.OnInitialize(self)
                 inline = true,
                 order = 2,
                 args = {
-                    chatMessageFadeAfterOverride = toggleOption(
-                        "chatMessageFadeAfterOverride",
-                        "Auto-Hide Chat Messages",
-                        "Auto-Hide chat messages after a custom duration and reveal them on mouse over.",
-                        1,
-                        function()
-                            self:ApplyChatLineFade()
-                        end,
-                        nil,
-                        1.2
-                    ),
-                    chatMessageFadeAfterSeconds = rangeOption(
-                        "chatMessageFadeAfterSeconds",
-                        "Fade After Seconds",
-                        "Number of seconds a chat message stays before fading when the override is enabled.",
-                        2,
-                        1,
-                        60,
-                        1,
-                        function()
-                            self:ApplyChatLineFade()
-                        end,
-                        function()
-                            return not self.db.profile.chatMessageFadeAfterOverride
-                        end,
-                        1.8
-                    ),
                     hideChatTabs = toggleOption(
                         "hideChatTabs",
                         "Auto-Hide Chat Tabs",
                         "Auto-Hide chat tab titles until you mouse over them. Set Options -> Social -> New Whispers: In-line to prevent new tabs from appearing.",
-                        3,
+                        1,
                         function()
                             self:UpdateChatTabsVisibility()
                         end
@@ -175,7 +146,7 @@ function Options.OnInitialize(self)
                         "chatFontOverrideEnabled",
                         "Set Chat Font Size",
                         "Enable a custom chat window font size for all tabs.",
-                        4,
+                        2,
                         function()
                             self:ApplyChatFontSize()
                         end,
@@ -186,7 +157,7 @@ function Options.OnInitialize(self)
                         "chatFontSize",
                         "Font Size",
                         "Font size to use when the override is enabled.",
-                        5,
+                        3,
                         8,
                         48,
                         1,
@@ -202,7 +173,7 @@ function Options.OnInitialize(self)
                         "hideChatMenuButton",
                         "Hide Chat Bubble Button",
                         "Auto-hide the chat button with the speech bubble icon until you mouse over the chat buttons area.",
-                        6,
+                        4,
                         function()
                             self:UpdateChatControlButtonsVisibility()
                         end
@@ -211,7 +182,7 @@ function Options.OnInitialize(self)
                         "hideChatChannelsButton",
                         "Hide Chat Channels Button",
                         "Auto-hide the chat button that opens the channel list until you mouse over the chat buttons area.",
-                        7,
+                        5,
                         function()
                             self:UpdateChatControlButtonsVisibility()
                         end
@@ -220,7 +191,7 @@ function Options.OnInitialize(self)
                         "hideSocialButton",
                         "Hide Social Button",
                         "Auto-hide the social button next to the chat frame until you mouse over the chat buttons area.",
-                        8,
+                        6,
                         function()
                             self:UpdateChatControlButtonsVisibility()
                         end
@@ -229,7 +200,7 @@ function Options.OnInitialize(self)
                         "transparentChatBackground",
                         "Transparent Chat Background",
                         "Set the chat background alpha to zero.",
-                        9,
+                        7,
                         function()
                             self:ApplyChatBackgroundAlpha()
                         end
