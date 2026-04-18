@@ -12,22 +12,6 @@ local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 local gameTooltipUnitColor = rawget(_G, "GameTooltip_UnitColor")
 
-local function isBlizzardMinimapButtonName(buttonName)
-    if not buttonName then return true end
-    if buttonName:match("^MiniMap") then return true end
-    if buttonName:match("^AddonCompartment") then return true end
-    if buttonName == "GameTimeFrame"
-        or buttonName == "GarrisonLandingPageMinimapButton"
-        or buttonName == "GuildInstanceDifficulty"
-        or buttonName == "ExpansionLandingPageMinimapButton"
-        or buttonName == "QueueStatusMinimapButton"
-        or buttonName == "TimeManagerClockButton"
-    then
-        return true
-    end
-    return false
-end
-
 local function applyTooltipUnitNameColor(unit)
     if not gameTooltipUnitColor then return end
     local r, g, b = gameTooltipUnitColor(unit)
@@ -193,7 +177,6 @@ function UITweaks:ADDON_LOADED(_, addonName)
     then
         self:UpdateConsolePortTempAbilityFrameVisibility()
     end
-    self:UpdateAddonMinimapIconsVisibility()
 end
 
 function UITweaks:PLAYER_REGEN_DISABLED()
@@ -901,63 +884,6 @@ function UITweaks:UpdateConsolePortTempAbilityFrameVisibility()
     end
 end
 
-local function shouldHideMinimapButton(button, minimap)
-    if not button or button == minimap then return false end
-    if not button.IsObjectType or not button:IsObjectType("Button") then return false end
-    if button.IsForbidden and button:IsForbidden() then return false end
-
-    local buttonName = button.GetName and button:GetName() or nil
-    if isBlizzardMinimapButtonName(buttonName) then
-        return false
-    end
-
-    return true
-end
-
-function UITweaks:UpdateAddonMinimapIconsVisibility()
-    if self.minimapAddonIconsTicker and not self.db.profile.hideAddonMinimapIcons then
-        self.minimapAddonIconsTicker:Cancel()
-        self.minimapAddonIconsTicker = nil
-    end
-
-    if not self.db.profile.hideAddonMinimapIcons then
-        return
-    end
-
-    local minimap = _G.Minimap
-    if not minimap or not minimap.GetChildren then
-        return
-    end
-
-    local function hideButtons(parent)
-        if not (parent and parent.GetChildren) then return end
-        for _, child in ipairs({ parent:GetChildren() }) do
-            if shouldHideMinimapButton(child, minimap) then
-                if not child.UITweaksHookedHideMinimapAddonIcon then
-                    child:HookScript("OnShow", function(frame)
-                        if UITweaks.db and UITweaks.db.profile.hideAddonMinimapIcons then
-                            frame:Hide()
-                        end
-                    end)
-                    child.UITweaksHookedHideMinimapAddonIcon = true
-                end
-                child:Hide()
-            end
-        end
-    end
-
-    hideButtons(minimap)
-    hideButtons(_G.MinimapCluster)
-
-    if not self.minimapAddonIconsTicker then
-        self.minimapAddonIconsTicker = C_Timer.NewTicker(1, function()
-            if UITweaks.db and UITweaks.db.profile.hideAddonMinimapIcons then
-                UITweaks:UpdateAddonMinimapIconsVisibility()
-            end
-        end)
-    end
-end
-
 local function getMicroMenuButtons()
     local buttons = {}
     local function addButtonsFromParent(parent)
@@ -1636,7 +1562,6 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateChatControlButtonsVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()
     self:UpdateGroupLootHistoryVisibility()
-    self:UpdateAddonMinimapIconsVisibility()
     self:UpdateMicroMenuVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateTotemFrameVisibility()

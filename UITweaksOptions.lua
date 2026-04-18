@@ -10,7 +10,6 @@ end
 Options.defaults = {
     profile = {
         hideHelpTips = false,
-        hideAddonMinimapIcons = false,
         hideBuffFrame = false,
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
@@ -418,20 +417,11 @@ function Options.OnInitialize(self)
                             self:HookHelpTipFrames()
                         end
                     ),
-                    hideAddonMinimapIcons = toggleOption(
-                        "hideAddonMinimapIcons",
-                        "Hide Minimap Addon Icons",
-                        "Hide addon minimap icons, except the AddOn Compartment button.",
-                        8,
-                        function()
-                            self:UpdateAddonMinimapIconsVisibility()
-                        end
-                    ),
                     hideMicroMenuButtons = toggleOption(
                         "hideMicroMenuButtons",
                         "Hide Micro Menu Buttons",
                         "Hide all micro menu buttons except the Dungeon Finder eye.",
-                        9,
+                        8,
                         function()
                             self:UpdateMicroMenuVisibility()
                         end
@@ -440,7 +430,7 @@ function Options.OnInitialize(self)
                         "hideTotemFrame",
                         "Hide Totem Frame",
                         "Hide the totem frame, including warlock pets.",
-                        10,
+                        9,
                         function()
                             self:UpdateTotemFrameVisibility()
                         end
@@ -449,7 +439,7 @@ function Options.OnInitialize(self)
                         "highlightActiveConsumablesInInventory",
                         "Highlight Active Consumables In Inventory",
                         "Highlight inventory consumables with a green frame and remaining buff time when their player aura or weapon enchant is active. Supports flasks, food, oils, and other consumables that apply a helpful aura or temporary weapon enchant. If a Well Fed buff is active, all food items are highlighted with that buff's remaining time. Cases where a consumable applies an aura with a different name than the item spell are not supported (except Well Fed food). Does not update during combat.",
-                        11,
+                        10,
                         function()
                             self.consumables.ApplyInventoryConsumableHighlights(self)
                         end
@@ -458,7 +448,7 @@ function Options.OnInitialize(self)
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",
                         "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
-                        12,
+                        11,
                         function(val)
                             if val then
                                 self:StartSkyridingBarMonitor()

@@ -50,7 +50,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.
 - Hide Group Loot History — Hide the group loot history frame.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
-- Hide Minimap Addon Icons — Hide addon minimap icons, except the AddOn Compartment button.
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
 - Hide Totem Frame — Hide the totem frame, including warlock pets.
 - Highlight Active Consumables In Inventory — Highlight inventory consumables with a green frame and remaining buff time when their player aura or weapon enchant is active. Supports flasks, food, oils, and other consumables that apply a helpful aura or temporary weapon enchant. If a Well Fed buff is active, all food items are highlighted with that buff's remaining time. Cases where a consumable applies an aura with a different name than the item spell are not supported (except Well Fed food). Does not update during combat.
