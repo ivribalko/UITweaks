@@ -812,6 +812,23 @@ function UITweaks:UpdateChatMenuButtonVisibility()
     end
 end
 
+function UITweaks:UpdateChatChannelsButtonVisibility()
+    local button = _G.ChatFrameChannelButton
+    if not button then return end
+    if self.db.profile.hideChatChannelsButton then
+        if not button.UITweaksHooked then
+            -- Keep the channels button hidden even when UI code shows it.
+            button:HookScript("OnShow", function(frame)
+                if UITweaks.db and UITweaks.db.profile.hideChatChannelsButton then
+                    frame:Hide()
+                end
+            end)
+            button.UITweaksHooked = true
+        end
+        button:Hide()
+    end
+end
+
 local function ensureGroupLootHistoryLoaded()
     if _G.GroupLootHistoryFrame then return true end
     local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
@@ -1590,6 +1607,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
+    self:UpdateChatChannelsButtonVisibility()
     self:UpdateChatMenuButtonVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()
     self:UpdateGroupLootHistoryVisibility()

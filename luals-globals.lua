@@ -104,6 +104,7 @@ unpack = unpack
 
 -- Additional _G fields used via dynamic lookups.
 ---@class _G
+---@field ChatFrameChannelButton any
 ---@field BagsBar any
 ---@field ChatFrameMenuButton any
 ---@field ConsolePort any

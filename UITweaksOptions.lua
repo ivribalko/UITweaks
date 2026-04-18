@@ -21,6 +21,7 @@ Options.defaults = {
         showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideChatMenuButton = false,
+        hideChatChannelsButton = false,
         transparentChatBackground = false,
         hideGroupLootHistoryFrame = false,
         hideStanceButtons = false,
@@ -205,11 +206,20 @@ function Options.OnInitialize(self)
                             self:UpdateChatMenuButtonVisibility()
                         end
                     ),
+                    hideChatChannelsButton = toggleOption(
+                        "hideChatChannelsButton",
+                        "Hide Chat Channels Button",
+                        "Hide the chat button that opens the channel list.",
+                        7,
+                        function()
+                            self:UpdateChatChannelsButtonVisibility()
+                        end
+                    ),
                     transparentChatBackground = toggleOption(
                         "transparentChatBackground",
                         "Transparent Chat Background",
                         "Set the chat background alpha to zero.",
-                        7,
+                        8,
                         function()
                             self:ApplyChatBackgroundAlpha()
                         end
