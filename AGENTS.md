@@ -14,10 +14,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ## Available Settings
 
-### Action Bars
-
-- Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
-
 ### Chat
 
 - Auto-Hide Chat Tabs — Auto-Hide chat tab titles until you mouse over them. Set Options -> Social -> New Whispers: In-line to prevent new tabs from appearing.
@@ -58,6 +54,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Hide Micro Menu Buttons — Hide all micro menu buttons except the Dungeon Finder eye.
 - Hide Totem Frame — Hide the totem frame, including warlock pets.
 - Highlight Active Consumables In Inventory — Highlight inventory consumables with a green frame and remaining buff time when their player aura or weapon enchant is active. Supports flasks, food, oils, and other consumables that apply a helpful aura or temporary weapon enchant. If a Well Fed buff is active, all food items are highlighted with that buff's remaining time. Cases where a consumable applies an aura with a different name than the item spell are not supported (except Well Fed food). Does not update during combat.
+- Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
 
 ## Settings Rules
 

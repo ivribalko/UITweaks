@@ -105,33 +105,11 @@ function Options.OnInitialize(self)
         name = "Stock UI Tweaks",
         type = "group",
         args = {
-            actionTimers = {
-                type = "group",
-                name = "Action Bars",
-                inline = true,
-                order = 1,
-                args = {
-                    skyridingBarSharing = toggleOption(
-                        "skyridingBarSharing",
-                        "Share Skyriding Action Bar Skills For All Characters",
-                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
-                        3,
-                        function(val)
-                            if val then
-                                self:StartSkyridingBarMonitor()
-                            else
-                                self:StopSkyridingBarMonitor()
-                            end
-                        end
-                    ),
-
-                },
-            },
             chatSettings = {
                 type = "group",
                 name = "Chat",
                 inline = true,
-                order = 2,
+                order = 1,
                 args = {
                     hideChatTabs = toggleOption(
                         "hideChatTabs",
@@ -211,7 +189,7 @@ function Options.OnInitialize(self)
                 type = "group",
                 name = "Combat",
                 inline = true,
-                order = 3,
+                order = 2,
                 args = {
                     combatVisibilityDelaySeconds = rangeOption(
                         "combatVisibilityDelaySeconds",
@@ -321,7 +299,7 @@ function Options.OnInitialize(self)
                 type = "group",
                 name = "ConsolePort",
                 inline = true,
-                order = 4,
+                order = 3,
                 args = {
                     hideConsolePortTempAbilityFrame = toggleOption(
                         "hideConsolePortTempAbilityFrame",
@@ -372,7 +350,7 @@ function Options.OnInitialize(self)
                 type = "group",
                 name = "Other",
                 inline = true,
-                order = 5,
+                order = 4,
                 args = {
                     addMacroForNextQuestInTracker = {
                         type = "execute",
@@ -474,6 +452,19 @@ function Options.OnInitialize(self)
                         11,
                         function()
                             self.consumables.ApplyInventoryConsumableHighlights(self)
+                        end
+                    ),
+                    skyridingBarSharing = toggleOption(
+                        "skyridingBarSharing",
+                        "Share Skyriding Action Bar Skills For All Characters",
+                        "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
+                        12,
+                        function(val)
+                            if val then
+                                self:StartSkyridingBarMonitor()
+                            else
+                                self:StopSkyridingBarMonitor()
+                            end
                         end
                     ),
                 },
