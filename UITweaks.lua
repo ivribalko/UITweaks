@@ -185,6 +185,12 @@ function UITweaks:ADDON_LOADED(_, addonName)
 end
 
 function UITweaks:PLAYER_REGEN_DISABLED()
+    self.damageMeterForceVisible = true
+    if self.visibilityTimer then
+        self.visibilityTimer:Cancel()
+        self.visibilityTimer = nil
+    end
+    self.visibilityDelayActive = false
     if self:ShouldCollapseObjectiveTracker() then
         self:CollapseTrackerIfNeeded()
     end
@@ -192,14 +198,10 @@ function UITweaks:PLAYER_REGEN_DISABLED()
     self:UpdateTargetFrameVisibility()
     self:UpdateDamageMeterVisibility()
     if self.db.profile.showSoftTargetTooltipOutOfCombat then GameTooltip:Hide() end
-    if self.visibilityTimer then
-        self.visibilityTimer:Cancel()
-        self.visibilityTimer = nil
-    end
-    self.visibilityDelayActive = false
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
+    self.damageMeterForceVisible = false
     self:ScheduleDelayedVisibilityUpdate()
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
@@ -375,7 +377,7 @@ end
 function UITweaks:UpdateDamageMeterAlphaState()
     if not _G.DamageMeter then return end
 
-    if InCombatLockdown and InCombatLockdown() then
+    if self.damageMeterForceVisible or (InCombatLockdown and InCombatLockdown()) then
         self.damageMeterHovered = false
         self:SetDamageMeterAlpha(1)
         _G.DamageMeter:Show()
