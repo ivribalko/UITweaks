@@ -353,12 +353,12 @@ function Options.OnInitialize(self)
                 args = {
                     addMacroForNextQuestInTracker = {
                         type = "execute",
-                        name = "Add Quest Prev/Next Macros",
-                        desc = "Pressing this button creates or updates macros named Quest Next and Quest Prev, then opens the Macro menu. Quest Next runs /uitnextquest and selects the next tracked quest (or the first if none is selected). Quest Prev runs /uitprevquest and selects the previous tracked quest (or the last if none is selected).",
+                        name = "Add Quest Prev/Next/Abandon Macros",
+                        desc = "Pressing this button creates or updates macros named Quest Abandon, Quest Next, and Quest Prev, then opens the Macro menu. Quest Abandon runs /uitabandonquest and opens the standard abandon confirmation for the currently selected tracked quest. Quest Next runs /uitnextquest and selects the next tracked quest (or the first if none is selected). Quest Prev runs /uitprevquest and selects the previous tracked quest (or the last if none is selected).",
                         order = 1,
                         width = "full",
                         func = function()
-                            self:EnsureAddMacroForNextQuestInTracker()
+                            self:EnsureQuestTrackerMacros()
                         end,
                     },
                     alwaysShowQuestMarkerDistance = toggleOption(

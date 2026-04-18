@@ -43,7 +43,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Other
 
-- Add Quest Prev/Next Macros — Pressing this button creates or updates macros named Quest Next and Quest Prev, then opens the Macro menu. Quest Next runs /uitnextquest and selects the next tracked quest (or the first if none is selected). Quest Prev runs /uitprevquest and selects the previous tracked quest (or the last if none is selected).
+- Add Quest Prev/Next/Abandon Macros — Pressing this button creates or updates macros named Quest Abandon, Quest Next, and Quest Prev, then opens the Macro menu. Quest Abandon runs /uitabandonquest and opens the standard abandon confirmation for the currently selected tracked quest. Quest Next runs /uitnextquest and selects the next tracked quest (or the first if none is selected). Quest Prev runs /uitprevquest and selects the previous tracked quest (or the last if none is selected).
 - Always Show Quest Marker Distance — Always show the built-in quest marker distance, even when not facing the objective.
 - Auto-Hide Bags Bar — Auto-Hide the Blizzard Bags Bar until you mouse over it.
 - Auto-Hide Buff Frame — Auto-Hide the Blizzard player buff frame until you mouse over it.

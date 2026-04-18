@@ -5,9 +5,11 @@ local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local SKYRIDING_BAR_SLOT_START = 121
 local SKYRIDING_BAR_SLOT_COUNT = 12
 local NUM_CHAT_WINDOWS = NUM_CHAT_WINDOWS or 10
+local ABANDON_QUEST_MACRO_NAME = "Quest Abandon"
 local NEXT_QUEST_MACRO_NAME = "Quest Next"
 local PREVIOUS_QUEST_MACRO_NAME = "Quest Prev"
 local NEXT_QUEST_MACRO_ICON = "INV_Misc_Note_01"
+local ABANDON_QUEST_MACRO_BODY = "/uitabandonquest"
 local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 local gameTooltipUnitColor = rawget(_G, "GameTooltip_UnitColor")
@@ -31,6 +33,7 @@ function UITweaks:OnInitialize()
 end
 
 function UITweaks:OnEnable()
+    self:RegisterChatCommand("uitabandonquest", "HandleAbandonQuestSlashCommand")
     self:RegisterChatCommand("uitnextquest", "HandleNextQuestSlashCommand")
     self:RegisterChatCommand("uitprevquest", "HandlePreviousQuestSlashCommand")
     self:ApplyQuestMarkerDistanceSetting()
@@ -235,6 +238,10 @@ end
 
 function UITweaks:HandleNextQuestSlashCommand()
     self:SelectNextTrackedQuest()
+end
+
+function UITweaks:HandleAbandonQuestSlashCommand()
+    self:AbandonSelectedTrackedQuest()
 end
 
 function UITweaks:HandlePreviousQuestSlashCommand()
@@ -1293,6 +1300,63 @@ function UITweaks:SelectPreviousTrackedQuest()
     self:SetSuperTrackedQuestID(watchedQuestIDs[previousIndex])
 end
 
+local function buildAbandonItemNames(items)
+    if items then
+        local itemNames = {}
+        local item = Item:CreateFromItemID(0)
+
+        for _, itemID in ipairs(items) do
+            item:SetItemID(itemID)
+            local itemName = item:GetItemName()
+            if itemName then
+                table.insert(itemNames, itemName)
+            end
+        end
+
+        if #itemNames > 0 then
+            return table.concat(itemNames, ", ")
+        end
+    end
+
+    return nil
+end
+
+function UITweaks:AbandonSelectedTrackedQuest()
+    local questID = self:GetSuperTrackedQuestID()
+    if not questID then
+        return false
+    end
+
+    local canAbandonQuest = C_QuestLog and C_QuestLog.CanAbandonQuest
+    if not canAbandonQuest or not canAbandonQuest(questID) then
+        return false
+    end
+
+    local oldSelectedQuest = C_QuestLog.GetSelectedQuest and C_QuestLog.GetSelectedQuest() or nil
+    if C_QuestLog.SetSelectedQuest then
+        C_QuestLog.SetSelectedQuest(questID)
+    end
+    if C_QuestLog.SetAbandonQuest then
+        C_QuestLog.SetAbandonQuest()
+    end
+
+    local items = C_QuestLog.GetAbandonQuestItems and buildAbandonItemNames(C_QuestLog.GetAbandonQuestItems()) or nil
+    local abandonQuestID = C_QuestLog.GetAbandonQuest and C_QuestLog.GetAbandonQuest() or questID
+    local title = QuestUtils_GetQuestName and QuestUtils_GetQuestName(abandonQuestID)
+    if items then
+        StaticPopup_Hide("ABANDON_QUEST")
+        StaticPopup_Show("ABANDON_QUEST_WITH_ITEMS", title, items)
+    else
+        StaticPopup_Hide("ABANDON_QUEST_WITH_ITEMS")
+        StaticPopup_Show("ABANDON_QUEST", title)
+    end
+
+    if C_QuestLog.SetSelectedQuest then
+        C_QuestLog.SetSelectedQuest(oldSelectedQuest)
+    end
+    return true
+end
+
 function UITweaks:OpenMacroPanel()
     local cAddOns = _G["C_AddOns"]
     local isAddOnLoaded = _G["IsAddOnLoaded"]
@@ -1312,7 +1376,7 @@ function UITweaks:OpenMacroPanel()
     end
 end
 
-function UITweaks:EnsureAddMacroForNextQuestInTracker()
+function UITweaks:EnsureQuestTrackerMacros()
     local getMacroIndexByName = _G["GetMacroIndexByName"]
     local createMacro = _G["CreateMacro"]
     local editMacro = _G["EditMacro"]
@@ -1342,12 +1406,13 @@ function UITweaks:EnsureAddMacroForNextQuestInTracker()
         return true
     end
 
+    local hasAbandonMacro = ensureMacro(ABANDON_QUEST_MACRO_NAME, ABANDON_QUEST_MACRO_BODY)
     local hasNextMacro = ensureMacro(NEXT_QUEST_MACRO_NAME, NEXT_QUEST_MACRO_BODY)
     local hasPreviousMacro = ensureMacro(PREVIOUS_QUEST_MACRO_NAME, PREVIOUS_QUEST_MACRO_BODY)
-    if hasNextMacro or hasPreviousMacro then
+    if hasAbandonMacro or hasNextMacro or hasPreviousMacro then
         self:OpenMacroPanel()
     end
-    return hasNextMacro and hasPreviousMacro
+    return hasAbandonMacro and hasNextMacro and hasPreviousMacro
 end
 
 function UITweaks:UpdateBottomLeftReloadButton()
