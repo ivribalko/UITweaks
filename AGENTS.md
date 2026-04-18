@@ -25,6 +25,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Auto-Hide Chat Tabs — Auto-Hide chat tab titles until you mouse over them. Set Options -> Social -> New Whispers: In-line to prevent new tabs from appearing.
 - Hide Chat Bubble Button — Hide the chat button with the speech bubble icon.
 - Hide Chat Channels Button — Hide the chat button that opens the channel list.
+- Hide Social Button — Hide the social button next to the chat frame.
 - Set Chat Font Size — Enable a custom chat window font size for all tabs.
 - Font Size — Font size to use when the override is enabled.
 - Transparent Chat Background — Set the chat background alpha to zero.

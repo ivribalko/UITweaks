@@ -829,6 +829,23 @@ function UITweaks:UpdateChatChannelsButtonVisibility()
     end
 end
 
+function UITweaks:UpdateSocialButtonVisibility()
+    local button = _G.QuickJoinToastButton
+    if not button then return end
+    if self.db.profile.hideSocialButton then
+        if not button.UITweaksHooked then
+            -- Keep the social button hidden even when UI code shows it.
+            button:HookScript("OnShow", function(frame)
+                if UITweaks.db and UITweaks.db.profile.hideSocialButton then
+                    frame:Hide()
+                end
+            end)
+            button.UITweaksHooked = true
+        end
+        button:Hide()
+    end
+end
+
 local function ensureGroupLootHistoryLoaded()
     if _G.GroupLootHistoryFrame then return true end
     local loadAddOn = C_AddOns and C_AddOns.LoadAddOn or UIParentLoadAddOn
@@ -1609,6 +1626,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateChatTabsVisibility()
     self:UpdateChatChannelsButtonVisibility()
     self:UpdateChatMenuButtonVisibility()
+    self:UpdateSocialButtonVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()
     self:UpdateGroupLootHistoryVisibility()
     self:UpdateAddonMinimapIconsVisibility()

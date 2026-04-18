@@ -22,6 +22,7 @@ Options.defaults = {
         hideChatTabs = false,
         hideChatMenuButton = false,
         hideChatChannelsButton = false,
+        hideSocialButton = false,
         transparentChatBackground = false,
         hideGroupLootHistoryFrame = false,
         hideStanceButtons = false,
@@ -215,11 +216,20 @@ function Options.OnInitialize(self)
                             self:UpdateChatChannelsButtonVisibility()
                         end
                     ),
+                    hideSocialButton = toggleOption(
+                        "hideSocialButton",
+                        "Hide Social Button",
+                        "Hide the social button next to the chat frame.",
+                        8,
+                        function()
+                            self:UpdateSocialButtonVisibility()
+                        end
+                    ),
                     transparentChatBackground = toggleOption(
                         "transparentChatBackground",
                         "Transparent Chat Background",
                         "Set the chat background alpha to zero.",
-                        8,
+                        9,
                         function()
                             self:ApplyChatBackgroundAlpha()
                         end

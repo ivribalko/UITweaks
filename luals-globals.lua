@@ -116,6 +116,7 @@ unpack = unpack
 ---@field MicroButtonAndBagsBar any
 ---@field MicroMenu any
 ---@field MicroMenuContainer any
+---@field QuickJoinToastButton any
 ---@field ShapeshiftBarFrame any
 ---@field StanceBar any
 ---@field SuperTrackedFrame any
