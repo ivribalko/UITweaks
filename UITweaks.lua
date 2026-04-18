@@ -49,6 +49,8 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("LOOT_OPENED")
     self:RegisterEvent("LOOT_CLOSED")
+    self:RegisterEvent("BAG_OPEN")
+    self:RegisterEvent("BAG_CLOSED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
     self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
@@ -216,6 +218,14 @@ function UITweaks:PLAYER_ENTERING_WORLD()
 end
 
 function UITweaks:BAG_UPDATE_DELAYED()
+    self.consumables.RequestInventoryConsumableRefresh(self, true)
+end
+
+function UITweaks:BAG_OPEN()
+    self.consumables.RequestInventoryConsumableRefresh(self, true)
+end
+
+function UITweaks:BAG_CLOSED()
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
 

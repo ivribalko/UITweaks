@@ -5,7 +5,7 @@ if addonTable then
     addonTable.Consumables = Consumables
 end
 
-local UPDATE_INTERVAL_SECONDS = 0.2
+local UPDATE_INTERVAL_SECONDS = 1
 local MAIN_HAND_SLOT_ID = 16
 local OFF_HAND_SLOT_ID = 17
 local ITEM_CLASS_CONSUMABLE = 0
@@ -31,35 +31,30 @@ local function getHelpfulAuras()
         return key ~= nil and (t == "string" or t == "number")
     end
 
-    local function safe_assign(tbl, key, value, context)
+    local function safe_assign(tbl, key, value)
         if type(tbl) ~= "table" then return end
         if is_valid_key(key) then
-            local ok = pcall(function()
+            pcall(function()
                 if tbl[key] == nil then
                     tbl[key] = value
                 end
             end)
-            -- silently ignore errors
         end
-        -- silently skip invalid keys
     end
-
-    if type(auraBySpellID) ~= "table" then auraBySpellID = {} end
-    if type(auraByName) ~= "table" then auraByName = {} end
 
     if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         local index = 1
         while true do
             local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
             if not aura then break end
-            safe_assign(auraBySpellID, aura.spellId, aura, "auraBySpellID at index " .. tostring(index))
-            safe_assign(auraByName, aura.name, aura, "auraByName at index " .. tostring(index))
+            safe_assign(auraBySpellID, aura.spellId, aura)
+            safe_assign(auraByName, aura.name, aura)
             index = index + 1
         end
     elseif AuraUtil and AuraUtil.ForEachAura then
         AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
-            safe_assign(auraBySpellID, aura.spellId, aura, "auraBySpellID in AuraUtil")
-            safe_assign(auraByName, aura.name, aura, "auraByName in AuraUtil")
+            safe_assign(auraBySpellID, aura.spellId, aura)
+            safe_assign(auraByName, aura.name, aura)
         end)
     end
 
@@ -237,6 +232,40 @@ local function createConsumableOverlay(button)
     return overlay
 end
 
+local function enumerateShownContainerItemButtons(callback)
+    if not ContainerFrameUtil_EnumerateContainerFrames then return end
+
+    for _, containerFrame in ContainerFrameUtil_EnumerateContainerFrames() do
+        if containerFrame and containerFrame.IsShown and containerFrame:IsShown() and containerFrame.EnumerateValidItems then
+            for _, itemButton in containerFrame:EnumerateValidItems() do
+                callback(itemButton, containerFrame)
+            end
+        end
+    end
+end
+
+local function enumerateContainerFrames(callback)
+    if not ContainerFrameUtil_EnumerateContainerFrames then return end
+
+    for _, containerFrame in ContainerFrameUtil_EnumerateContainerFrames() do
+        if containerFrame then
+            callback(containerFrame)
+        end
+    end
+end
+
+local function hasShownContainerFrames()
+    local hasShownFrames = false
+
+    enumerateContainerFrames(function(containerFrame)
+        if containerFrame.IsShown and containerFrame:IsShown() then
+            hasShownFrames = true
+        end
+    end)
+
+    return hasShownFrames
+end
+
 function Consumables:GetConsumableOverlay(button)
     if not self.inventoryConsumableOverlays then
         self.inventoryConsumableOverlays = {}
@@ -247,7 +276,7 @@ function Consumables:GetConsumableOverlay(button)
     return self.inventoryConsumableOverlays[button]
 end
 
-function Consumables:FindConsumableAuraForButton(button, auraBySpellID, auraByName, weaponEnchantStates)
+function Consumables:FindConsumableAuraForButton(button, auraBySpellID, auraByName, wellFedAura, weaponEnchantStates)
     local _, _, itemID, itemLink = getContainerButtonItemInfo(button)
     if not itemID then return end
 
@@ -264,7 +293,6 @@ function Consumables:FindConsumableAuraForButton(button, auraBySpellID, auraByNa
         return aura
     end
 
-    local wellFedAura = findWellFedAura(auraByName)
     if wellFedAura and wellFedAura.expirationTime and isFoodItem(itemID) then
         return wellFedAura
     end
@@ -280,14 +308,26 @@ function Consumables:FindConsumableAuraForButton(button, auraBySpellID, auraByNa
     end
 end
 
-local function enumerateShownContainerItemButtons(callback)
-    if not ContainerFrameUtil_EnumerateContainerFrames then return end
+function Consumables:HookContainerFrames()
+    enumerateContainerFrames(function(containerFrame)
+        if containerFrame.UITweaksConsumablesHooked then return end
 
-    for _, containerFrame in ContainerFrameUtil_EnumerateContainerFrames() do
-        if containerFrame and containerFrame.IsShown and containerFrame:IsShown() and containerFrame.EnumerateValidItems then
-            for _, itemButton in containerFrame:EnumerateValidItems() do
-                callback(itemButton, containerFrame)
-            end
+        containerFrame:HookScript("OnShow", function()
+            Consumables.RequestInventoryConsumableRefresh(self, true)
+        end)
+        containerFrame:HookScript("OnHide", function()
+            Consumables.RequestInventoryConsumableRefresh(self, true)
+        end)
+        containerFrame.UITweaksConsumablesHooked = true
+    end)
+end
+
+function Consumables:UpdateInventoryConsumableTimers()
+    if not self.inventoryConsumableOverlays then return end
+
+    for _, overlay in pairs(self.inventoryConsumableOverlays) do
+        if overlay:IsShown() then
+            overlay:UpdateTimer()
         end
     end
 end
@@ -299,14 +339,21 @@ function Consumables:RefreshInventoryConsumableHighlights()
     end
     if InCombatLockdown() then return end
 
+    Consumables.HookContainerFrames(self)
+    if not hasShownContainerFrames() then
+        Consumables.ClearInventoryConsumableHighlights(self)
+        return
+    end
+
     local auraBySpellID, auraByName = getHelpfulAuras()
+    local wellFedAura = findWellFedAura(auraByName)
     local weaponEnchantStates = buildWeaponEnchantTooltipCache()
     local activeButtons = {}
 
     enumerateShownContainerItemButtons(function(button)
         if button then
             local overlay = Consumables.GetConsumableOverlay(self, button)
-            local aura = Consumables.FindConsumableAuraForButton(self, button, auraBySpellID, auraByName,
+            local aura = Consumables.FindConsumableAuraForButton(self, button, auraBySpellID, auraByName, wellFedAura,
                 weaponEnchantStates)
 
             if aura then
@@ -337,13 +384,7 @@ function Consumables:StartInventoryConsumableTicker()
     if self.inventoryConsumableTicker then return end
     self.inventoryConsumableTicker = C_Timer.NewTicker(UPDATE_INTERVAL_SECONDS, function()
         if InCombatLockdown() then return end
-        Consumables.RefreshInventoryConsumableHighlights(self)
-        if not self.inventoryConsumableOverlays then return end
-        for _, overlay in pairs(self.inventoryConsumableOverlays) do
-            if overlay:IsShown() then
-                overlay:UpdateTimer()
-            end
-        end
+        Consumables.UpdateInventoryConsumableTimers(self)
     end)
 end
 
@@ -356,15 +397,26 @@ end
 function Consumables:RequestInventoryConsumableRefresh(forceRescan)
     if not self.db.profile.highlightActiveConsumablesInInventory then return end
     if InCombatLockdown() then return end
-    Consumables.RefreshInventoryConsumableHighlights(self)
+
+    Consumables.HookContainerFrames(self)
+    if self.inventoryConsumableRefreshPending then return end
+
+    self.inventoryConsumableRefreshPending = true
+    C_Timer.After(0, function()
+        self.inventoryConsumableRefreshPending = nil
+        if InCombatLockdown() then return end
+        Consumables.RefreshInventoryConsumableHighlights(self)
+    end)
 end
 
 function Consumables:ApplyInventoryConsumableHighlights()
     if self.db.profile.highlightActiveConsumablesInInventory then
+        Consumables.HookContainerFrames(self)
         Consumables.StartInventoryConsumableTicker(self)
         Consumables.RequestInventoryConsumableRefresh(self, true)
     else
         Consumables.StopInventoryConsumableTicker(self)
+        self.inventoryConsumableRefreshPending = nil
         Consumables.ClearInventoryConsumableHighlights(self)
     end
 end
