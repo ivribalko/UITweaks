@@ -1,6 +1,7 @@
 ## Interface: 120001, 120000
 ## Title: Stock UI Tweaks
 ## Notes: Various Stock UI Tweaks
+## Category: Quality of Life
 ## Author: Me
 ## Version: 1.8
 ## IconTexture: Interface\AddOns\UITweaks\icon64.tga
