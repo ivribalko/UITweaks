@@ -358,6 +358,32 @@ function UITweaks:SetDamageMeterAlpha(alpha)
     end
 end
 
+function UITweaks:ShouldShowDamageMeterFrame()
+    local damageMeter = _G.DamageMeter
+    if not damageMeter then
+        return false
+    end
+
+    if damageMeter.ShouldBeShown then
+        return damageMeter:ShouldBeShown()
+    end
+
+    if C_CVar and C_CVar.GetCVarBool then
+        return C_CVar.GetCVarBool("damageMeterEnabled")
+    end
+
+    if GetCVarBool then
+        return GetCVarBool("damageMeterEnabled")
+    end
+
+    if GetCVar then
+        local value = GetCVar("damageMeterEnabled")
+        return value == "1" or value == "true"
+    end
+
+    return true
+end
+
 function UITweaks:IsDamageMeterHovered()
     for _, frame in ipairs(self:GetDamageMeterFrames()) do
         if isCursorInsideFrame(frame) then
@@ -379,6 +405,13 @@ end
 
 function UITweaks:UpdateDamageMeterAlphaState()
     if not _G.DamageMeter then return end
+
+    if not self:ShouldShowDamageMeterFrame() then
+        self.damageMeterHovered = false
+        self:SetDamageMeterAlpha(1)
+        _G.DamageMeter:Hide()
+        return
+    end
 
     if self.damageMeterForceVisible or (InCombatLockdown and InCombatLockdown()) then
         self.damageMeterHovered = false
