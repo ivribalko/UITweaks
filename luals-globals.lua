@@ -1,8 +1,7 @@
----@meta
----@diagnostic disable: lowercase-global
 
 -- LuaLS-only WoW global declarations moved from .luarc.json.
 _G = _G
+Enum = Enum
 ActionButtonUtil = ActionButtonUtil
 ActionButton_CalculateAction = ActionButton_CalculateAction
 ActionButton_GetPagedID = ActionButton_GetPagedID
@@ -12,6 +11,7 @@ BuffFrame = BuffFrame
 BuffIconCooldownViewer = BuffIconCooldownViewer
 ChatFontNormal = ChatFontNormal
 C_AddOns = C_AddOns
+C_DamageMeter = C_DamageMeter
 C_Container = C_Container
 C_CooldownViewer = C_CooldownViewer
 C_Navigation = C_Navigation
@@ -39,6 +39,7 @@ GetChatWindowInfo = GetChatWindowInfo
 GetCVar = GetCVar
 GetItemInfo = GetItemInfo
 GetItemInfoInstant = GetItemInfoInstant
+GetInstanceInfo = GetInstanceInfo
 GetItemSpell = GetItemSpell
 GetWeaponEnchantInfo = GetWeaponEnchantInfo
 GetMacroInfo = GetMacroInfo

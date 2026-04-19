@@ -14,6 +14,7 @@ Options.defaults = {
         hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
         hideDamageMeter = false,
+        setDamageMeterCurrentSegmentOnInstanceEnter = false,
         hideTargetFrameOutOfCombat = false,
         showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
@@ -281,11 +282,17 @@ function Options.OnInitialize(self)
                             self:ScheduleDelayedVisibilityUpdate()
                         end
                     ),
+                    setDamageMeterCurrentSegmentOnInstanceEnter = toggleOption(
+                        "setDamageMeterCurrentSegmentOnInstanceEnter",
+                        "Set Damage Meter To Current Segment On Instance Enter",
+                        "Switch the built-in damage meter to Current when you enter an instance.",
+                        6
+                    ),
                     showSoftTargetTooltipOutOfCombat = toggleOption(
                         "showSoftTargetTooltipOutOfCombat",
                         "Show Tooltip For Soft (Action) Target Out of Combat",
                         "Display the ConsolePort soft (action) target's tooltip while out of combat. Useful to check if the target is related to any active quests.",
-                        6,
+                        7,
                         function(val)
                             if not val then
                                 GameTooltip:Hide()
