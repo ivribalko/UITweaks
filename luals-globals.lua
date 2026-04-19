@@ -75,6 +75,7 @@ PlaceAction = PlaceAction
 PlayerFrame = PlayerFrame
 RegisterStateDriver = RegisterStateDriver
 ReloadUI = ReloadUI
+Settings = Settings
 SetChatWindowAlpha = SetChatWindowAlpha
 StanceBar = StanceBar
 TotemFrame = TotemFrame

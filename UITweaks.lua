@@ -14,6 +14,10 @@ local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 local gameTooltipUnitColor = rawget(_G, "GameTooltip_UnitColor")
 
+_G.UITweaks_OnAddonCompartmentClick = function()
+    UITweaks:OpenOptionsPanel()
+end
+
 local function applyTooltipUnitNameColor(unit)
     if not gameTooltipUnitColor then return end
     local r, g, b = gameTooltipUnitColor(unit)
@@ -1301,7 +1305,9 @@ function UITweaks:ScheduleDelayedVisibilityUpdate(skipDelay)
 end
 
 function UITweaks:OpenOptionsPanel()
-    if InterfaceOptionsFrame_OpenToCategory and self.optionsFrame then
+    if Settings and Settings.OpenToCategory and self.optionsCategoryID then
+        Settings.OpenToCategory(self.optionsCategoryID)
+    elseif InterfaceOptionsFrame_OpenToCategory and self.optionsFrame then
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
         InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
     elseif AceConfigDialog then

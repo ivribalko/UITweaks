@@ -4,6 +4,7 @@
 ## Author: Me
 ## Version: 1.8
 ## IconTexture: Interface\AddOns\UITweaks\icon64.tga
+## AddonCompartmentFunc: UITweaks_OnAddonCompartmentClick
 ## SavedVariables: UITweaksDB
 
 # Libs

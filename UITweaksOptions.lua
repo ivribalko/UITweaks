@@ -472,7 +472,7 @@ function Options.OnInitialize(self)
         },
     }
     AceConfig:RegisterOptionsTable(addonName, options)
-    self.optionsFrame = AceConfigDialog:AddToBlizOptions(addonName, "Stock UI Tweaks")
+    self.optionsFrame, self.optionsCategoryID = AceConfigDialog:AddToBlizOptions(addonName, "Stock UI Tweaks")
     self:EnsureReloadButton()
 end
 
