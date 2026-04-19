@@ -33,7 +33,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Everywhere Else — Collapse the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).
 - Hide Player Frame Out of Combat — Hide the player unit frame outside combat.
 - Hide Target Frame Out of Combat — Hide the target unit frame outside combat.
-- Set Damage Meter To Current Segment On Instance Enter — Switch the built-in damage meter to Current when you enter an instance.
 - Show Tooltip For Soft (Action) Target Out of Combat — Display the ConsolePort soft (action) target's tooltip while out of combat. Useful to check if the target is related to any active quests.
 
 ### ConsolePort

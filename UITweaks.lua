@@ -170,8 +170,6 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self:ApplyBuffFrameHide()
         self:ApplyVisibilityState()
         self:ScheduleDelayedVisibilityUpdate(true)
-    elseif addonName == "Blizzard_DamageMeter" then
-        self:ApplyPendingDamageMeterInstanceSegmentSwitch()
     elseif addonName == "Blizzard_GroupLootHistory" then
         self:UpdateGroupLootHistoryVisibility()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
@@ -216,7 +214,6 @@ function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate(true)
-    self:UpdateDamageMeterInstanceSegmentPreference()
     self.consumables.RequestInventoryConsumableRefresh(self, true)
     if self.db.profile.consolePortBarSharing then
         self:RestoreConsolePortActionBarProfile()
@@ -465,69 +462,6 @@ function UITweaks:HookDamageMeterFrames()
             frame.UITweaksHooked = true
         end
     end
-end
-
-function UITweaks:ApplyPendingDamageMeterInstanceSegmentSwitch()
-    local pendingInstanceID = self.pendingDamageMeterInstanceSegmentSwitchID
-    if not pendingInstanceID then
-        return
-    end
-    if not self.db.profile.setDamageMeterCurrentSegmentOnInstanceEnter then
-        self.pendingDamageMeterInstanceSegmentSwitchID = nil
-        return
-    end
-
-    local damageMeter = _G.DamageMeter
-    local damageMeterSessionType = _G.Enum and _G.Enum.DamageMeterSessionType
-    if not damageMeter
-        or not damageMeter.ForEachSessionWindow
-        or not damageMeter.SetSessionWindowSessionID
-        or not damageMeterSessionType
-    then
-        return
-    end
-
-    local currentSessionType = damageMeterSessionType.Current
-    if currentSessionType == nil then
-        return
-    end
-
-    damageMeter:ForEachSessionWindow(function(sessionWindow)
-        if not sessionWindow then
-            return
-        end
-
-        damageMeter:SetSessionWindowSessionID(sessionWindow, currentSessionType, nil)
-    end)
-
-    self.pendingDamageMeterInstanceSegmentSwitchID = nil
-end
-
-function UITweaks:UpdateDamageMeterInstanceSegmentPreference()
-    if not self.db.profile.setDamageMeterCurrentSegmentOnInstanceEnter then
-        self.pendingDamageMeterInstanceSegmentSwitchID = nil
-        self.lastDamageMeterInstanceSegmentSwitchID = nil
-        return
-    end
-
-    local inInstance = IsInInstance()
-    if not inInstance then
-        self.pendingDamageMeterInstanceSegmentSwitchID = nil
-        self.lastDamageMeterInstanceSegmentSwitchID = nil
-        return
-    end
-
-    local _, _, _, _, _, _, _, instanceID = GetInstanceInfo()
-    if not instanceID or instanceID == 0 then
-        return
-    end
-    if self.lastDamageMeterInstanceSegmentSwitchID == instanceID then
-        return
-    end
-
-    self.lastDamageMeterInstanceSegmentSwitchID = instanceID
-    self.pendingDamageMeterInstanceSegmentSwitchID = instanceID
-    self:ApplyPendingDamageMeterInstanceSegmentSwitch()
 end
 
 function UITweaks:SetChatControlButtonsHoverPolling(enabled)
