@@ -1,4 +1,4 @@
-## Interface: 120005
+## Interface: 120100
 ## Title: Stock UI Tweaks
 ## Notes: Various Stock UI Tweaks
 ## Category: Quality of Life
