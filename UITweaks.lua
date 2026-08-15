@@ -31,6 +31,7 @@ end
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
     self.consumables = type(require) == "function" and require("UITweaksConsumables") or addonTable.Consumables
+    self.immersion = type(require) == "function" and require("UITweaksImmersion") or addonTable.Immersion
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
     options.OnInitialize(self)
@@ -46,6 +47,7 @@ function UITweaks:OnEnable()
     self:HookHelpTipFrames()
     self:ApplyBuffFrameHide()
     self.consumables.ApplyInventoryConsumableHighlights(self)
+    self.immersion.Apply(self)
     self.debug.OnEnable(self)
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
@@ -178,6 +180,8 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self:UpdateObjectiveTrackerState()
     elseif addonName == "Blizzard_TotemBar" then
         self:UpdateTotemFrameVisibility()
+    elseif addonName == "Immersion" then
+        self.immersion.Apply(self)
     elseif addonName == "ConsolePort"
         or addonName == "ConsolePort_ActionBar"
         or addonName == "ConsolePortActionBar"

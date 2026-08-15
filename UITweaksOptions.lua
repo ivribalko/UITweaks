@@ -38,6 +38,7 @@ Options.defaults = {
         chatFontSize = 16,
         hideConsolePortTempAbilityFrame = false,
         consolePortBarSharing = false,
+        useCircleToCancelImmersion = false,
         skyridingBarSharing = false,
         alwaysShowQuestMarkerDistance = false,
         highlightActiveConsumablesInInventory = false,
@@ -317,10 +318,28 @@ function Options.OnInitialize(self)
                         "consolePortBarSharing",
                         "Share ConsolePort Action Bar Settings For All Characters",
                         "Warning: This will overwrite your ConsolePort UI settings. When enabled, Stock UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
-                        3,
+                        2,
                         function()
                             return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
+                        end
+                    ),
+                    useCircleToCancelImmersion = toggleOption(
+                        "useCircleToCancelImmersion",
+                        "Use Circle To Cancel Immersion Dialogues",
+                        "Use Circle to cancel or close Immersion dialogue and Triangle to inspect items or back out of item inspection when using ConsolePort.",
+                        3,
+                        function(val)
+                            if val then
+                                self.immersion.Apply(self)
+                            end
+                        end,
+                        function()
+                            local consolePortLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
+                                or (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
+                            local immersionLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("Immersion"))
+                                or (IsAddOnLoaded and IsAddOnLoaded("Immersion"))
+                            return not consolePortLoaded or not immersionLoaded
                         end
                     ),
                     -- Keep this execute action last in the ConsolePort panel.

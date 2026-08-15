@@ -34,6 +34,7 @@ GameTooltip = GameTooltip
 GameTooltip_SetDefaultAnchor = GameTooltip_SetDefaultAnchor
 GetActionInfo = GetActionInfo
 GetAddOnMetadata = GetAddOnMetadata
+GetBindingAction = GetBindingAction
 GetBuildInfo = GetBuildInfo
 GetChatWindowInfo = GetChatWindowInfo
 GetCVar = GetCVar
@@ -112,9 +113,12 @@ unpack = unpack
 ---@field ConsolePort any
 ---@field ConsolePortActionBarConfig any
 ---@field ConsolePortTempAbilityFrame any
+---@field ConsolePortUIHandle any
 ---@field CooldownViewerSettings any
 ---@field DamageMeter any
 ---@field GroupLootHistoryFrame any
+---@field ImmersionAPI any
+---@field ImmersionFrame any
 ---@field MicroButtonAndBagsBar any
 ---@field MicroMenu any
 ---@field MicroMenuContainer any

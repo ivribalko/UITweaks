@@ -3,10 +3,10 @@
 ## Notes: Various Stock UI Tweaks
 ## Category: Quality of Life
 ## Author: Me
-## Version: 1.8.3
+## Version: 1.8.4
 ## IconTexture: Interface\AddOns\UITweaks\icon64.tga
 ## AddonCompartmentFunc: UITweaks_OnAddonCompartmentClick
-## OptionalDeps: ConsolePort, ConsolePort_Bar
+## OptionalDeps: ConsolePort, ConsolePort_Bar, Immersion
 ## SavedVariables: UITweaksDB
 
 # Libs
@@ -23,3 +23,4 @@ UITweaks.lua
 UITweaksDebug.lua
 UITweaksOptions.lua
 UITweaksConsumables.lua
+UITweaksImmersion.lua
