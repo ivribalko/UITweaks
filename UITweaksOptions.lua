@@ -11,10 +11,10 @@ Options.defaults = {
     profile = {
         hideHelpTips = false,
         hideBuffFrame = false,
-        hidePlayerFrameOutOfCombat = false,
         hideBackpackButton = false,
         hideDamageMeter = false,
-        hideTargetFrameOutOfCombat = false,
+        playerAndTargetFrameOpacityInCombat = 100,
+        playerAndTargetFrameOpacityOutOfCombat = 100,
         showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideChatMenuButton = false,
@@ -49,6 +49,16 @@ Options.defaults = {
 }
 
 function Options.OnInitialize(self)
+    local profile = self.db.profile
+    if profile.hidePlayerFrameOutOfCombat or profile.hideTargetFrameOutOfCombat then
+        profile.playerAndTargetFrameOpacityOutOfCombat = 0
+    end
+    profile.fadePlayerAndTargetFramesOutOfCombat = nil
+    profile.hidePlayerFrameOutOfCombat = nil
+    profile.hideTargetFrameOutOfCombat = nil
+    profile.playerFrameOpacityOutOfCombat = nil
+    profile.targetFrameOpacityOutOfCombat = nil
+
     local function getOption(key)
         return function()
             return self.db.profile[key]
@@ -262,23 +272,27 @@ function Options.OnInitialize(self)
                             },
                         },
                     },
-                    hidePlayerFrameOutOfCombat = toggleOption(
-                        "hidePlayerFrameOutOfCombat",
-                        "Hide Player Frame Out of Combat",
-                        "Hide the player unit frame outside combat.",
+                    playerAndTargetFrameOpacityInCombat = rangeOption(
+                        "playerAndTargetFrameOpacityInCombat",
+                        "Player and Target Frame Opacity In Combat",
+                        "Set the player and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).",
                         4,
+                        0,
+                        100,
+                        1,
                         function()
-                            self:UpdatePlayerFrameVisibility()
-                            self:ScheduleDelayedVisibilityUpdate()
+                            self:UpdatePlayerAndTargetFrameOpacity()
                         end
                     ),
-                    hideTargetFrameOutOfCombat = toggleOption(
-                        "hideTargetFrameOutOfCombat",
-                        "Hide Target Frame Out of Combat",
-                        "Hide the target unit frame outside combat.",
+                    playerAndTargetFrameOpacityOutOfCombat = rangeOption(
+                        "playerAndTargetFrameOpacityOutOfCombat",
+                        "Player and Target Frame Opacity Out of Combat",
+                        "Set the player and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).",
                         5,
+                        0,
+                        100,
+                        1,
                         function()
-                            self:UpdateTargetFrameVisibility()
                             self:ScheduleDelayedVisibilityUpdate()
                         end
                     ),

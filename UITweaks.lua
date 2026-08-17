@@ -202,8 +202,7 @@ function UITweaks:PLAYER_REGEN_DISABLED()
     if self:ShouldCollapseObjectiveTracker() then
         self:CollapseTrackerIfNeeded()
     end
-    self:UpdatePlayerFrameVisibility()
-    self:UpdateTargetFrameVisibility()
+    self:UpdatePlayerAndTargetFrameOpacity(true)
     self:UpdateDamageMeterVisibility()
     if self.db.profile.showSoftTargetTooltipOutOfCombat then GameTooltip:Hide() end
 end
@@ -266,7 +265,7 @@ end
 
 function UITweaks:PLAYER_TARGET_CHANGED()
     self:UpdateTargetTooltip()
-    self:UpdateTargetFrameVisibility()
+    self:UpdatePlayerAndTargetFrameOpacity()
 end
 
 function UITweaks:UNIT_AURA(_, unit)
@@ -803,41 +802,15 @@ function UITweaks:ApplyBuffFrameHide(retry)
     end
 end
 
-local function UpdateCombatFrameVisibility(frame, profileKey, stateDriver, delayStateDriver)
-    if not frame then return end
-    if UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey] then
-        if not frame.UITweaksHooked then
-            -- Keep frames hidden outside combat when addons try to show them.
-            frame:HookScript("OnShow", function(shownFrame)
-                if UITweaks.db and UITweaks.db.profile and UITweaks.db.profile[profileKey] then
-                    if not (InCombatLockdown and InCombatLockdown()) and not UITweaks.visibilityDelayActive then
-                        shownFrame:Hide()
-                    end
-                end
-            end)
-            frame.UITweaksHooked = true
-        end
-        if RegisterStateDriver then
-            if not (InCombatLockdown and InCombatLockdown()) then
-                local driver = UITweaks.visibilityDelayActive and delayStateDriver or stateDriver
-                if driver then
-                    RegisterStateDriver(frame, "visibility", driver)
-                end
-            end
-        end
-        if not (InCombatLockdown and InCombatLockdown()) and not UITweaks.visibilityDelayActive then
-            frame:Hide()
-        end
-    end
-end
+function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
+    local inCombat = forceInCombat or (InCombatLockdown and InCombatLockdown())
+    local opacityKey = (inCombat or self.visibilityDelayActive)
+        and "playerAndTargetFrameOpacityInCombat"
+        or "playerAndTargetFrameOpacityOutOfCombat"
+    local alpha = (tonumber(self.db.profile[opacityKey]) or 100) / 100
 
-function UITweaks:UpdatePlayerFrameVisibility()
-    UpdateCombatFrameVisibility(PlayerFrame, "hidePlayerFrameOutOfCombat", "[combat] show; hide", "show")
-end
-
-function UITweaks:UpdateTargetFrameVisibility()
-    UpdateCombatFrameVisibility(_G.TargetFrame, "hideTargetFrameOutOfCombat", "[combat,@target,exists] show; hide",
-        "[@target,exists] show; hide")
+    if PlayerFrame then PlayerFrame:SetAlpha(alpha) end
+    if _G.TargetFrame then _G.TargetFrame:SetAlpha(alpha) end
 end
 
 function UITweaks:UpdateBackpackButtonVisibility()
@@ -1199,9 +1172,10 @@ function UITweaks:UpdateTargetTooltip(forceHide)
 end
 
 function UITweaks:HasDelayedVisibilityFeatures()
+    local inCombatOpacity = tonumber(self.db.profile.playerAndTargetFrameOpacityInCombat) or 100
+    local outOfCombatOpacity = tonumber(self.db.profile.playerAndTargetFrameOpacityOutOfCombat) or 100
     return self.db.profile.hideDamageMeter
-        or self.db.profile.hidePlayerFrameOutOfCombat
-        or self.db.profile.hideTargetFrameOutOfCombat
+        or inCombatOpacity ~= outOfCombatOpacity
         or self:ShouldCollapseObjectiveTracker()
         or self.db.profile.showSoftTargetTooltipOutOfCombat
 end
@@ -1210,8 +1184,7 @@ function UITweaks:ApplyDelayedVisibility()
     if self.db.profile.hideDamageMeter then
         self:UpdateDamageMeterVisibility()
     end
-    if self.db.profile.hidePlayerFrameOutOfCombat then self:UpdatePlayerFrameVisibility() end
-    if self.db.profile.hideTargetFrameOutOfCombat then self:UpdateTargetFrameVisibility() end
+    self:UpdatePlayerAndTargetFrameOpacity()
     if self:ShouldCollapseObjectiveTracker() then self:ExpandTrackerIfNeeded(true) end
     if self.db.profile.showSoftTargetTooltipOutOfCombat then self:UpdateTargetTooltip() end
 end
@@ -1230,8 +1203,7 @@ function UITweaks:ScheduleDelayedVisibilityUpdate(skipDelay)
             self:ApplyDelayedVisibility()
         else
             self.visibilityDelayActive = true
-            self:UpdatePlayerFrameVisibility()
-            self:UpdateTargetFrameVisibility()
+            self:UpdatePlayerAndTargetFrameOpacity()
             self.visibilityTimer = C_Timer.NewTimer(delay, function()
                 if not InCombatLockdown or not InCombatLockdown() then
                     self.visibilityDelayActive = false
@@ -1239,6 +1211,8 @@ function UITweaks:ScheduleDelayedVisibilityUpdate(skipDelay)
                 end
             end)
         end
+    else
+        self:UpdatePlayerAndTargetFrameOpacity()
     end
 end
 
@@ -1738,8 +1712,7 @@ function UITweaks:RestoreSkyridingBarLayout()
 end
 
 function UITweaks:ApplyVisibilityState()
-    self:UpdatePlayerFrameVisibility()
-    self:UpdateTargetFrameVisibility()
+    self:UpdatePlayerAndTargetFrameOpacity()
     self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
