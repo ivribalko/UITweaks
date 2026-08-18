@@ -38,6 +38,7 @@ function UITweaks:OnInitialize()
 end
 
 function UITweaks:OnEnable()
+    self:CreateMinimapButton()
     self:RegisterChatCommand("uitabandonquest", "HandleAbandonQuestSlashCommand")
     self:RegisterChatCommand("uitnextquest", "HandleNextQuestSlashCommand")
     self:RegisterChatCommand("uitprevquest", "HandlePreviousQuestSlashCommand")
@@ -1228,6 +1229,98 @@ function UITweaks:OpenOptionsPanel()
             self:EnsureReloadButtonForFrame(AceConfigDialog.OpenFrames[addonName])
         end
     end
+end
+
+function UITweaks:UpdateMinimapButtonPosition()
+    local angle = math.rad(self.db.profile.minimapPos)
+    local radius = (Minimap:GetWidth() / 2) + 6
+    self.minimapButton:ClearAllPoints()
+    self.minimapButton:SetPoint("CENTER", Minimap, "CENTER", math.cos(angle) * radius, math.sin(angle) * radius)
+end
+
+function UITweaks:UpdateMinimapButtonDragPosition()
+    local cursorX, cursorY = GetCursorPosition()
+    local minimapX, minimapY = Minimap:GetCenter()
+    local scale = UIParent:GetEffectiveScale()
+    local angle = math.deg(math.atan2((cursorY / scale) - minimapY, (cursorX / scale) - minimapX))
+    self.db.profile.minimapPos = angle % 360
+    self:UpdateMinimapButtonPosition()
+end
+
+function UITweaks:CreateMinimapButton()
+    if self.minimapButton then return end
+
+    local dataBroker = LibStub("LibDataBroker-1.1", true)
+    local iconLibrary = LibStub("LibDBIcon-1.0", true)
+    if dataBroker and iconLibrary then
+        local launcher = dataBroker:NewDataObject(addonName, {
+            type = "launcher",
+            icon = "Interface\\AddOns\\UITweaks\\icon64.tga",
+            OnClick = function(_, mouseButton)
+                if mouseButton == "LeftButton" then self:OpenOptionsPanel() end
+            end,
+            OnTooltipShow = function(tooltip)
+                tooltip:AddLine("Stock UI Tweaks")
+                tooltip:AddLine("Left-click to open settings.", 1, 1, 1)
+                tooltip:AddLine("Drag to move this button.", 1, 1, 1)
+            end,
+        })
+        iconLibrary:Register(addonName, launcher, self.db.profile)
+        self.minimapButton = iconLibrary:GetMinimapButton(addonName)
+        return
+    end
+
+    local button = CreateFrame("Button", "UITweaksMinimapButton", Minimap)
+    button:SetSize(32, 32)
+    button:SetFrameStrata("MEDIUM")
+    button:SetFrameLevel(8)
+    button:RegisterForClicks("LeftButtonUp")
+    button:RegisterForDrag("LeftButton")
+
+    local background = button:CreateTexture(nil, "BACKGROUND")
+    background:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
+    background:SetSize(24, 24)
+    background:SetPoint("CENTER")
+
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:SetTexture("Interface\\AddOns\\UITweaks\\icon64.tga")
+    icon:SetSize(20, 20)
+    icon:SetPoint("CENTER")
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+    local border = button:CreateTexture(nil, "OVERLAY")
+    border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+    border:SetSize(54, 54)
+    border:SetPoint("TOPLEFT")
+
+    local highlight = button:CreateTexture(nil, "HIGHLIGHT")
+    highlight:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+    highlight:SetBlendMode("ADD")
+    highlight:SetSize(24, 24)
+    highlight:SetPoint("CENTER")
+
+    button:SetScript("OnMouseDown", function() button.wasDragged = false end)
+    button:SetScript("OnClick", function()
+        if not button.wasDragged then self:OpenOptionsPanel() end
+    end)
+    button:SetScript("OnDragStart", function()
+        button.wasDragged = true
+        button:SetScript("OnUpdate", function() self:UpdateMinimapButtonDragPosition() end)
+    end)
+    button:SetScript("OnDragStop", function()
+        button:SetScript("OnUpdate", nil)
+    end)
+    button:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(button, "ANCHOR_LEFT")
+        GameTooltip:SetText("Stock UI Tweaks")
+        GameTooltip:AddLine("Left-click to open settings.", 1, 1, 1)
+        GameTooltip:AddLine("Drag to move this button.", 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    self.minimapButton = button
+    self:UpdateMinimapButtonPosition()
 end
 
 function UITweaks:EnsureReloadButtonForFrame(parent)

@@ -83,5 +83,6 @@ Exceptions:
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - Debug panel is alpha-only and intentionally omitted from this README.
 - `AddOns/` contains addons and other files used strictly as references. Do not use or read anything in `AddOns/` unless explicitly instructed.
+- Never modify other addons' code when inspecting them.
 - Check WoW UI source at [https://github.com/Gethe/wow-ui-source](https://github.com/Gethe/wow-ui-source) if Blizzard UI behavior or implementation details need verification.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.

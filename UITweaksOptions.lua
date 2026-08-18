@@ -42,6 +42,7 @@ Options.defaults = {
         skyridingBarSharing = false,
         alwaysShowQuestMarkerDistance = false,
         highlightActiveConsumablesInInventory = false,
+        minimapPos = 225,
     },
     global = {
         skyridingBarLayout = {},
@@ -50,6 +51,10 @@ Options.defaults = {
 
 function Options.OnInitialize(self)
     local profile = self.db.profile
+    if rawget(profile, "minimapButtonAngle") then
+        profile.minimapPos = profile.minimapButtonAngle
+        profile.minimapButtonAngle = nil
+    end
     if profile.hidePlayerFrameOutOfCombat or profile.hideTargetFrameOutOfCombat then
         profile.playerAndTargetFrameOpacityOutOfCombat = 0
     end
