@@ -9,6 +9,7 @@ Stock UI Tweaks is an Ace3 addon organized around a small core and focused featu
 - `UITweaksConsumables.lua` detects active consumables and updates inventory highlights.
 - `UITweaksCooldownOverlay.lua` places Blizzard Cooldown Manager icons over matching ConsolePort action buttons.
 - `UITweaksImmersion.lua` applies the optional Immersion and ConsolePort controller compatibility layer.
+- `UITweaksConsolePortMenu.lua` adds optional actions to ConsolePort's menu ring.
 - `UITweaksDebug.lua` contains alpha-only diagnostics and debugging UI.
 - `Libs/` contains embedded Ace3 dependencies.
 - `Textures/` and the root icon files contain addon artwork.

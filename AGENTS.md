@@ -38,6 +38,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### ConsolePort
 
+- Add Leave Instance Group To ConsolePort Menu Ring — Add a separate Leave Instance Group button next to ConsolePort's dungeon teleport button in the menu ring. The button is hidden while you are not in a party.
 - Hide ConsolePort 'New Ability Available!' Frame — Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.
 - Overlay Cooldown Manager Icons On ConsolePort Action Bar — Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.
 - Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. When enabled, Stock UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as "UITweaksProfile" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.
@@ -78,7 +79,7 @@ Exceptions:
 ## Dev Notes
 
 - Addon files live in the repository root.
-- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksDebug.lua` (debug tools/UI).
+- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring additions), `UITweaksDebug.lua` (debug tools/UI).
 - Add new Lua files in the repository root and list them in `UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`

@@ -33,6 +33,7 @@ function UITweaks:OnInitialize()
     self.consumables = type(require) == "function" and require("UITweaksConsumables") or addonTable.Consumables
     self.cooldownOverlay = type(require) == "function" and require("UITweaksCooldownOverlay") or addonTable.CooldownOverlay
     self.immersion = type(require) == "function" and require("UITweaksImmersion") or addonTable.Immersion
+    self.consolePortMenu = type(require) == "function" and require("UITweaksConsolePortMenu") or addonTable.ConsolePortMenu
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
     options.OnInitialize(self)
@@ -52,6 +53,7 @@ function UITweaks:OnEnable()
     self.consumables.ApplyInventoryConsumableHighlights(self)
     self.cooldownOverlay.Apply(self)
     self.immersion.Apply(self)
+    self.consolePortMenu.Apply(self)
     self.debug.OnEnable(self)
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
@@ -188,6 +190,8 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self.cooldownOverlay.Apply(self)
     elseif addonName == "Immersion" then
         self.immersion.Apply(self)
+    elseif addonName == "ConsolePort_Menu" then
+        self.consolePortMenu.Apply(self)
     elseif addonName == "ConsolePort"
         or addonName == "ConsolePort_ActionBar"
         or addonName == "ConsolePortActionBar"
@@ -216,6 +220,7 @@ end
 function UITweaks:PLAYER_REGEN_ENABLED()
     self.damageMeterForceVisible = false
     self:ScheduleDelayedVisibilityUpdate()
+    self.consolePortMenu.Apply(self)
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
 
