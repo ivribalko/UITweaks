@@ -48,6 +48,7 @@ function UITweaks:OnEnable()
     self:ApplyChatBackgroundAlpha()
     self:HookHelpTipFrames()
     self:ApplyBuffFrameHide()
+    self:ApplyTargetFrameAurasHide()
     self.consumables.ApplyInventoryConsumableHighlights(self)
     self.cooldownOverlay.Apply(self)
     self.immersion.Apply(self)
@@ -816,6 +817,14 @@ function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
 
     if PlayerFrame then PlayerFrame:SetAlpha(alpha) end
     if _G.TargetFrame then _G.TargetFrame:SetAlpha(alpha) end
+end
+
+function UITweaks:ApplyTargetFrameAurasHide()
+    if not self.db.profile.hideTargetFrameAuras or not _G.TargetFrame then return end
+
+    _G.TargetFrame.maxBuffs = 0
+    _G.TargetFrame.maxDebuffs = 0
+    _G.TargetFrame:UpdateAuras()
 end
 
 function UITweaks:UpdateBackpackButtonVisibility()

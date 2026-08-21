@@ -13,6 +13,7 @@ Options.defaults = {
         hideBuffFrame = false,
         hideBackpackButton = false,
         hideDamageMeter = false,
+        hideTargetFrameAuras = false,
         playerAndTargetFrameOpacityInCombat = 100,
         playerAndTargetFrameOpacityOutOfCombat = 100,
         showSoftTargetTooltipOutOfCombat = false,
@@ -278,11 +279,20 @@ function Options.OnInitialize(self)
                             },
                         },
                     },
+                    hideTargetFrameAuras = toggleOption(
+                        "hideTargetFrameAuras",
+                        "Hide Target Frame Buffs and Debuffs",
+                        "Hide all buffs and debuffs from the target frame.",
+                        4,
+                        function()
+                            self:ApplyTargetFrameAurasHide()
+                        end
+                    ),
                     playerAndTargetFrameOpacityInCombat = rangeOption(
                         "playerAndTargetFrameOpacityInCombat",
                         "Player and Target Frame Opacity In Combat",
                         "Set the player and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).",
-                        4,
+                        5,
                         0,
                         100,
                         1,
@@ -294,7 +304,7 @@ function Options.OnInitialize(self)
                         "playerAndTargetFrameOpacityOutOfCombat",
                         "Player and Target Frame Opacity Out of Combat",
                         "Set the player and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).",
-                        5,
+                        6,
                         0,
                         100,
                         1,
@@ -306,7 +316,7 @@ function Options.OnInitialize(self)
                         "showSoftTargetTooltipOutOfCombat",
                         "Show Tooltip For Soft (Action) Target Out of Combat",
                         "Display the ConsolePort soft (action) target's tooltip while out of combat. Useful to check if the target is related to any active quests.",
-                        6,
+                        7,
                         function(val)
                             if not val then
                                 GameTooltip:Hide()
