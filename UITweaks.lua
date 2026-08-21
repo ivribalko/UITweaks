@@ -31,6 +31,7 @@ end
 function UITweaks:OnInitialize()
     local options = type(require) == "function" and require("UITweaksOptions") or addonTable.Options
     self.consumables = type(require) == "function" and require("UITweaksConsumables") or addonTable.Consumables
+    self.cooldownOverlay = type(require) == "function" and require("UITweaksCooldownOverlay") or addonTable.CooldownOverlay
     self.immersion = type(require) == "function" and require("UITweaksImmersion") or addonTable.Immersion
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
@@ -48,6 +49,7 @@ function UITweaks:OnEnable()
     self:HookHelpTipFrames()
     self:ApplyBuffFrameHide()
     self.consumables.ApplyInventoryConsumableHighlights(self)
+    self.cooldownOverlay.Apply(self)
     self.immersion.Apply(self)
     self.debug.OnEnable(self)
     self:ApplyVisibilityState()
@@ -181,6 +183,8 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self:UpdateObjectiveTrackerState()
     elseif addonName == "Blizzard_TotemBar" then
         self:UpdateTotemFrameVisibility()
+    elseif addonName == "Blizzard_CooldownViewer" or addonName == "ConsolePort_Bar" then
+        self.cooldownOverlay.Apply(self)
     elseif addonName == "Immersion" then
         self.immersion.Apply(self)
     elseif addonName == "ConsolePort"

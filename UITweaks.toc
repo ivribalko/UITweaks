@@ -6,7 +6,7 @@
 ## Version: 1.8.4
 ## IconTexture: Interface\AddOns\UITweaks\icon64.tga
 ## AddonCompartmentFunc: UITweaks_OnAddonCompartmentClick
-## OptionalDeps: ConsolePort, ConsolePort_Bar, EnhanceQoL, Immersion
+## OptionalDeps: Blizzard_CooldownViewer, ConsolePort, ConsolePort_Bar, EnhanceQoL, Immersion
 ## SavedVariables: UITweaksDB
 
 # Libs
@@ -23,4 +23,5 @@ UITweaks.lua
 UITweaksDebug.lua
 UITweaksOptions.lua
 UITweaksConsumables.lua
+UITweaksCooldownOverlay.lua
 UITweaksImmersion.lua
