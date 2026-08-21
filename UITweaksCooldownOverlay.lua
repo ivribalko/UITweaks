@@ -35,6 +35,8 @@ local watchedEvents = {
     "UPDATE_SHAPESHIFT_FORM",
 }
 
+local hotkeyKeys = { "Hotkey", "Hotkey1", "Hotkey2" }
+
 local function canAccessValue(value)
     if issecretvalue and issecretvalue(value) then return false end
     if value == nil then return true end
@@ -179,12 +181,54 @@ local function setItemUnmatched(item, container)
 end
 
 local function raiseConsolePortHotkeys(button, frameLevel)
-    for _, key in ipairs({ "Hotkey", "Hotkey1", "Hotkey2" }) do
+    for _, key in ipairs(hotkeyKeys) do
         local hotkey = button[key]
         if hotkey then
             hotkey:SetFrameLevel(frameLevel)
         end
     end
+end
+
+local function isConsolePortHotkey(button, frame)
+    for _, key in ipairs(hotkeyKeys) do
+        if button[key] == frame then return true end
+    end
+    return false
+end
+
+local function hideButtonArtwork(addon, button)
+    local states = addon.cooldownOverlayButtonArtwork[button]
+    if not states then
+        states = {}
+        addon.cooldownOverlayButtonArtwork[button] = states
+    end
+
+    local normalTexture = button.NormalTexture or (button.GetNormalTexture and button:GetNormalTexture())
+    for _, region in ipairs({ button:GetRegions() }) do
+        if region ~= normalTexture then
+            if states[region] == nil then
+                states[region] = region:GetAlpha()
+            end
+            region:SetAlpha(0)
+        end
+    end
+    for _, child in ipairs({ button:GetChildren() }) do
+        if not isConsolePortHotkey(button, child) then
+            if states[child] == nil then
+                states[child] = child:GetAlpha()
+            end
+            child:SetAlpha(0)
+        end
+    end
+end
+
+local function restoreButtonArtwork(addon, button)
+    local states = addon.cooldownOverlayButtonArtwork[button]
+    if not states then return end
+    for region, alpha in pairs(states) do
+        region:SetAlpha(alpha)
+    end
+    addon.cooldownOverlayButtonArtwork[button] = nil
 end
 
 local function setItemMatched(item, container, button)
@@ -199,11 +243,22 @@ local function setItemMatched(item, container, button)
     item:ClearAllPoints()
     item:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
     item:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
-    item:SetAlpha(1)
+    item:SetAlpha(button:GetEffectiveAlpha())
     item:SetFrameStrata(button:GetFrameStrata())
     item:SetFrameLevel(button:GetFrameLevel() + 20)
     raiseConsolePortHotkeys(button, item:GetFrameLevel() + 20)
     return true
+end
+
+local function syncMatchedButtonVisuals(addon)
+    for button, item in pairs(addon.cooldownOverlayMatchedButtons) do
+        if button:IsShown() and item:IsVisible() then
+            item:SetAlpha(button:GetEffectiveAlpha())
+            hideButtonArtwork(addon, button)
+        else
+            restoreButtonArtwork(addon, button)
+        end
+    end
 end
 
 local function findMatchingButton(spellIDs, buttons, assignedButtons)
@@ -231,8 +286,14 @@ local function ensureViewerContainer(addon, viewer)
     container:SetShown(viewer:IsShown())
     addon.cooldownOverlayContainers[viewer] = container
 
-    viewer:HookScript("OnShow", function() container:Show() end)
-    viewer:HookScript("OnHide", function() container:Hide() end)
+    viewer:HookScript("OnShow", function()
+        container:Show()
+        CooldownOverlay.RequestUpdate(addon)
+    end)
+    viewer:HookScript("OnHide", function()
+        container:Hide()
+        CooldownOverlay.RequestUpdate(addon)
+    end)
     viewer:SetAlpha(0)
     return container
 end
@@ -264,6 +325,17 @@ local function hookViewer(addon, viewer)
     end)
 end
 
+local function hookViewerItem(addon, item)
+    if item.uitweaksCooldownOverlayHooked then return end
+    item.uitweaksCooldownOverlayHooked = true
+    item:HookScript("OnShow", function()
+        CooldownOverlay.RequestUpdate(addon)
+    end)
+    item:HookScript("OnHide", function()
+        CooldownOverlay.RequestUpdate(addon)
+    end)
+end
+
 function CooldownOverlay.Update(addon)
     if not addon.db.profile.overlayCooldownManagerOnConsolePort then return end
 
@@ -274,22 +346,33 @@ function CooldownOverlay.Update(addon)
     end
 
     local assignedButtons = {}
+    local matchedButtons = {}
     for _, viewerName in ipairs(viewerNames) do
         local viewer = _G[viewerName]
         if viewer then
             hookViewer(addon, viewer)
             local container = ensureViewerContainer(addon, viewer)
             for _, item in ipairs(getViewerItems(viewer)) do
-                local button = findMatchingButton(getCooldownItemSpellIDs(item), buttons, assignedButtons)
-                if button then
+                hookViewerItem(addon, item)
+                local button = viewer:IsShown() and item:IsShown()
+                    and findMatchingButton(getCooldownItemSpellIDs(item), buttons, assignedButtons)
+                if button and setItemMatched(item, container, button) then
                     assignedButtons[button] = true
-                    setItemMatched(item, container, button)
+                    matchedButtons[button] = item
                 else
                     setItemUnmatched(item, container)
                 end
             end
         end
     end
+
+    for button in pairs(addon.cooldownOverlayMatchedButtons) do
+        if not matchedButtons[button] then
+            restoreButtonArtwork(addon, button)
+        end
+    end
+    addon.cooldownOverlayMatchedButtons = matchedButtons
+    syncMatchedButtonVisuals(addon)
 end
 
 function CooldownOverlay.RequestUpdate(addon)
@@ -331,6 +414,8 @@ function CooldownOverlay.Apply(addon)
     end
 
     addon.cooldownOverlayContainers = {}
+    addon.cooldownOverlayMatchedButtons = {}
+    addon.cooldownOverlayButtonArtwork = {}
     addon.cooldownOverlayEventFrame = CreateFrame("Frame")
     for _, eventName in ipairs(watchedEvents) do
         addon.cooldownOverlayEventFrame:RegisterEvent(eventName)

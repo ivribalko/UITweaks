@@ -347,7 +347,7 @@ function Options.OnInitialize(self)
                     overlayCooldownManagerOnConsolePort = toggleOption(
                         "overlayCooldownManagerOnConsolePort",
                         "Overlay Cooldown Manager Icons On ConsolePort Action Bar",
-                        "Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size. Updates when ConsolePort toggle keys change the action shown on a button.",
+                        "Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.",
                         2,
                         function(val)
                             if val then
@@ -361,7 +361,7 @@ function Options.OnInitialize(self)
                     ),
                     cooldownManagerTrackingNote = {
                         type = "description",
-                        name = "Note: Some spells track more reliably as cooldowns, while others track more reliably as tracked buffs. Use Advanced Cooldown Settings to choose whichever works best for each spell.",
+                        name = "Note: Some spells track more reliably as cooldowns, while others track more reliably as tracked buffs. Use Advanced Cooldown Settings to choose whichever works best for each spell. Changes made in Blizzard's Advanced Cooldown Settings require /reload before the overlays update.",
                         order = 2.1,
                         width = "full",
                     },
