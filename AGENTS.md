@@ -39,6 +39,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 ### ConsolePort
 
 - Add Leave Instance Group To ConsolePort Menu Ring — Add a separate Leave Instance Group button next to ConsolePort's dungeon teleport button in the menu ring. The button is hidden while you are not in a party.
+- Disable Immersion Dialog List Item Scaling — Prevent Immersion's active dialogue list items from growing when hovered or selected.
 - Hide ConsolePort 'New Ability Available!' Frame — Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.
 - Overlay Cooldown Manager Icons On ConsolePort Action Bar — Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.
 - Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. When enabled, Stock UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as "UITweaksProfile" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.
@@ -89,6 +90,6 @@ Exceptions:
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - Debug panel is alpha-only and intentionally omitted from this README.
 - `AddOns/` contains addons and other files used strictly as references. Do not use or read anything in `AddOns/` unless explicitly instructed.
-- Never modify other addons' code when inspecting them.
+- When changing this addon, use other addons in the same parent folder as reference sources when useful, but never edit them.
 - Check WoW UI source at [https://github.com/Gethe/wow-ui-source](https://github.com/Gethe/wow-ui-source) if Blizzard UI behavior or implementation details need verification.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.

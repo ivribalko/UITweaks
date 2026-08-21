@@ -37,10 +37,34 @@ local function getUIControlKey(consolePort, handle, button)
     end
 end
 
-function ImmersionCompatibility.Apply(addon)
+local function disableDialogListItemScaling(addon, frame)
+    if not addon.db.profile.disableImmersionDialogListItemScaling or addon.immersionDialogListItemScalingDisabled then return end
+
+    local titleButtons = frame and frame.TitleButtons
+    if not titleButtons or not titleButtons.Buttons or not titleButtons.GetButton then return end
+
+    local function disableButtonScaling(button)
+        button.enterScale = 1
+        button.normalScale = 1
+        button.targetScale = 1
+        button:SetScale(1)
+    end
+
+    addon.immersionDialogListItemScalingDisabled = true
+    for _, button in pairs(titleButtons.Buttons) do
+        disableButtonScaling(button)
+    end
+    hooksecurefunc(titleButtons, "GetButton", function(self, index)
+        local button = self.Buttons[index]
+        if button then
+            disableButtonScaling(button)
+        end
+    end)
+end
+
+local function applyCircleCancel(addon, frame)
     if not addon.db.profile.useCircleToCancelImmersion or addon.immersionCircleCancelApplied then return end
 
-    local frame = _G.ImmersionFrame
     local api = _G.ImmersionAPI
     local consolePort = _G.ConsolePort
     local handle = _G.ConsolePortUIHandle
@@ -82,6 +106,14 @@ function ImmersionCompatibility.Apply(addon)
 
         return originalParseControllerCommand(self, button)
     end
+end
+
+function ImmersionCompatibility.Apply(addon)
+    local frame = _G.ImmersionFrame
+    if not frame then return end
+
+    disableDialogListItemScaling(addon, frame)
+    applyCircleCancel(addon, frame)
 end
 
 return ImmersionCompatibility
