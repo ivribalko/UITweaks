@@ -375,6 +375,12 @@ function Options.OnInitialize(self)
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
                         end
                     ),
+                    consolePortBarSharingNote = {
+                        type = "description",
+                        name = "Note: Enabling this setting overwrites your ConsolePort UI settings. Stock UI Tweaks saves the current layout when you log out and restores it when you log in on any character.",
+                        order = 3.1,
+                        width = "full",
+                    },
                     useCircleToCancelImmersion = toggleOption(
                         "useCircleToCancelImmersion",
                         "Use Circle To Cancel Immersion Dialogues",
@@ -405,6 +411,7 @@ function Options.OnInitialize(self)
                             then
                                 return
                             end
+                            self:CloseOptionsPanel()
                             self:OpenConsolePortActionBarConfig()
                         end,
                         disabled = function()
@@ -524,6 +531,12 @@ function Options.OnInitialize(self)
                             self.consumables.ApplyInventoryConsumableHighlights(self)
                         end
                     ),
+                    highlightActiveConsumablesNote = {
+                        type = "description",
+                        name = "Note: Consumables that apply an aura with a different name than the item spell are not supported, except for Well Fed food. Highlights do not update during combat.",
+                        order = 10.1,
+                        width = "full",
+                    },
                     skyridingBarSharing = toggleOption(
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",

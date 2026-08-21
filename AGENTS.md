@@ -71,6 +71,7 @@ Exceptions:
 - Objective tracker toggles stay in this order: In Raids, In Dungeons, Everywhere Else.
 - Combat: Delay After Combat Seconds stays first.
 - Chat: keep checkboxes together with their respective ranges, such as Set Chat Font Size and Font Size.
+- Explanatory notes stay directly below their related checkboxes.
 - ConsolePort: Open ConsolePort Designer stays after the toggles, and Open Advanced Cooldown Settings stays last.
 - Debug panel stays last.
 

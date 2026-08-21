@@ -1244,6 +1244,28 @@ function UITweaks:OpenOptionsPanel()
     end
 end
 
+function UITweaks:CloseOptionsPanel()
+    local settingsPanel = _G.SettingsPanel
+    if settingsPanel and settingsPanel:IsShown() and settingsPanel.Close then
+        settingsPanel:Close(true)
+        return
+    end
+
+    local interfaceOptionsFrame = _G.InterfaceOptionsFrame
+    if interfaceOptionsFrame and interfaceOptionsFrame:IsShown() then
+        if _G.HideUIPanel then
+            _G.HideUIPanel(interfaceOptionsFrame)
+        else
+            interfaceOptionsFrame:Hide()
+        end
+        return
+    end
+
+    if AceConfigDialog then
+        AceConfigDialog:Close(addonName)
+    end
+end
+
 function UITweaks:UpdateMinimapButtonPosition()
     local angle = math.rad(self.db.profile.minimapPos)
     local radius = (Minimap:GetWidth() / 2) + 6
@@ -1483,6 +1505,14 @@ function UITweaks:AbandonSelectedTrackedQuest()
 end
 
 function UITweaks:OpenMacroPanel()
+    self:CloseOptionsPanel()
+
+    local showMacroFrame = _G["ShowMacroFrame"]
+    if showMacroFrame then
+        showMacroFrame()
+        return
+    end
+
     local cAddOns = _G["C_AddOns"]
     local isAddOnLoaded = _G["IsAddOnLoaded"]
     local loadAddOn = (cAddOns and cAddOns.LoadAddOn) or _G["UIParentLoadAddOn"]
@@ -1508,6 +1538,7 @@ function UITweaks:EnsureQuestTrackerMacros()
     local getMacroInfo = _G["GetMacroInfo"]
     local getNumMacros = _G["GetNumMacros"]
     if not (getMacroIndexByName and createMacro and editMacro and getMacroInfo and getNumMacros) then
+        self:OpenMacroPanel()
         return false
     end
 
@@ -1534,9 +1565,7 @@ function UITweaks:EnsureQuestTrackerMacros()
     local hasAbandonMacro = ensureMacro(ABANDON_QUEST_MACRO_NAME, ABANDON_QUEST_MACRO_BODY)
     local hasNextMacro = ensureMacro(NEXT_QUEST_MACRO_NAME, NEXT_QUEST_MACRO_BODY)
     local hasPreviousMacro = ensureMacro(PREVIOUS_QUEST_MACRO_NAME, PREVIOUS_QUEST_MACRO_BODY)
-    if hasAbandonMacro or hasNextMacro or hasPreviousMacro then
-        self:OpenMacroPanel()
-    end
+    self:OpenMacroPanel()
     return hasAbandonMacro and hasNextMacro and hasPreviousMacro
 end
 
