@@ -1,5 +1,7 @@
 local addonName, addonTable = ...
 local ConsolePortMenu = {}
+local MYTHIC_PLUS_CATEGORY_ID = 2
+local mythicPlusFinderWatcher
 
 if addonTable then
     addonTable.ConsolePortMenu = ConsolePortMenu
@@ -20,6 +22,66 @@ local function leaveInstanceGroup()
     end
 end
 
+local function enableGroupFinderFilterGamepadClick()
+    local panel = LFGListFrame and LFGListFrame.SearchPanel
+    local dropdown = panel and panel.FilterButton
+    if not dropdown or dropdown.UITweaksConsolePortDropdownClick then return end
+    dropdown.UITweaksConsolePortDropdownClick = true
+
+    dropdown:HookScript("OnMouseDown", function(button, mouseButton)
+        if mouseButton ~= "LeftButton" or IsMouseButtonDown("LeftButton") then return end
+        if not ConsolePort or not ConsolePort.IsCursorActive or not ConsolePort:IsCursorActive() then return end
+        if ConsolePort:GetCursorNode() ~= button then return end
+        if button.UITweaksHandlingGamepadClick then return end
+
+        button.UITweaksHandlingGamepadClick = true
+        button:SetMenuOpen(not button:IsMenuOpen())
+        C_Timer.After(0, function()
+            button.UITweaksHandlingGamepadClick = nil
+        end)
+    end)
+end
+
+local function tryOpenMythicPlusFinder()
+    if not LFGListFrame or C_LFGList.HasActiveEntryInfo() then return true end
+    local filters = bit.bor(Enum.LFGListFilter.PvE, Enum.LFGListFilter.Recommended)
+    if #C_LFGList.GetAvailableActivities(MYTHIC_PLUS_CATEGORY_ID, nil, filters) == 0 then
+        return false
+    end
+
+    LFGListFrame_SetBaseFilters(LFGListFrame, Enum.LFGListFilter.PvE)
+    local panel = LFGListFrame.CategorySelection
+    LFGListCategorySelection_SelectCategory(panel, MYTHIC_PLUS_CATEGORY_ID, 0)
+    LFGListCategorySelection_StartFindGroup(panel)
+    return true
+end
+
+local function waitToOpenMythicPlusFinder()
+    if not mythicPlusFinderWatcher then
+        mythicPlusFinderWatcher = CreateFrame("Frame")
+        mythicPlusFinderWatcher:SetScript("OnEvent", function(watcher)
+            if tryOpenMythicPlusFinder() then
+                watcher:UnregisterEvent("LFG_LIST_AVAILABILITY_UPDATE")
+            end
+        end)
+    end
+    mythicPlusFinderWatcher:RegisterEvent("LFG_LIST_AVAILABILITY_UPDATE")
+end
+
+local function openMythicPlusFinder()
+    if not isAddOnLoaded("Blizzard_GroupFinder") and C_AddOns and C_AddOns.LoadAddOn then
+        C_AddOns.LoadAddOn("Blizzard_GroupFinder")
+    end
+    if not PVEFrame_ShowFrame or not LFGListPVEStub or not LFGListFrame then return end
+
+    enableGroupFinderFilterGamepadClick()
+    PVEFrame_ShowFrame("GroupFinderFrame", LFGListPVEStub)
+    C_LFGList.RequestAvailableActivities()
+    if not tryOpenMythicPlusFinder() then
+        waitToOpenMythicPlusFinder()
+    end
+end
+
 local function createLeaveInstanceGroupButtonData()
     return {
         UITweaksLeaveInstanceGroup = true,
@@ -29,6 +91,15 @@ local function createLeaveInstanceGroupButtonData()
         OnShow = function(button)
             button:SetEnabled(canLeaveInstanceGroup())
         end,
+    }
+end
+
+local function createMythicPlusFinderButtonData()
+    return {
+        UITweaksMythicPlusFinder = true,
+        text = "Mythic+ Finder",
+        img = "Interface\\LFGFRAME\\UI-LFG-PORTRAIT",
+        click = openMythicPlusFinder,
     }
 end
 
@@ -44,9 +115,28 @@ local function findScenarioButtonIndex(selector)
     end
 end
 
+local function findGroupFinderButtonIndex(selector)
+    for button in selector:EnumerateActive() do
+        if (DUNGEONS_BUTTON and button.text == DUNGEONS_BUTTON)
+            or (LFDMicroButton and button.ref == LFDMicroButton)
+            or (LFGMicroButton and button.ref == LFGMicroButton)
+        then
+            return button:GetID()
+        end
+    end
+end
+
 local function findLeaveInstanceGroupButton(selector)
     for button in selector:EnumerateActive() do
         if button.UITweaksLeaveInstanceGroup then
+            return button
+        end
+    end
+end
+
+local function findMythicPlusFinderButton(selector)
+    for button in selector:EnumerateActive() do
+        if button.UITweaksMythicPlusFinder then
             return button
         end
     end
@@ -77,7 +167,7 @@ local function updateSelectorSize(selector, buttonCount)
     updateSelectorMacro(selector, buttonCount)
 end
 
-local function addButtonToInitializedSelector(selector, insertIndex)
+local function addButtonToInitializedSelector(selector, insertIndex, buttonData)
     local oldButtonCount = selector:GetNumActive()
     local buttonCount = oldButtonCount + 1
     local activeButtons = {}
@@ -113,7 +203,7 @@ local function addButtonToInitializedSelector(selector, insertIndex)
     button:SetRotation(selector:GetRotation(x, y))
     button:SetID(insertIndex)
     button:Show()
-    button:SetData(createLeaveInstanceGroupButtonData())
+    button:SetData(buttonData)
     setSecureButtonReference(selector, insertIndex, button)
     if not button.UITweaksPostClickHooked then
         selector:Hook(button, "PostClick", selector.PrivateEnv.ButtonPostClick)
@@ -167,8 +257,12 @@ local function ensureGroupWatcher(addon)
 end
 
 function ConsolePortMenu.Apply(addon)
-    if not addon.db.profile.addLeaveInstanceGroupToConsolePortMenu then return false end
-    ensureGroupWatcher(addon)
+    local addLeaveButton = addon.db.profile.addLeaveInstanceGroupToConsolePortMenu
+    local addMythicPlusButton = addon.db.profile.addMythicPlusFinderToConsolePortMenu
+    if not addLeaveButton and not addMythicPlusButton then return false end
+    if addLeaveButton then
+        ensureGroupWatcher(addon)
+    end
     if InCombatLockdown and InCombatLockdown() then return false end
     if not isAddOnLoaded("ConsolePort_Menu") then return false end
 
@@ -185,25 +279,38 @@ function ConsolePortMenu.Apply(addon)
     end
 
     local leaveInstanceGroupButton = findLeaveInstanceGroupButton(selector)
-    if not IsInGroup() then
+    if addLeaveButton and not IsInGroup() then
         if leaveInstanceGroupButton then
             removeButtonFromSelector(selector, leaveInstanceGroupButton)
         end
-        addon.consolePortMenuApplied = nil
-        return true
-    end
-    if leaveInstanceGroupButton then
-        addon.consolePortMenuApplied = true
-        return true
+        leaveInstanceGroupButton = nil
+    elseif addLeaveButton and not leaveInstanceGroupButton then
+        local scenarioIndex = findScenarioButtonIndex(selector)
+        if not scenarioIndex then return false end
+        local buttonCount
+        leaveInstanceGroupButton, buttonCount = addButtonToInitializedSelector(
+            selector,
+            scenarioIndex,
+            createLeaveInstanceGroupButtonData()
+        )
+        if not leaveInstanceGroupButton then return false end
+        updateSelectorSize(selector, buttonCount)
     end
 
-    local scenarioIndex = findScenarioButtonIndex(selector)
-    if not scenarioIndex then return false end
-    local buttonCount
-    leaveInstanceGroupButton, buttonCount = addButtonToInitializedSelector(selector, scenarioIndex)
-    if not leaveInstanceGroupButton then return false end
+    local mythicPlusFinderButton = findMythicPlusFinderButton(selector)
+    if addMythicPlusButton and not mythicPlusFinderButton then
+        local groupFinderIndex = findGroupFinderButtonIndex(selector)
+        if not groupFinderIndex then return false end
+        local buttonCount
+        mythicPlusFinderButton, buttonCount = addButtonToInitializedSelector(
+            selector,
+            groupFinderIndex + 1,
+            createMythicPlusFinderButtonData()
+        )
+        if not mythicPlusFinderButton then return false end
+        updateSelectorSize(selector, buttonCount)
+    end
 
-    updateSelectorSize(selector, buttonCount)
     addon.consolePortMenuApplied = true
     return true
 end
