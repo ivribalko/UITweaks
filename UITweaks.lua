@@ -12,6 +12,11 @@ local NEXT_QUEST_MACRO_ICON = "INV_Misc_Note_01"
 local ABANDON_QUEST_MACRO_BODY = "/uitabandonquest"
 local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
+local SPEECH_BUBBLE_CVARS = {
+    "chatBubbles",
+    "chatBubblesParty",
+    "chatBubblesRaid",
+}
 local gameTooltipUnitColor = rawget(_G, "GameTooltip_UnitColor")
 
 _G.UITweaks_OnAddonCompartmentClick = function()
@@ -47,6 +52,7 @@ function UITweaks:OnEnable()
     self:ApplyQuestMarkerDistanceSetting()
     self:ApplyChatFontSize()
     self:ApplyChatBackgroundAlpha()
+    self:ApplySpeechBubbleVisibility()
     self:HookHelpTipFrames()
     self:ApplyTargetFrameAurasHide()
     self.consumables.ApplyInventoryConsumableHighlights(self)
@@ -444,6 +450,28 @@ function UITweaks:ApplyChatBackgroundAlpha()
                 SetChatWindowAlpha(i, alpha <= 1 and alpha * 100 or alpha)
             end
         end
+    end
+end
+
+function UITweaks:ApplySpeechBubbleVisibility()
+    local savedValues = self.db.global.speechBubbleCVarValues
+    if self.db.profile.hideAllSpeechBubbles then
+        if not savedValues then
+            savedValues = {}
+            for _, cvarName in ipairs(SPEECH_BUBBLE_CVARS) do
+                savedValues[cvarName] = GetCVar(cvarName)
+            end
+            self.db.global.speechBubbleCVarValues = savedValues
+        end
+        for _, cvarName in ipairs(SPEECH_BUBBLE_CVARS) do
+            SetCVar(cvarName, "0")
+        end
+    elseif savedValues then
+        for _, cvarName in ipairs(SPEECH_BUBBLE_CVARS) do
+            local value = savedValues[cvarName]
+            if value ~= nil then SetCVar(cvarName, value) end
+        end
+        self.db.global.speechBubbleCVarValues = nil
     end
 end
 

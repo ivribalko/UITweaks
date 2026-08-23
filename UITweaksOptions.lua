@@ -15,6 +15,7 @@ Options.defaults = {
         playerAndTargetFrameOpacityOutOfCombat = 100,
         showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
+        hideAllSpeechBubbles = false,
         hideChatMenuButton = false,
         hideChatChannelsButton = false,
         hideSocialButton = false,
@@ -141,11 +142,47 @@ function Options.OnInitialize(self)
                             self:UpdateChatTabsVisibility()
                         end
                     ),
+                    hideAllSpeechBubbles = toggleOption(
+                        "hideAllSpeechBubbles",
+                        "Hide All Speech Bubbles",
+                        "Hide all native world-space speech bubbles from players and NPCs. Separate Talking Head, gossip, quest, and raid warning UI remains visible.",
+                        2,
+                        function(val)
+                            if val then self:ApplySpeechBubbleVisibility() end
+                        end
+                    ),
+                    hideChatMenuButton = toggleOption(
+                        "hideChatMenuButton",
+                        "Hide Chat Bubble Button",
+                        "Auto-hide the chat button with the speech bubble icon until you mouse over the chat buttons area.",
+                        3,
+                        function()
+                            self:UpdateChatControlButtonsVisibility()
+                        end
+                    ),
+                    hideChatChannelsButton = toggleOption(
+                        "hideChatChannelsButton",
+                        "Hide Chat Channels Button",
+                        "Auto-hide the chat button that opens the channel list until you mouse over the chat buttons area.",
+                        4,
+                        function()
+                            self:UpdateChatControlButtonsVisibility()
+                        end
+                    ),
+                    hideSocialButton = toggleOption(
+                        "hideSocialButton",
+                        "Hide Social Button",
+                        "Auto-hide the social button next to the chat frame until you mouse over the chat buttons area.",
+                        5,
+                        function()
+                            self:UpdateChatControlButtonsVisibility()
+                        end
+                    ),
                     chatFontOverrideEnabled = toggleOption(
                         "chatFontOverrideEnabled",
                         "Set Chat Font Size",
                         "Enable a custom chat window font size for all tabs.",
-                        2,
+                        6,
                         function()
                             self:ApplyChatFontSize()
                         end,
@@ -156,7 +193,7 @@ function Options.OnInitialize(self)
                         "chatFontSize",
                         "Font Size",
                         "Font size to use when the override is enabled.",
-                        3,
+                        7,
                         8,
                         48,
                         1,
@@ -168,38 +205,11 @@ function Options.OnInitialize(self)
                         end,
                         1.8
                     ),
-                    hideChatMenuButton = toggleOption(
-                        "hideChatMenuButton",
-                        "Hide Chat Bubble Button",
-                        "Auto-hide the chat button with the speech bubble icon until you mouse over the chat buttons area.",
-                        4,
-                        function()
-                            self:UpdateChatControlButtonsVisibility()
-                        end
-                    ),
-                    hideChatChannelsButton = toggleOption(
-                        "hideChatChannelsButton",
-                        "Hide Chat Channels Button",
-                        "Auto-hide the chat button that opens the channel list until you mouse over the chat buttons area.",
-                        5,
-                        function()
-                            self:UpdateChatControlButtonsVisibility()
-                        end
-                    ),
-                    hideSocialButton = toggleOption(
-                        "hideSocialButton",
-                        "Hide Social Button",
-                        "Auto-hide the social button next to the chat frame until you mouse over the chat buttons area.",
-                        6,
-                        function()
-                            self:UpdateChatControlButtonsVisibility()
-                        end
-                    ),
                     transparentChatBackground = toggleOption(
                         "transparentChatBackground",
                         "Transparent Chat Background",
                         "Set the chat background alpha to zero.",
-                        7,
+                        8,
                         function()
                             self:ApplyChatBackgroundAlpha()
                         end
