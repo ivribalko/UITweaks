@@ -59,6 +59,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
 - Hide Totem Frame — Hide the totem frame, including warlock pets.
 - Highlight Active Consumables In Inventory — Highlight inventory consumables with a green frame and remaining buff time when their player aura or weapon enchant is active. Supports flasks, food, oils, and other consumables that apply a helpful aura or temporary weapon enchant. If a Well Fed buff is active, all food items are highlighted with that buff's remaining time. Cases where a consumable applies an aura with a different name than the item spell are not supported (except Well Fed food). Does not update during combat.
+- Party and Raid Frame Scale — Scale Blizzard's party and raid frame containers from 50% to 100%. Set this to 100% and reload to use Blizzard's Edit Mode sizes.
 - Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
 
 ## Settings Rules

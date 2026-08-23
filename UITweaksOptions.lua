@@ -19,6 +19,7 @@ Options.defaults = {
         hideChatChannelsButton = false,
         hideSocialButton = false,
         transparentChatBackground = false,
+        partyAndRaidFrameScale = 100,
         hideCompactRaidFrameManager = false,
         hideGroupLootHistoryFrame = false,
         hideStanceButtons = false,
@@ -591,11 +592,23 @@ function Options.OnInitialize(self)
                         order = 8.1,
                         width = "full",
                     },
+                    partyAndRaidFrameScale = rangeOption(
+                        "partyAndRaidFrameScale",
+                        "Party and Raid Frame Scale",
+                        "Scale Blizzard's party and raid frame containers from 50% to 100%. Set this to 100% and reload to use Blizzard's Edit Mode sizes.",
+                        9,
+                        50,
+                        100,
+                        5,
+                        function()
+                            self:ApplyPartyAndRaidFrameScale()
+                        end
+                    ),
                     skyridingBarSharing = toggleOption(
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",
                         "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
-                        9,
+                        10,
                         function(val)
                             if val then
                                 self:StartSkyridingBarMonitor()

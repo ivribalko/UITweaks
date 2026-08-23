@@ -43,6 +43,7 @@ function UITweaks:OnEnable()
     self:ApplyChatFontSize()
     self:ApplyChatBackgroundAlpha()
     self:ApplySpeechBubbleVisibility()
+    self:ApplyPartyAndRaidFrameScale()
     self:HookHelpTipFrames()
     self:ApplyTargetFrameAurasHide()
     self.consumables.ApplyInventoryConsumableHighlights(self)
@@ -53,6 +54,7 @@ function UITweaks:OnEnable()
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
     self:RegisterEvent("ADDON_LOADED")
+    self:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("PLAYER_LOGOUT")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -169,6 +171,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self:HookHelpTipFrames()
     elseif addonName == "Blizzard_CompactRaidFrames" then
         self:UpdateCompactRaidFrameManagerVisibility()
+        self:ApplyPartyAndRaidFrameScale()
     elseif addonName == "Blizzard_GroupLootHistory" then
         self:UpdateGroupLootHistoryVisibility()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
@@ -203,12 +206,14 @@ end
 function UITweaks:PLAYER_REGEN_ENABLED()
     self:UpdatePlayerAndTargetFrameOpacity()
     if self:ShouldFadeObjectiveTracker() then self:FadeInObjectiveTrackerIfNeeded(true) end
+    if self.partyAndRaidFrameScalePending then self:ApplyPartyAndRaidFrameScale() end
     self.consolePortMenu.Apply(self)
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyVisibilityState()
+    self:ApplyPartyAndRaidFrameScale()
     self:UpdateObjectiveTrackerState()
     if self:ShouldFadeObjectiveTracker() and not InCombatLockdown() then
         self:FadeInObjectiveTrackerIfNeeded(true)
@@ -223,6 +228,10 @@ function UITweaks:PLAYER_ENTERING_WORLD()
         self:StartSkyridingBarMonitor()
     end
     C_Timer.After(0.5, function() self.consumables.RequestInventoryConsumableRefresh(self, true) end)
+end
+
+function UITweaks:EDIT_MODE_LAYOUTS_UPDATED()
+    self:ApplyPartyAndRaidFrameScale()
 end
 
 function UITweaks:ZONE_CHANGED_NEW_AREA()
@@ -712,6 +721,24 @@ function UITweaks:UpdateCompactRaidFrameManagerVisibility()
         frame.UITweaksHooked = true
     end
     frame:Hide()
+end
+
+function UITweaks:ApplyPartyAndRaidFrameScale()
+    local scalePercent = self.db.profile.partyAndRaidFrameScale
+    if not scalePercent or scalePercent >= 100 then return end
+    if InCombatLockdown and InCombatLockdown() then
+        self.partyAndRaidFrameScalePending = true
+        return
+    end
+
+    self.partyAndRaidFrameScalePending = nil
+    local scale = scalePercent / 100
+    if _G.CompactPartyFrame then
+        _G.CompactPartyFrame:SetScale(scale)
+    end
+    if _G.CompactRaidFrameContainer then
+        _G.CompactRaidFrameContainer:SetScale(scale)
+    end
 end
 
 local function ensureGroupLootHistoryLoaded()
