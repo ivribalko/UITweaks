@@ -17,20 +17,9 @@ local SPEECH_BUBBLE_CVARS = {
     "chatBubblesParty",
     "chatBubblesRaid",
 }
-local gameTooltipUnitColor = rawget(_G, "GameTooltip_UnitColor")
 
 _G.UITweaks_OnAddonCompartmentClick = function()
     UITweaks:OpenOptionsPanel()
-end
-
-local function applyTooltipUnitNameColor(unit)
-    if not gameTooltipUnitColor then return end
-    local r, g, b = gameTooltipUnitColor(unit)
-    if not r then return end
-    local nameLine = rawget(_G, "GameTooltipTextLeft1")
-    if nameLine and nameLine.GetText and nameLine:GetText() then
-        nameLine:SetTextColor(r, g, b)
-    end
 end
 
 function UITweaks:OnInitialize()
@@ -67,14 +56,10 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_LOGOUT")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
-    self:RegisterEvent("LOOT_OPENED")
-    self:RegisterEvent("LOOT_CLOSED")
     self:RegisterEvent("MAIL_SHOW")
     self:RegisterEvent("BAG_OPEN")
     self:RegisterEvent("BAG_CLOSED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
-    self:RegisterEvent("PLAYER_SOFT_ENEMY_CHANGED")
-    self:RegisterEvent("PLAYER_SOFT_INTERACT_CHANGED")
     self:RegisterEvent("BAG_UPDATE_DELAYED")
     self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
     self:RegisterEvent("UNIT_AURA")
@@ -210,13 +195,11 @@ function UITweaks:PLAYER_REGEN_DISABLED()
         self:CollapseTrackerIfNeeded()
     end
     self:UpdatePlayerAndTargetFrameOpacity(true)
-    if self.db.profile.showSoftTargetTooltipOutOfCombat then GameTooltip:Hide() end
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
     self:UpdatePlayerAndTargetFrameOpacity()
     if self:ShouldCollapseObjectiveTracker() then self:ExpandTrackerIfNeeded(true) end
-    if self.db.profile.showSoftTargetTooltipOutOfCombat then self:UpdateTargetTooltip() end
     self.consolePortMenu.Apply(self)
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
@@ -304,7 +287,6 @@ function UITweaks:PLAYER_LOGOUT()
 end
 
 function UITweaks:PLAYER_TARGET_CHANGED()
-    self:UpdateTargetTooltip()
     self:UpdatePlayerAndTargetFrameOpacity()
 end
 
@@ -316,22 +298,6 @@ end
 
 function UITweaks:WEAPON_ENCHANT_CHANGED()
     self.consumables.RequestInventoryConsumableRefresh(self, true)
-end
-
-function UITweaks:PLAYER_SOFT_ENEMY_CHANGED()
-    self:UpdateTargetTooltip()
-end
-
-function UITweaks:PLAYER_SOFT_INTERACT_CHANGED()
-    self:UpdateTargetTooltip()
-end
-
-function UITweaks:LOOT_OPENED()
-    self:UpdateTargetTooltip(true)
-end
-
-function UITweaks:LOOT_CLOSED()
-    self:UpdateTargetTooltip()
 end
 
 local function getChatFrames()
@@ -949,39 +915,6 @@ function UITweaks:UpdateStanceButtonsVisibility()
             setStanceAlpha(0)
         end
     end)
-end
-
-function UITweaks:GetTargetTooltipUnit()
-    local unit
-    if self.db.profile.showSoftTargetTooltipOutOfCombat then
-        if UnitExists("softenemy") then unit = "softenemy" end
-        if not unit and UnitExists("softfriend") then unit = "softfriend" end
-        if not unit and UnitExists("softinteract") then unit = "softinteract" end
-    end
-    return unit
-end
-
-function UITweaks:UpdateTargetTooltip(forceHide)
-    if not GameTooltip then
-        return
-    end
-
-    if forceHide
-        or not self.db.profile.showSoftTargetTooltipOutOfCombat
-        or (InCombatLockdown and InCombatLockdown())
-    then
-        GameTooltip:Hide()
-        return
-    end
-
-    local unit = self:GetTargetTooltipUnit()
-    if unit then
-        GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
-        GameTooltip:SetUnit(unit)
-        applyTooltipUnitNameColor(unit)
-    else
-        GameTooltip:Hide()
-    end
 end
 
 function UITweaks:OpenOptionsPanel()
@@ -1602,7 +1535,6 @@ end
 
 function UITweaks:ApplyVisibilityState()
     self:UpdatePlayerAndTargetFrameOpacity()
-    self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
     self:UpdateChatControlButtonsVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()

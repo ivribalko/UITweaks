@@ -33,7 +33,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Hide Target Frame Buffs and Debuffs — Hide all buffs and debuffs from the target frame.
 - Player and Target Frame Opacity In Combat — Set the player and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).
 - Player and Target Frame Opacity Out of Combat — Set the player and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).
-- Show Tooltip For Soft (Action) Target Out of Combat — Display the ConsolePort soft (action) target's tooltip while out of combat. Useful to check if the target is related to any active quests.
 
 ### ConsolePort
 

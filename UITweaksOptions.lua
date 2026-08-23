@@ -13,7 +13,6 @@ Options.defaults = {
         hideTargetFrameAuras = false,
         playerAndTargetFrameOpacityInCombat = 100,
         playerAndTargetFrameOpacityOutOfCombat = 100,
-        showSoftTargetTooltipOutOfCombat = false,
         hideChatTabs = false,
         hideAllSpeechBubbles = false,
         hideChatMenuButton = false,
@@ -70,6 +69,7 @@ function Options.OnInitialize(self)
     profile.hideMicroMenuButtons = nil
     profile.combatVisibilityDelaySeconds = nil
     profile.hideDamageMeter = nil
+    profile.showSoftTargetTooltipOutOfCombat = nil
 
     local function getOption(key)
         return function()
@@ -303,17 +303,6 @@ function Options.OnInitialize(self)
                         1,
                         function()
                             self:UpdatePlayerAndTargetFrameOpacity()
-                        end
-                    ),
-                    showSoftTargetTooltipOutOfCombat = toggleOption(
-                        "showSoftTargetTooltipOutOfCombat",
-                        "Show Tooltip For Soft (Action) Target Out of Combat",
-                        "Display the ConsolePort soft (action) target's tooltip while out of combat. Useful to check if the target is related to any active quests.",
-                        5,
-                        function(val)
-                            if not val then
-                                GameTooltip:Hide()
-                            end
                         end
                     ),
                 },
