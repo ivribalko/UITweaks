@@ -167,6 +167,8 @@ end
 function UITweaks:ADDON_LOADED(_, addonName)
     if addonName == "Blizzard_HelpTip" then
         self:HookHelpTipFrames()
+    elseif addonName == "Blizzard_CompactRaidFrames" then
+        self:UpdateCompactRaidFrameManagerVisibility()
     elseif addonName == "Blizzard_GroupLootHistory" then
         self:UpdateGroupLootHistoryVisibility()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
@@ -696,6 +698,20 @@ function UITweaks:UpdateChatControlButtonsVisibility()
     self:UpdateChatMenuButtonVisibility()
     self:UpdateChatChannelsButtonVisibility()
     self:UpdateSocialButtonVisibility()
+end
+
+function UITweaks:UpdateCompactRaidFrameManagerVisibility()
+    local frame = _G.CompactRaidFrameManager
+    if not frame or not self.db.profile.hideCompactRaidFrameManager then return end
+    if not frame.UITweaksHooked then
+        frame:HookScript("OnShow", function(shownFrame)
+            if UITweaks.db and UITweaks.db.profile.hideCompactRaidFrameManager then
+                shownFrame:Hide()
+            end
+        end)
+        frame.UITweaksHooked = true
+    end
+    frame:Hide()
 end
 
 local function ensureGroupLootHistoryLoaded()
@@ -1510,6 +1526,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateChatTabsVisibility()
     self:UpdateChatControlButtonsVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()
+    self:UpdateCompactRaidFrameManagerVisibility()
     self:UpdateGroupLootHistoryVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateTotemFrameVisibility()

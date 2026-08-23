@@ -53,6 +53,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Add Quest Prev/Next/Abandon Macros — Pressing this button creates or updates macros named Quest Abandon, Quest Next, and Quest Prev, then opens the Macro menu. Quest Abandon runs /uitabandonquest and opens the standard abandon confirmation for the currently selected tracked quest. Quest Next runs /uitnextquest and selects the next tracked quest (or the first if none is selected). Quest Prev runs /uitprevquest and selects the previous tracked quest (or the last if none is selected).
 - Always Show Quest Marker Distance — Always show the built-in quest marker distance, even when not facing the objective.
 - Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.
+- Hide Compact Raid Frame Manager — Hide the compact raid frame manager.
 - Hide Group Loot History — Hide the group loot history frame.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
 - Hide Totem Frame — Hide the totem frame, including warlock pets.

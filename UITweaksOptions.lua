@@ -19,6 +19,7 @@ Options.defaults = {
         hideChatChannelsButton = false,
         hideSocialButton = false,
         transparentChatBackground = false,
+        hideCompactRaidFrameManager = false,
         hideGroupLootHistoryFrame = false,
         hideStanceButtons = false,
         hideTotemFrame = false,
@@ -519,11 +520,20 @@ function Options.OnInitialize(self)
                             self:UpdateStanceButtonsVisibility()
                         end
                     ),
+                    hideCompactRaidFrameManager = toggleOption(
+                        "hideCompactRaidFrameManager",
+                        "Hide Compact Raid Frame Manager",
+                        "Hide the compact raid frame manager.",
+                        4,
+                        function()
+                            self:UpdateCompactRaidFrameManagerVisibility()
+                        end
+                    ),
                     hideGroupLootHistoryFrame = toggleOption(
                         "hideGroupLootHistoryFrame",
                         "Hide Group Loot History",
                         "Hide the group loot history frame.",
-                        4,
+                        5,
                         function()
                             self:UpdateGroupLootHistoryVisibility()
                         end
@@ -532,7 +542,7 @@ function Options.OnInitialize(self)
                         "hideHelpTips",
                         "Hide Help Tips",
                         "Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.",
-                        5,
+                        6,
                         function()
                             self:HookHelpTipFrames()
                         end
@@ -541,7 +551,7 @@ function Options.OnInitialize(self)
                         "hideTotemFrame",
                         "Hide Totem Frame",
                         "Hide the totem frame, including warlock pets.",
-                        6,
+                        7,
                         function()
                             self:UpdateTotemFrameVisibility()
                         end
@@ -550,7 +560,7 @@ function Options.OnInitialize(self)
                         "highlightActiveConsumablesInInventory",
                         "Highlight Active Consumables In Inventory",
                         "Highlight inventory consumables with a green frame and remaining buff time when their player aura or weapon enchant is active. Supports flasks, food, oils, and other consumables that apply a helpful aura or temporary weapon enchant. If a Well Fed buff is active, all food items are highlighted with that buff's remaining time. Cases where a consumable applies an aura with a different name than the item spell are not supported (except Well Fed food). Does not update during combat.",
-                        7,
+                        8,
                         function()
                             self.consumables.ApplyInventoryConsumableHighlights(self)
                         end
@@ -558,14 +568,14 @@ function Options.OnInitialize(self)
                     highlightActiveConsumablesNote = {
                         type = "description",
                         name = "Note: Consumables that apply an aura with a different name than the item spell are not supported, except for Well Fed food. Highlights do not update during combat.",
-                        order = 7.1,
+                        order = 8.1,
                         width = "full",
                     },
                     skyridingBarSharing = toggleOption(
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",
                         "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
-                        8,
+                        9,
                         function(val)
                             if val then
                                 self:StartSkyridingBarMonitor()
