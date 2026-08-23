@@ -103,6 +103,31 @@ local function createMythicPlusFinderButtonData()
     }
 end
 
+local function isSoundEnabled()
+    return GetCVar("Sound_EnableAllSound") == "1"
+end
+
+local function updateSoundToggleButton(button)
+    button.text = "Sound"
+    button.subtitle = isSoundEnabled() and "Enabled" or "Disabled"
+    button:Update()
+end
+
+local function toggleSound()
+    SetCVar("Sound_EnableAllSound", isSoundEnabled() and 0 or 1)
+end
+
+local function createSoundToggleButtonData()
+    return {
+        UITweaksSoundToggle = true,
+        text = "Sound",
+        subtitle = isSoundEnabled() and "Enabled" or "Disabled",
+        img = "Interface\\Icons\\INV_Misc_Horn_01",
+        click = toggleSound,
+        OnShow = updateSoundToggleButton,
+    }
+end
+
 local function findScenarioButtonIndex(selector)
     for button in selector:EnumerateActive() do
         if button.states then
@@ -137,6 +162,14 @@ end
 local function findMythicPlusFinderButton(selector)
     for button in selector:EnumerateActive() do
         if button.UITweaksMythicPlusFinder then
+            return button
+        end
+    end
+end
+
+local function findSoundToggleButton(selector)
+    for button in selector:EnumerateActive() do
+        if button.UITweaksSoundToggle then
             return button
         end
     end
@@ -259,7 +292,8 @@ end
 function ConsolePortMenu.Apply(addon)
     local addLeaveButton = addon.db.profile.addLeaveInstanceGroupToConsolePortMenu
     local addMythicPlusButton = addon.db.profile.addMythicPlusFinderToConsolePortMenu
-    if not addLeaveButton and not addMythicPlusButton then return false end
+    local addSoundToggleButton = addon.db.profile.addSoundToggleToConsolePortMenu
+    if not addLeaveButton and not addMythicPlusButton and not addSoundToggleButton then return false end
     if addLeaveButton then
         ensureGroupWatcher(addon)
     end
@@ -308,6 +342,18 @@ function ConsolePortMenu.Apply(addon)
             createMythicPlusFinderButtonData()
         )
         if not mythicPlusFinderButton then return false end
+        updateSelectorSize(selector, buttonCount)
+    end
+
+    local soundToggleButton = findSoundToggleButton(selector)
+    if addSoundToggleButton and not soundToggleButton then
+        local buttonCount
+        soundToggleButton, buttonCount = addButtonToInitializedSelector(
+            selector,
+            selector:GetNumActive() + 1,
+            createSoundToggleButtonData()
+        )
+        if not soundToggleButton then return false end
         updateSelectorSize(selector, buttonCount)
     end
 
