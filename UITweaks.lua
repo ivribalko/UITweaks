@@ -201,11 +201,6 @@ end
 
 function UITweaks:PLAYER_REGEN_DISABLED()
     self.damageMeterForceVisible = true
-    if self.visibilityTimer then
-        self.visibilityTimer:Cancel()
-        self.visibilityTimer = nil
-    end
-    self.visibilityDelayActive = false
     if self:ShouldCollapseObjectiveTracker() then
         self:CollapseTrackerIfNeeded()
     end
@@ -216,7 +211,10 @@ end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
     self.damageMeterForceVisible = false
-    self:ScheduleDelayedVisibilityUpdate()
+    self:UpdateDamageMeterVisibility()
+    self:UpdatePlayerAndTargetFrameOpacity()
+    if self:ShouldCollapseObjectiveTracker() then self:ExpandTrackerIfNeeded(true) end
+    if self.db.profile.showSoftTargetTooltipOutOfCombat then self:UpdateTargetTooltip() end
     self.consolePortMenu.Apply(self)
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
@@ -224,7 +222,9 @@ end
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
-    self:ScheduleDelayedVisibilityUpdate(true)
+    if self:ShouldCollapseObjectiveTracker() and not InCombatLockdown() then
+        self:ExpandTrackerIfNeeded(true)
+    end
     self.consumables.RequestInventoryConsumableRefresh(self, true)
     if self.db.profile.consolePortBarSharing then
         self:RestoreConsolePortActionBarProfile()
@@ -456,13 +456,6 @@ function UITweaks:UpdateDamageMeterAlphaState()
     end
 
     if self.damageMeterForceVisible or (InCombatLockdown and InCombatLockdown()) then
-        self.damageMeterHovered = false
-        self:SetDamageMeterAlpha(1)
-        _G.DamageMeter:Show()
-        return
-    end
-
-    if self.visibilityDelayActive then
         self.damageMeterHovered = false
         self:SetDamageMeterAlpha(1)
         _G.DamageMeter:Show()
@@ -805,7 +798,7 @@ end
 
 function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
     local inCombat = forceInCombat or (InCombatLockdown and InCombatLockdown())
-    local opacityKey = (inCombat or self.visibilityDelayActive)
+    local opacityKey = inCombat
         and "playerAndTargetFrameOpacityInCombat"
         or "playerAndTargetFrameOpacityOutOfCombat"
     local alpha = (tonumber(self.db.profile[opacityKey]) or 100) / 100
@@ -1111,51 +1104,6 @@ function UITweaks:UpdateTargetTooltip(forceHide)
         applyTooltipUnitNameColor(unit)
     else
         GameTooltip:Hide()
-    end
-end
-
-function UITweaks:HasDelayedVisibilityFeatures()
-    local inCombatOpacity = tonumber(self.db.profile.playerAndTargetFrameOpacityInCombat) or 100
-    local outOfCombatOpacity = tonumber(self.db.profile.playerAndTargetFrameOpacityOutOfCombat) or 100
-    return self.db.profile.hideDamageMeter
-        or inCombatOpacity ~= outOfCombatOpacity
-        or self:ShouldCollapseObjectiveTracker()
-        or self.db.profile.showSoftTargetTooltipOutOfCombat
-end
-
-function UITweaks:ApplyDelayedVisibility()
-    if self.db.profile.hideDamageMeter then
-        self:UpdateDamageMeterVisibility()
-    end
-    self:UpdatePlayerAndTargetFrameOpacity()
-    if self:ShouldCollapseObjectiveTracker() then self:ExpandTrackerIfNeeded(true) end
-    if self.db.profile.showSoftTargetTooltipOutOfCombat then self:UpdateTargetTooltip() end
-end
-
-function UITweaks:ScheduleDelayedVisibilityUpdate(skipDelay)
-    if self.visibilityTimer then
-        self.visibilityTimer:Cancel()
-        self.visibilityTimer = nil
-    end
-    self.visibilityDelayActive = false
-    if self:HasDelayedVisibilityFeatures() then
-        local delay = tonumber(self.db.profile.combatVisibilityDelaySeconds)
-        if skipDelay and not (InCombatLockdown and InCombatLockdown()) then
-            self:ApplyDelayedVisibility()
-        elseif delay <= 0 then
-            self:ApplyDelayedVisibility()
-        else
-            self.visibilityDelayActive = true
-            self:UpdatePlayerAndTargetFrameOpacity()
-            self.visibilityTimer = C_Timer.NewTimer(delay, function()
-                if not InCombatLockdown or not InCombatLockdown() then
-                    self.visibilityDelayActive = false
-                    self:ApplyDelayedVisibility()
-                end
-            end)
-        end
-    else
-        self:UpdatePlayerAndTargetFrameOpacity()
     end
 end
 

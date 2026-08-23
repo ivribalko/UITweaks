@@ -26,7 +26,6 @@ Options.defaults = {
         collapseObjectiveTrackerInRaids = false,
         collapseObjectiveTrackerInDungeons = false,
         collapseObjectiveTrackerEverywhereElse = false,
-        combatVisibilityDelaySeconds = 5,
         showOptionsOnReload = false,
         showReloadButtonBottomLeft = false,
         showBlockedInterfaceActionCount = false,
@@ -69,6 +68,7 @@ function Options.OnInitialize(self)
     profile.hideBackpackButton = nil
     profile.hideBuffFrame = nil
     profile.hideMicroMenuButtons = nil
+    profile.combatVisibilityDelaySeconds = nil
 
     local function getOption(key)
         return function()
@@ -212,23 +212,11 @@ function Options.OnInitialize(self)
                 inline = true,
                 order = 2,
                 args = {
-                    combatVisibilityDelaySeconds = rangeOption(
-                        "combatVisibilityDelaySeconds",
-                        "Delay Restoring Out of Combat",
-                        "Delay before restoring frames after combat end for set seconds.",
-                        1,
-                        0,
-                        20,
-                        1,
-                        function()
-                            self:ScheduleDelayedVisibilityUpdate()
-                        end
-                    ),
                     hideDamageMeter = toggleOption(
                         "hideDamageMeter",
                         "Auto-Hide Damage Meter Out of Combat",
                         "Auto-Hide the built-in damage meter frame after combat until you mouse over it.",
-                        2,
+                        1,
                         function()
                             self:UpdateDamageMeterVisibility()
                         end
@@ -237,7 +225,7 @@ function Options.OnInitialize(self)
                         type = "group",
                         name = "Collapse Objective Tracker",
                         inline = true,
-                        order = 3,
+                        order = 2,
                         args = {
                             collapseObjectiveTrackerInRaids = {
                                 type = "toggle",
@@ -287,7 +275,7 @@ function Options.OnInitialize(self)
                         "hideTargetFrameAuras",
                         "Hide Target Frame Buffs and Debuffs",
                         "Hide all buffs and debuffs from the target frame.",
-                        4,
+                        3,
                         function()
                             self:ApplyTargetFrameAurasHide()
                         end
@@ -296,7 +284,7 @@ function Options.OnInitialize(self)
                         "playerAndTargetFrameOpacityInCombat",
                         "Player and Target Frame Opacity In Combat",
                         "Set the player and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).",
-                        5,
+                        4,
                         0,
                         100,
                         1,
@@ -308,19 +296,19 @@ function Options.OnInitialize(self)
                         "playerAndTargetFrameOpacityOutOfCombat",
                         "Player and Target Frame Opacity Out of Combat",
                         "Set the player and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).",
-                        6,
+                        5,
                         0,
                         100,
                         1,
                         function()
-                            self:ScheduleDelayedVisibilityUpdate()
+                            self:UpdatePlayerAndTargetFrameOpacity()
                         end
                     ),
                     showSoftTargetTooltipOutOfCombat = toggleOption(
                         "showSoftTargetTooltipOutOfCombat",
                         "Show Tooltip For Soft (Action) Target Out of Combat",
                         "Display the ConsolePort soft (action) target's tooltip while out of combat. Useful to check if the target is related to any active quests.",
-                        7,
+                        6,
                         function(val)
                             if not val then
                                 GameTooltip:Hide()

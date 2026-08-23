@@ -26,7 +26,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Combat
 
-- Delay Restoring Out of Combat — Delay before restoring frames after combat end for set seconds.
 - Auto-Hide Damage Meter Out of Combat — Auto-Hide the built-in damage meter frame after combat until you mouse over it.
 - In Raids — Collapse the objective tracker in combat while in raid instances.
 - In Dungeons — Collapse the objective tracker in combat while in dungeon instances.
@@ -70,7 +69,6 @@ Keep panels and items sorted alphabetically (by display name) in both `UITweaksO
 Exceptions:
 
 - Objective tracker toggles stay in this order: In Raids, In Dungeons, Everywhere Else.
-- Combat: Delay After Combat Seconds stays first.
 - Chat: keep checkboxes together with their respective ranges, such as Set Chat Font Size and Font Size.
 - Explanatory notes stay directly below their related checkboxes.
 - ConsolePort: Open ConsolePort Designer stays after the toggles, and Open Advanced Cooldown Settings stays last.
