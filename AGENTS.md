@@ -52,6 +52,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 ### Other
 
 - Add Quest Prev/Next/Abandon Macros — Pressing this button creates or updates macros named Quest Abandon, Quest Next, and Quest Prev, then opens the Macro menu. Quest Abandon runs /uitabandonquest and opens the standard abandon confirmation for the currently selected tracked quest. Quest Next runs /uitnextquest and selects the next tracked quest (or the first if none is selected). Quest Prev runs /uitprevquest and selects the previous tracked quest (or the last if none is selected).
+- Adjust Minimap Zoom Based On Player Speed — Automatically zoom the minimap in while stationary, use one zoom level while moving or in combat, and fully zoom it out while flying.
 - Always Show Quest Marker Distance — Always show the built-in quest marker distance, even when not facing the objective.
 - Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.
 - Hide Compact Raid Frame Manager — Hide the compact raid frame manager.

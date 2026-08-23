@@ -13,6 +13,7 @@ local ABANDON_QUEST_MACRO_BODY = "/uitabandonquest"
 local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 local OBJECTIVE_TRACKER_FADE_DURATION = 0.25
+local MINIMAP_SPEED_ZOOM_UPDATE_INTERVAL = 0.5
 local SPEECH_BUBBLE_CVARS = {
     "chatBubbles",
     "chatBubblesParty",
@@ -36,6 +37,7 @@ end
 
 function UITweaks:OnEnable()
     self:CreateMinimapButton()
+    self:StartMinimapSpeedZoomMonitor()
     self:RegisterChatCommand("uitabandonquest", "HandleAbandonQuestSlashCommand")
     self:RegisterChatCommand("uitnextquest", "HandleNextQuestSlashCommand")
     self:RegisterChatCommand("uitprevquest", "HandlePreviousQuestSlashCommand")
@@ -201,10 +203,12 @@ function UITweaks:PLAYER_REGEN_DISABLED()
         self:FadeOutObjectiveTrackerIfNeeded()
     end
     self:UpdatePlayerAndTargetFrameOpacity(true)
+    if self.minimapSpeedZoomTicker then self:UpdateMinimapZoomForPlayerSpeed() end
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
     self:UpdatePlayerAndTargetFrameOpacity()
+    if self.minimapSpeedZoomTicker then self:UpdateMinimapZoomForPlayerSpeed() end
     if self:ShouldFadeObjectiveTracker() then self:FadeInObjectiveTrackerIfNeeded(true) end
     if self.partyAndRaidFrameScalePending then self:ApplyPartyAndRaidFrameScale() end
     self.consolePortMenu.Apply(self)
@@ -940,6 +944,54 @@ function UITweaks:CloseOptionsPanel()
     if AceConfigDialog then
         AceConfigDialog:Close(addonName)
     end
+end
+
+function UITweaks:UpdateMinimapZoomForPlayerSpeed()
+    local maximumZoom = math.max(0, Minimap:GetZoomLevels() - 1)
+    local walkRunZoom = math.floor((maximumZoom * 0.6) + 0.5)
+    local desiredZoom
+    if InCombatLockdown() then
+        desiredZoom = walkRunZoom
+    else
+        local isFlying = IsFlying("player")
+        if issecretvalue and issecretvalue(isFlying) then return end
+
+        local currentSpeed
+        if not isFlying then
+            currentSpeed = GetUnitSpeed("player")
+            if issecretvalue and issecretvalue(currentSpeed) then return end
+            if type(currentSpeed) ~= "number" then return end
+        end
+
+        if isFlying then
+            desiredZoom = 0
+        elseif currentSpeed < 0.5 then
+            desiredZoom = maximumZoom
+        else
+            desiredZoom = walkRunZoom
+        end
+    end
+
+    if desiredZoom == self.minimapSpeedZoomLevel then return end
+    self.minimapSpeedZoomLevel = desiredZoom
+    Minimap:SetZoom(desiredZoom)
+end
+
+function UITweaks:StartMinimapSpeedZoomMonitor()
+    if self.minimapSpeedZoomTicker or not self.db.profile.adjustMinimapZoomBasedOnPlayerSpeed then return end
+    self.minimapSpeedZoomLevel = nil
+    self:UpdateMinimapZoomForPlayerSpeed()
+    self.minimapSpeedZoomTicker = C_Timer.NewTicker(MINIMAP_SPEED_ZOOM_UPDATE_INTERVAL, function()
+        self:UpdateMinimapZoomForPlayerSpeed()
+    end)
+end
+
+function UITweaks:StopMinimapSpeedZoomMonitor()
+    if self.minimapSpeedZoomTicker then
+        self.minimapSpeedZoomTicker:Cancel()
+        self.minimapSpeedZoomTicker = nil
+    end
+    self.minimapSpeedZoomLevel = nil
 end
 
 function UITweaks:UpdateMinimapButtonPosition()
