@@ -332,7 +332,7 @@ function Options.OnInitialize(self)
                     addLeaveInstanceGroupToConsolePortMenu = toggleOption(
                         "addLeaveInstanceGroupToConsolePortMenu",
                         "Add Leave Instance Group To ConsolePort Menu Ring",
-                        "Add a separate Leave Instance Group button next to ConsolePort's dungeon teleport button in the menu ring. The button is hidden while you are not in a party.",
+                        "Add a separate Leave Instance Group button next to ConsolePort's dungeon teleport button in the menu ring. The button is hidden while you are not in a party or when ConsolePort's regular Leave Party action is already shown.",
                         1,
                         function(val)
                             if val then

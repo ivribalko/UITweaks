@@ -36,7 +36,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### ConsolePort
 
-- Add Leave Instance Group To ConsolePort Menu Ring — Add a separate Leave Instance Group button next to ConsolePort's dungeon teleport button in the menu ring. The button is hidden while you are not in a party.
+- Add Leave Instance Group To ConsolePort Menu Ring — Add a separate Leave Instance Group button next to ConsolePort's dungeon teleport button in the menu ring. The button is hidden while you are not in a party or when ConsolePort's regular Leave Party action is already shown.
 - Add Mythic+ Finder To ConsolePort Menu Ring — Add a Mythic+ Finder button next to ConsolePort's Group Finder button in the menu ring. It opens the Premade Groups dungeon search directly.
 - Add Sound Toggle To ConsolePort Menu Ring — Add a Sound button to ConsolePort's menu ring that toggles Settings -> Game -> Audio -> Enable Sound and shows whether sound is enabled or disabled.
 - Disable Immersion Dialog List Item Scaling — Prevent Immersion's active dialogue list items from growing when hovered or selected.

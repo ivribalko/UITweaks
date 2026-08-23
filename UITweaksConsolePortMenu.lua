@@ -193,6 +193,32 @@ local function findLeaveInstanceGroupButton(selector)
     end
 end
 
+local function isLeavePartyButtonShown(selector)
+    for button in selector:EnumerateActive() do
+        if not button.UITweaksLeaveInstanceGroup then
+            if button.states then
+                local hasLeavePartyState = false
+                for _, state in ipairs(button.states) do
+                    if state.text == PARTY_LEAVE then
+                        hasLeavePartyState = true
+                        break
+                    end
+                end
+                if hasLeavePartyState then
+                    for _, state in ipairs(button.states) do
+                        if state.predicate() then
+                            return state.text == PARTY_LEAVE
+                        end
+                    end
+                end
+            elseif button.text == PARTY_LEAVE then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 local function findMythicPlusFinderButton(selector)
     for button in selector:EnumerateActive() do
         if button.UITweaksMythicPlusFinder then
@@ -315,6 +341,8 @@ local function ensureGroupWatcher(addon)
 
     local watcher = CreateFrame("Frame")
     watcher:RegisterEvent("GROUP_ROSTER_UPDATE")
+    watcher:RegisterEvent("LFG_COMPLETION_REWARD")
+    watcher:RegisterEvent("LFG_UPDATE")
     watcher:RegisterEvent("PLAYER_ENTERING_WORLD")
     watcher:RegisterEvent("PLAYER_REGEN_ENABLED")
     watcher:SetScript("OnEvent", function()
@@ -351,7 +379,8 @@ function ConsolePortMenu.Apply(addon)
     end
 
     local leaveInstanceGroupButton = findLeaveInstanceGroupButton(selector)
-    if addLeaveButton and not IsInGroup() then
+    local showLeaveInstanceGroupButton = IsInGroup() and not isLeavePartyButtonShown(selector)
+    if addLeaveButton and not showLeaveInstanceGroupButton then
         if leaveInstanceGroupButton then
             removeButtonFromSelector(selector, leaveInstanceGroupButton)
         end
