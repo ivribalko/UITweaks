@@ -26,7 +26,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Combat
 
-- Auto-Hide Damage Meter Out of Combat — Auto-Hide the built-in damage meter frame after combat until you mouse over it.
 - In Raids — Collapse the objective tracker in combat while in raid instances.
 - In Dungeons — Collapse the objective tracker in combat while in dungeon instances.
 - Everywhere Else — Collapse the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).

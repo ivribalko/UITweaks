@@ -200,18 +200,14 @@ function UITweaks:ADDON_LOADED(_, addonName)
 end
 
 function UITweaks:PLAYER_REGEN_DISABLED()
-    self.damageMeterForceVisible = true
     if self:ShouldCollapseObjectiveTracker() then
         self:CollapseTrackerIfNeeded()
     end
     self:UpdatePlayerAndTargetFrameOpacity(true)
-    self:UpdateDamageMeterVisibility()
     if self.db.profile.showSoftTargetTooltipOutOfCombat then GameTooltip:Hide() end
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
-    self.damageMeterForceVisible = false
-    self:UpdateDamageMeterVisibility()
     self:UpdatePlayerAndTargetFrameOpacity()
     if self:ShouldCollapseObjectiveTracker() then self:ExpandTrackerIfNeeded(true) end
     if self.db.profile.showSoftTargetTooltipOutOfCombat then self:UpdateTargetTooltip() end
@@ -351,13 +347,6 @@ local function isCursorInsideFrame(frame)
     return frame:IsMouseOver()
 end
 
-local function addUniqueFrame(frames, seen, frame)
-    if not frame or seen[frame] then return end
-    if not frame.IsObjectType or not frame:IsObjectType("Frame") then return end
-    seen[frame] = true
-    frames[#frames + 1] = frame
-end
-
 local function shouldAutoHideChatControlButtons(self)
     return self.db.profile.hideChatMenuButton
         or self.db.profile.hideChatChannelsButton
@@ -372,130 +361,6 @@ function UITweaks:AreChatControlButtonsHovered()
     return isCursorInsideFrame(_G.ChatFrameMenuButton)
         or isCursorInsideFrame(_G.ChatFrameChannelButton)
         or isCursorInsideFrame(_G.QuickJoinToastButton)
-end
-
-function UITweaks:RefreshDamageMeterFrames()
-    local frames = {}
-    local seen = {}
-    addUniqueFrame(frames, seen, _G.DamageMeter)
-    for globalName, frame in pairs(_G) do
-        if type(globalName) == "string" and globalName:match("^DamageMeter") then
-            addUniqueFrame(frames, seen, frame)
-        end
-    end
-    self.damageMeterFrames = frames
-    return frames
-end
-
-function UITweaks:GetDamageMeterFrames()
-    if not self.damageMeterFrames or #self.damageMeterFrames == 0 then
-        return self:RefreshDamageMeterFrames()
-    end
-    return self.damageMeterFrames
-end
-
-function UITweaks:SetDamageMeterAlpha(alpha)
-    for _, frame in ipairs(self:GetDamageMeterFrames()) do
-        frame:SetAlpha(alpha)
-    end
-end
-
-function UITweaks:ShouldShowDamageMeterFrame()
-    local damageMeter = _G.DamageMeter
-    if not damageMeter then
-        return false
-    end
-
-    if damageMeter.ShouldBeShown then
-        return damageMeter:ShouldBeShown()
-    end
-
-    if C_CVar and C_CVar.GetCVarBool then
-        return C_CVar.GetCVarBool("damageMeterEnabled")
-    end
-
-    if GetCVarBool then
-        return GetCVarBool("damageMeterEnabled")
-    end
-
-    if GetCVar then
-        local value = GetCVar("damageMeterEnabled")
-        return value == "1" or value == "true"
-    end
-
-    return true
-end
-
-function UITweaks:IsDamageMeterHovered()
-    for _, frame in ipairs(self:GetDamageMeterFrames()) do
-        if isCursorInsideFrame(frame) then
-            return true
-        end
-    end
-    return false
-end
-
-function UITweaks:ScheduleDamageMeterHoverStateUpdate()
-    if self.damageMeterLeaveTimer then
-        self.damageMeterLeaveTimer:Cancel()
-    end
-    self.damageMeterLeaveTimer = C_Timer.NewTimer(0, function()
-        UITweaks.damageMeterLeaveTimer = nil
-        UITweaks:UpdateDamageMeterAlphaState()
-    end)
-end
-
-function UITweaks:UpdateDamageMeterAlphaState()
-    if not _G.DamageMeter then return end
-
-    if not self:ShouldShowDamageMeterFrame() then
-        self.damageMeterHovered = false
-        self:SetDamageMeterAlpha(1)
-        _G.DamageMeter:Hide()
-        return
-    end
-
-    if self.damageMeterForceVisible or (InCombatLockdown and InCombatLockdown()) then
-        self.damageMeterHovered = false
-        self:SetDamageMeterAlpha(1)
-        _G.DamageMeter:Show()
-        return
-    end
-
-    if not self.db.profile.hideDamageMeter then
-        self.damageMeterHovered = false
-        self:SetDamageMeterAlpha(1)
-        _G.DamageMeter:Show()
-        return
-    end
-
-    self.damageMeterHovered = self:IsDamageMeterHovered()
-    self:SetDamageMeterAlpha(self.damageMeterHovered and 1 or 0)
-    _G.DamageMeter:Show()
-end
-
-function UITweaks:HookDamageMeterFrames()
-    for _, frame in ipairs(self:GetDamageMeterFrames()) do
-        if not frame.UITweaksHooked then
-            frame:HookScript("OnShow", function(shownFrame)
-                UITweaks:RefreshDamageMeterFrames()
-                UITweaks:HookDamageMeterFrames()
-                UITweaks:UpdateDamageMeterAlphaState()
-            end)
-            frame:HookScript("OnEnter", function()
-                if UITweaks.damageMeterLeaveTimer then
-                    UITweaks.damageMeterLeaveTimer:Cancel()
-                    UITweaks.damageMeterLeaveTimer = nil
-                end
-                UITweaks.damageMeterHovered = true
-                UITweaks:UpdateDamageMeterAlphaState()
-            end)
-            frame:HookScript("OnLeave", function()
-                UITweaks:ScheduleDamageMeterHoverStateUpdate()
-            end)
-            frame.UITweaksHooked = true
-        end
-    end
 end
 
 function UITweaks:SetChatControlButtonsHoverPolling(enabled)
@@ -813,22 +678,6 @@ function UITweaks:ApplyTargetFrameAurasHide()
     _G.TargetFrame.maxBuffs = 0
     _G.TargetFrame.maxDebuffs = 0
     _G.TargetFrame:UpdateAuras()
-end
-
-function UITweaks:UpdateDamageMeterVisibility(retry)
-    if self.damageMeterLeaveTimer then
-        self.damageMeterLeaveTimer:Cancel()
-        self.damageMeterLeaveTimer = nil
-    end
-    if not _G.DamageMeter then
-        if not retry then
-            C_Timer.After(0.5, function() self:UpdateDamageMeterVisibility(true) end)
-        end
-        return
-    end
-    self:RefreshDamageMeterFrames()
-    self:HookDamageMeterFrames()
-    self:UpdateDamageMeterAlphaState()
 end
 
 function UITweaks:UpdateChatTabsVisibility()
@@ -1725,7 +1574,6 @@ end
 
 function UITweaks:ApplyVisibilityState()
     self:UpdatePlayerAndTargetFrameOpacity()
-    self:UpdateDamageMeterVisibility()
     self:UpdateTargetTooltip()
     self:UpdateChatTabsVisibility()
     self:UpdateChatControlButtonsVisibility()

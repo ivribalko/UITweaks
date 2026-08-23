@@ -10,7 +10,6 @@ BuffBarCooldownViewer = BuffBarCooldownViewer
 BuffIconCooldownViewer = BuffIconCooldownViewer
 ChatFontNormal = ChatFontNormal
 C_AddOns = C_AddOns
-C_DamageMeter = C_DamageMeter
 C_Container = C_Container
 C_CooldownViewer = C_CooldownViewer
 C_Navigation = C_Navigation
@@ -36,7 +35,6 @@ GetAddOnMetadata = GetAddOnMetadata
 GetBindingAction = GetBindingAction
 GetBuildInfo = GetBuildInfo
 GetChatWindowInfo = GetChatWindowInfo
-GetCVar = GetCVar
 GetCursorPosition = GetCursorPosition
 GetItemInfo = GetItemInfo
 GetItemInfoInstant = GetItemInfoInstant
@@ -115,7 +113,6 @@ unpack = unpack
 ---@field ConsolePortTempAbilityFrame any
 ---@field ConsolePortUIHandle any
 ---@field CooldownViewerSettings any
----@field DamageMeter any
 ---@field GroupLootHistoryFrame any
 ---@field ImmersionAPI any
 ---@field ImmersionFrame any
