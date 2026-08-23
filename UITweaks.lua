@@ -64,6 +64,7 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("LOOT_OPENED")
     self:RegisterEvent("LOOT_CLOSED")
+    self:RegisterEvent("MAIL_SHOW")
     self:RegisterEvent("BAG_OPEN")
     self:RegisterEvent("BAG_CLOSED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -250,6 +251,32 @@ end
 
 function UITweaks:BAG_CLOSED()
     self.consumables.RequestInventoryConsumableRefresh(self, true)
+end
+
+function UITweaks:FocusMailboxOpenAllButton(attemptsRemaining)
+    if not self.db.profile.focusMailboxOpenAllButton then return end
+
+    local openAllButton = _G.OpenAllMail
+    if openAllButton and openAllButton:IsShown() then
+        -- Let ConsolePort's own mailbox scan choose this button, then reassert the
+        -- focus after its deferred frame-stack updates have finished.
+        openAllButton:SetAttribute("nodepriority", 1)
+
+        local consolePort = _G.ConsolePort
+        if consolePort and consolePort.SetCursorNodeIfActive then
+            consolePort:SetCursorNodeIfActive(openAllButton)
+        end
+    end
+
+    if attemptsRemaining > 1 then
+        C_Timer.After(0, function()
+            UITweaks:FocusMailboxOpenAllButton(attemptsRemaining - 1)
+        end)
+    end
+end
+
+function UITweaks:MAIL_SHOW()
+    self:FocusMailboxOpenAllButton(4)
 end
 
 function UITweaks:PLAYER_EQUIPMENT_CHANGED()
