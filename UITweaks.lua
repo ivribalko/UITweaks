@@ -74,6 +74,7 @@ function UITweaks:OnEnable()
     self:RegisterEvent("UNIT_AURA")
     self:RegisterEvent("NAVIGATION_FRAME_CREATED")
     self:RegisterEvent("WEAPON_ENCHANT_CHANGED")
+    self:RegisterEvent("ZONE_CHANGED_NEW_AREA")
     if self.db.profile.showOptionsOnReload then
         C_Timer.After(1, function() self:OpenOptionsPanel() end)
     end
@@ -222,6 +223,7 @@ end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyVisibilityState()
+    self:UpdateObjectiveTrackerState()
     self:ScheduleDelayedVisibilityUpdate(true)
     self.consumables.RequestInventoryConsumableRefresh(self, true)
     if self.db.profile.consolePortBarSharing then
@@ -233,6 +235,10 @@ function UITweaks:PLAYER_ENTERING_WORLD()
         self:StartSkyridingBarMonitor()
     end
     C_Timer.After(0.5, function() self.consumables.RequestInventoryConsumableRefresh(self, true) end)
+end
+
+function UITweaks:ZONE_CHANGED_NEW_AREA()
+    self:UpdateObjectiveTrackerState()
 end
 
 function UITweaks:BAG_UPDATE_DELAYED()
@@ -710,11 +716,15 @@ end
 
 function UITweaks:EnsureObjectiveTrackerLoaded()
     if ObjectiveTrackerFrame and (ObjectiveTrackerFrame.SetCollapsed or ObjectiveTrackerFrame.Collapse) then
+        self:HookObjectiveTrackerCollapseState()
         return true
     end
     if UIParentLoadAddOn then
         local loaded = UIParentLoadAddOn("Blizzard_ObjectiveTracker")
-        if loaded and ObjectiveTrackerFrame then return true end
+        if loaded and ObjectiveTrackerFrame then
+            self:HookObjectiveTrackerCollapseState()
+            return true
+        end
     end
 end
 
@@ -731,24 +741,41 @@ function UITweaks:ShouldCollapseObjectiveTracker()
         or self.db.profile.collapseObjectiveTrackerEverywhereElse
 end
 
-function UITweaks:CollapseTrackerIfNeeded()
-    if self:ShouldCollapseObjectiveTracker() then
-        local shouldCollapse = true
-        local inInstance, instanceType = IsInInstance()
-        if inInstance and instanceType == "raid" then
-            shouldCollapse = self.db.profile.collapseObjectiveTrackerInRaids
-        elseif inInstance and instanceType == "party" then
-            shouldCollapse = self.db.profile.collapseObjectiveTrackerInDungeons
-        else
-            shouldCollapse = self.db.profile.collapseObjectiveTrackerEverywhereElse
-        end
-        if shouldCollapse and self:EnsureObjectiveTrackerLoaded() then
-            if not self:IsObjectiveTrackerCollapsed() then
-                collapseObjectiveTracker()
-                self.trackerCollapsedByAddon = true
-            else
-                self.trackerCollapsedByAddon = false
+function UITweaks:ShouldCollapseObjectiveTrackerHere()
+    local inInstance, instanceType = IsInInstance()
+    if inInstance and instanceType == "raid" then
+        return self.db.profile.collapseObjectiveTrackerInRaids
+    elseif inInstance and instanceType == "party" then
+        return self.db.profile.collapseObjectiveTrackerInDungeons
+    end
+    return self.db.profile.collapseObjectiveTrackerEverywhereElse
+end
+
+function UITweaks:HookObjectiveTrackerCollapseState()
+    if self.objectiveTrackerCollapseHooked then return end
+    if not ObjectiveTrackerFrame or not ObjectiveTrackerFrame.SetCollapsed then return end
+
+    self.objectiveTrackerCollapseHooked = true
+    hooksecurefunc(ObjectiveTrackerFrame, "SetCollapsed", function(_, collapsed)
+        if collapsed or not InCombatLockdown() then return end
+        if not UITweaks:ShouldCollapseObjectiveTrackerHere() then return end
+        if UITweaks.objectiveTrackerRecollapsePending then return end
+
+        UITweaks.objectiveTrackerRecollapsePending = true
+        C_Timer.After(0, function()
+            UITweaks.objectiveTrackerRecollapsePending = nil
+            if InCombatLockdown() and UITweaks:ShouldCollapseObjectiveTrackerHere() then
+                UITweaks:CollapseTrackerIfNeeded()
             end
+        end)
+    end)
+end
+
+function UITweaks:CollapseTrackerIfNeeded()
+    if self:ShouldCollapseObjectiveTrackerHere() and self:EnsureObjectiveTrackerLoaded() then
+        if not self:IsObjectiveTrackerCollapsed() then
+            collapseObjectiveTracker()
+            self.trackerCollapsedByAddon = true
         end
     end
 end
@@ -765,7 +792,11 @@ end
 function UITweaks:UpdateObjectiveTrackerState()
     if self:ShouldCollapseObjectiveTracker() then
         if InCombatLockdown and InCombatLockdown() then
-            self:CollapseTrackerIfNeeded()
+            if self:ShouldCollapseObjectiveTrackerHere() then
+                self:CollapseTrackerIfNeeded()
+            else
+                self:ExpandTrackerIfNeeded()
+            end
         else
             self:ExpandTrackerIfNeeded()
         end
