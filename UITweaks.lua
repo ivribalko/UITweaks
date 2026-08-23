@@ -1016,6 +1016,32 @@ function UITweaks:GetWatchedQuestIDs()
             watchedQuestIDs[#watchedQuestIDs + 1] = questID
         end
     end
+
+    if not self:EnsureObjectiveTrackerLoaded() then
+        return watchedQuestIDs
+    end
+
+    local trackerOrderedQuestIDs = {}
+    local trackerModuleNames = {
+        "CampaignQuestObjectiveTracker",
+        "QuestObjectiveTracker",
+    }
+    for _, moduleName in ipairs(trackerModuleNames) do
+        local module = _G[moduleName]
+        if module and module.BuildQuestWatchInfos then
+            for _, questWatchInfo in ipairs(module:BuildQuestWatchInfos()) do
+                local quest = questWatchInfo.quest
+                local questID = quest and quest.GetID and quest:GetID()
+                if questID then
+                    trackerOrderedQuestIDs[#trackerOrderedQuestIDs + 1] = questID
+                end
+            end
+        end
+    end
+
+    if #trackerOrderedQuestIDs > 0 then
+        return trackerOrderedQuestIDs
+    end
     return watchedQuestIDs
 end
 
