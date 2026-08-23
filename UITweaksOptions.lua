@@ -22,9 +22,9 @@ Options.defaults = {
         hideGroupLootHistoryFrame = false,
         hideStanceButtons = false,
         hideTotemFrame = false,
-        collapseObjectiveTrackerInRaids = false,
-        collapseObjectiveTrackerInDungeons = false,
-        collapseObjectiveTrackerEverywhereElse = false,
+        fadeObjectiveTrackerInRaids = false,
+        fadeObjectiveTrackerInDungeons = false,
+        fadeObjectiveTrackerEverywhereElse = false,
         showOptionsOnReload = false,
         showReloadButtonBottomLeft = false,
         showBlockedInterfaceActionCount = false,
@@ -52,6 +52,15 @@ Options.defaults = {
 
 function Options.OnInitialize(self)
     local profile = self.db.profile
+    local objectiveTrackerSettingMigration = {
+        collapseObjectiveTrackerInRaids = "fadeObjectiveTrackerInRaids",
+        collapseObjectiveTrackerInDungeons = "fadeObjectiveTrackerInDungeons",
+        collapseObjectiveTrackerEverywhereElse = "fadeObjectiveTrackerEverywhereElse",
+    }
+    for oldKey, newKey in pairs(objectiveTrackerSettingMigration) do
+        if rawget(profile, oldKey) then profile[newKey] = true end
+        profile[oldKey] = nil
+    end
     if rawget(profile, "minimapButtonAngle") then
         profile.minimapPos = profile.minimapButtonAngle
         profile.minimapButtonAngle = nil
@@ -224,49 +233,49 @@ function Options.OnInitialize(self)
                 args = {
                     objectiveTrackerVisibility = {
                         type = "group",
-                        name = "Collapse Objective Tracker",
+                        name = "Fade Objective Tracker",
                         inline = true,
                         order = 1,
                         args = {
-                            collapseObjectiveTrackerInRaids = {
+                            fadeObjectiveTrackerInRaids = {
                                 type = "toggle",
                                 name = "In Raids",
-                                desc = "Collapse the objective tracker in combat while in raid instances.",
+                                desc = "Fade out the objective tracker in combat while in raid instances.",
                                 width = "auto",
                                 order = 1,
                                 get = function()
-                                    return self.db.profile.collapseObjectiveTrackerInRaids
+                                    return self.db.profile.fadeObjectiveTrackerInRaids
                                 end,
                                 set = function(_, val)
-                                    self.db.profile.collapseObjectiveTrackerInRaids = val
+                                    self.db.profile.fadeObjectiveTrackerInRaids = val
                                     self:UpdateObjectiveTrackerState()
                                 end,
                             },
-                            collapseObjectiveTrackerInDungeons = {
+                            fadeObjectiveTrackerInDungeons = {
                                 type = "toggle",
                                 name = "In Dungeons",
-                                desc = "Collapse the objective tracker in combat while in dungeon instances.",
+                                desc = "Fade out the objective tracker in combat while in dungeon instances.",
                                 width = "auto",
                                 order = 2,
                                 get = function()
-                                    return self.db.profile.collapseObjectiveTrackerInDungeons
+                                    return self.db.profile.fadeObjectiveTrackerInDungeons
                                 end,
                                 set = function(_, val)
-                                    self.db.profile.collapseObjectiveTrackerInDungeons = val
+                                    self.db.profile.fadeObjectiveTrackerInDungeons = val
                                     self:UpdateObjectiveTrackerState()
                                 end,
                             },
-                            collapseObjectiveTrackerEverywhereElse = {
+                            fadeObjectiveTrackerEverywhereElse = {
                                 type = "toggle",
                                 name = "Everywhere Else",
-                                desc = "Collapse the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).",
+                                desc = "Fade out the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).",
                                 width = "auto",
                                 order = 3,
                                 get = function()
-                                    return self.db.profile.collapseObjectiveTrackerEverywhereElse
+                                    return self.db.profile.fadeObjectiveTrackerEverywhereElse
                                 end,
                                 set = function(_, val)
-                                    self.db.profile.collapseObjectiveTrackerEverywhereElse = val
+                                    self.db.profile.fadeObjectiveTrackerEverywhereElse = val
                                     self:UpdateObjectiveTrackerState()
                                 end,
                             },

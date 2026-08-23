@@ -12,6 +12,7 @@ local NEXT_QUEST_MACRO_ICON = "INV_Misc_Note_01"
 local ABANDON_QUEST_MACRO_BODY = "/uitabandonquest"
 local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
+local OBJECTIVE_TRACKER_FADE_DURATION = 0.25
 local SPEECH_BUBBLE_CVARS = {
     "chatBubbles",
     "chatBubblesParty",
@@ -191,15 +192,15 @@ function UITweaks:ADDON_LOADED(_, addonName)
 end
 
 function UITweaks:PLAYER_REGEN_DISABLED()
-    if self:ShouldCollapseObjectiveTracker() then
-        self:CollapseTrackerIfNeeded()
+    if self:ShouldFadeObjectiveTracker() then
+        self:FadeOutObjectiveTrackerIfNeeded()
     end
     self:UpdatePlayerAndTargetFrameOpacity(true)
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
     self:UpdatePlayerAndTargetFrameOpacity()
-    if self:ShouldCollapseObjectiveTracker() then self:ExpandTrackerIfNeeded(true) end
+    if self:ShouldFadeObjectiveTracker() then self:FadeInObjectiveTrackerIfNeeded(true) end
     self.consolePortMenu.Apply(self)
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
@@ -207,8 +208,8 @@ end
 function UITweaks:PLAYER_ENTERING_WORLD()
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
-    if self:ShouldCollapseObjectiveTracker() and not InCombatLockdown() then
-        self:ExpandTrackerIfNeeded(true)
+    if self:ShouldFadeObjectiveTracker() and not InCombatLockdown() then
+        self:FadeInObjectiveTrackerIfNeeded(true)
     end
     self.consumables.RequestInventoryConsumableRefresh(self, true)
     if self.db.profile.consolePortBarSharing then
@@ -546,111 +547,56 @@ function UITweaks:HookHelpTipFrames()
     self:HideHelpTips()
 end
 
-local function collapseObjectiveTracker()
-    if ObjectiveTrackerFrame and ObjectiveTrackerFrame.SetCollapsed then
-        ObjectiveTrackerFrame:SetCollapsed(true)
-    elseif ObjectiveTrackerFrame and ObjectiveTrackerFrame.Collapse then
-        ObjectiveTrackerFrame:Collapse()
-    elseif ObjectiveTracker_Collapse then
-        ObjectiveTracker_Collapse()
-    end
-end
-
-local function expandObjectiveTracker()
-    if ObjectiveTrackerFrame and ObjectiveTrackerFrame.SetCollapsed then
-        ObjectiveTrackerFrame:SetCollapsed(false)
-    elseif ObjectiveTrackerFrame and ObjectiveTrackerFrame.Expand then
-        ObjectiveTrackerFrame:Expand()
-    elseif ObjectiveTracker_Expand then
-        ObjectiveTracker_Expand()
-    end
-end
-
 function UITweaks:EnsureObjectiveTrackerLoaded()
-    if ObjectiveTrackerFrame and (ObjectiveTrackerFrame.SetCollapsed or ObjectiveTrackerFrame.Collapse) then
-        self:HookObjectiveTrackerCollapseState()
-        return true
-    end
+    if ObjectiveTrackerFrame then return true end
     if UIParentLoadAddOn then
         local loaded = UIParentLoadAddOn("Blizzard_ObjectiveTracker")
-        if loaded and ObjectiveTrackerFrame then
-            self:HookObjectiveTrackerCollapseState()
-            return true
-        end
+        if loaded and ObjectiveTrackerFrame then return true end
     end
 end
 
-function UITweaks:IsObjectiveTrackerCollapsed()
-    if ObjectiveTrackerFrame then
-        if ObjectiveTrackerFrame.IsCollapsed then return ObjectiveTrackerFrame:IsCollapsed() end
-        if ObjectiveTrackerFrame.collapsed ~= nil then return ObjectiveTrackerFrame.collapsed end
-    end
+function UITweaks:ShouldFadeObjectiveTracker()
+    return self.db.profile.fadeObjectiveTrackerInRaids
+        or self.db.profile.fadeObjectiveTrackerInDungeons
+        or self.db.profile.fadeObjectiveTrackerEverywhereElse
 end
 
-function UITweaks:ShouldCollapseObjectiveTracker()
-    return self.db.profile.collapseObjectiveTrackerInRaids
-        or self.db.profile.collapseObjectiveTrackerInDungeons
-        or self.db.profile.collapseObjectiveTrackerEverywhereElse
-end
-
-function UITweaks:ShouldCollapseObjectiveTrackerHere()
+function UITweaks:ShouldFadeObjectiveTrackerHere()
     local inInstance, instanceType = IsInInstance()
     if inInstance and instanceType == "raid" then
-        return self.db.profile.collapseObjectiveTrackerInRaids
+        return self.db.profile.fadeObjectiveTrackerInRaids
     elseif inInstance and instanceType == "party" then
-        return self.db.profile.collapseObjectiveTrackerInDungeons
+        return self.db.profile.fadeObjectiveTrackerInDungeons
     end
-    return self.db.profile.collapseObjectiveTrackerEverywhereElse
+    return self.db.profile.fadeObjectiveTrackerEverywhereElse
 end
 
-function UITweaks:HookObjectiveTrackerCollapseState()
-    if self.objectiveTrackerCollapseHooked then return end
-    if not ObjectiveTrackerFrame or not ObjectiveTrackerFrame.SetCollapsed then return end
-
-    self.objectiveTrackerCollapseHooked = true
-    hooksecurefunc(ObjectiveTrackerFrame, "SetCollapsed", function(_, collapsed)
-        if collapsed or not InCombatLockdown() then return end
-        if not UITweaks:ShouldCollapseObjectiveTrackerHere() then return end
-        if UITweaks.objectiveTrackerRecollapsePending then return end
-
-        UITweaks.objectiveTrackerRecollapsePending = true
-        C_Timer.After(0, function()
-            UITweaks.objectiveTrackerRecollapsePending = nil
-            if InCombatLockdown() and UITweaks:ShouldCollapseObjectiveTrackerHere() then
-                UITweaks:CollapseTrackerIfNeeded()
-            end
-        end)
-    end)
-end
-
-function UITweaks:CollapseTrackerIfNeeded()
-    if self:ShouldCollapseObjectiveTrackerHere() and self:EnsureObjectiveTrackerLoaded() then
-        if not self:IsObjectiveTrackerCollapsed() then
-            collapseObjectiveTracker()
-            self.trackerCollapsedByAddon = true
-        end
+function UITweaks:FadeOutObjectiveTrackerIfNeeded()
+    if self:ShouldFadeObjectiveTrackerHere() and self:EnsureObjectiveTrackerLoaded() then
+        UIFrameFadeOut(ObjectiveTrackerFrame, OBJECTIVE_TRACKER_FADE_DURATION, ObjectiveTrackerFrame:GetAlpha(), 0)
+        self.objectiveTrackerFadedByAddon = true
     end
 end
 
-function UITweaks:ExpandTrackerIfNeeded(force)
+function UITweaks:FadeInObjectiveTrackerIfNeeded(force)
     if self:EnsureObjectiveTrackerLoaded() then
-        if force or self.trackerCollapsedByAddon then
-            expandObjectiveTracker()
-            self.trackerCollapsedByAddon = false
+        if force or self.objectiveTrackerFadedByAddon then
+            UIFrameFadeIn(ObjectiveTrackerFrame, OBJECTIVE_TRACKER_FADE_DURATION, ObjectiveTrackerFrame:GetAlpha(), 1)
+            self.objectiveTrackerFadedByAddon = false
         end
     end
 end
 
 function UITweaks:UpdateObjectiveTrackerState()
-    if self:ShouldCollapseObjectiveTracker() then
+    if self:ShouldFadeObjectiveTracker() then
         if InCombatLockdown and InCombatLockdown() then
-            if self:ShouldCollapseObjectiveTrackerHere() then
-                self:CollapseTrackerIfNeeded()
+            if self:ShouldFadeObjectiveTrackerHere() then
+                self:FadeOutObjectiveTrackerIfNeeded()
             else
-                self:ExpandTrackerIfNeeded()
+                self:FadeInObjectiveTrackerIfNeeded()
             end
         else
-            self:ExpandTrackerIfNeeded()
+            self:FadeInObjectiveTrackerIfNeeded()
         end
     end
 end
