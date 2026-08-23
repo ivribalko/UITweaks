@@ -22,9 +22,7 @@ local function leaveInstanceGroup()
     end
 end
 
-local function enableGroupFinderFilterGamepadClick()
-    local panel = LFGListFrame and LFGListFrame.SearchPanel
-    local dropdown = panel and panel.FilterButton
+local function enableDropdownGamepadClick(dropdown)
     if not dropdown or dropdown.UITweaksConsolePortDropdownClick then return end
     dropdown.UITweaksConsolePortDropdownClick = true
 
@@ -40,6 +38,42 @@ local function enableGroupFinderFilterGamepadClick()
             button.UITweaksHandlingGamepadClick = nil
         end)
     end)
+end
+
+local function enableGroupFinderFilterGamepadClick()
+    local panel = LFGListFrame and LFGListFrame.SearchPanel
+    enableDropdownGamepadClick(panel and panel.FilterButton)
+end
+
+local function isModernDropdown(frame)
+    if not frame then return false end
+    if IsDropdownButtonIntrinsic then
+        return IsDropdownButtonIntrinsic(frame)
+    end
+    return frame.intrinsic == "DropdownButton"
+end
+
+local function enableAllDropdownGamepadClicks(addon)
+    if not DropdownButtonMixin or not DropdownButtonMixin.OnLoad_Intrinsic then return end
+
+    if not addon.consolePortDropdownLoadHooked then
+        hooksecurefunc(DropdownButtonMixin, "OnLoad_Intrinsic", function(dropdown)
+            if addon.db.profile.fixDropdownsForConsolePort then
+                enableDropdownGamepadClick(dropdown)
+            end
+        end)
+        addon.consolePortDropdownLoadHooked = true
+    end
+
+    if addon.consolePortDropdownsScanned or not EnumerateFrames then return end
+    addon.consolePortDropdownsScanned = true
+    local frame = EnumerateFrames()
+    while frame do
+        if isModernDropdown(frame) then
+            enableDropdownGamepadClick(frame)
+        end
+        frame = EnumerateFrames(frame)
+    end
 end
 
 local function tryOpenMythicPlusFinder()
@@ -293,6 +327,10 @@ function ConsolePortMenu.Apply(addon)
     local addLeaveButton = addon.db.profile.addLeaveInstanceGroupToConsolePortMenu
     local addMythicPlusButton = addon.db.profile.addMythicPlusFinderToConsolePortMenu
     local addSoundToggleButton = addon.db.profile.addSoundToggleToConsolePortMenu
+    local fixDropdowns = addon.db.profile.fixDropdownsForConsolePort
+    if fixDropdowns then
+        enableAllDropdownGamepadClicks(addon)
+    end
     if not addLeaveButton and not addMythicPlusButton and not addSoundToggleButton then return false end
     if addLeaveButton then
         ensureGroupWatcher(addon)

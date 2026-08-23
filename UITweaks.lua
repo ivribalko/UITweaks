@@ -181,7 +181,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self.cooldownOverlay.Apply(self)
     elseif addonName == "Immersion" then
         self.immersion.Apply(self)
-    elseif addonName == "ConsolePort_Menu" then
+    elseif addonName == "ConsolePort_Menu" or addonName == "Blizzard_Menu" then
         self.consolePortMenu.Apply(self)
     elseif addonName == "ConsolePort"
         or addonName == "ConsolePort_ActionBar"

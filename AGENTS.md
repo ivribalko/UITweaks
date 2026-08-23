@@ -40,6 +40,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Add Mythic+ Finder To ConsolePort Menu Ring — Add a Mythic+ Finder button next to ConsolePort's Group Finder button in the menu ring. It opens the Premade Groups dungeon search directly.
 - Add Sound Toggle To ConsolePort Menu Ring — Add a Sound button to ConsolePort's menu ring that toggles Settings -> Game -> Audio -> Enable Sound and shows whether sound is enabled or disabled.
 - Disable Immersion Dialog List Item Scaling — Prevent Immersion's active dialogue list items from growing when hovered or selected.
+- Fix Dropdowns For ConsolePort — Allow ConsolePort's controller X button to open modern dropdown menus throughout the UI, such as the Raid Finder raid selector and Premade Groups filter.
 - Focus Mailbox Open All Button — Focus the ConsolePort controller cursor on the mailbox's Open All button when opening the mailbox.
 - Hide ConsolePort 'New Ability Available!' Frame — Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.
 - Overlay Cooldown Manager Icons On ConsolePort Action Bar — Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.
@@ -78,7 +79,7 @@ Exceptions:
 ## Dev Notes
 
 - Addon files live in the repository root.
-- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring additions), `UITweaksDebug.lua` (debug tools/UI).
+- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring and dropdown compatibility), `UITweaksDebug.lua` (debug tools/UI).
 - Add new Lua files in the repository root and list them in `UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
