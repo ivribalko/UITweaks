@@ -7,7 +7,6 @@ ActionButton_CalculateAction = ActionButton_CalculateAction
 ActionButton_GetPagedID = ActionButton_GetPagedID
 AuraUtil = AuraUtil
 BuffBarCooldownViewer = BuffBarCooldownViewer
-BuffFrame = BuffFrame
 BuffIconCooldownViewer = BuffIconCooldownViewer
 ChatFontNormal = ChatFontNormal
 C_AddOns = C_AddOns
@@ -110,7 +109,6 @@ unpack = unpack
 -- Additional _G fields used via dynamic lookups.
 ---@class _G
 ---@field ChatFrameChannelButton any
----@field BagsBar any
 ---@field ChatFrameMenuButton any
 ---@field ConsolePort any
 ---@field ConsolePortActionBarConfig any
@@ -121,9 +119,6 @@ unpack = unpack
 ---@field GroupLootHistoryFrame any
 ---@field ImmersionAPI any
 ---@field ImmersionFrame any
----@field MicroButtonAndBagsBar any
----@field MicroMenu any
----@field MicroMenuContainer any
 ---@field OpenAllMail any
 ---@field QuickJoinToastButton any
 ---@field ShapeshiftBarFrame any

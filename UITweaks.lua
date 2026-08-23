@@ -48,7 +48,6 @@ function UITweaks:OnEnable()
     self:ApplyChatFontSize()
     self:ApplyChatBackgroundAlpha()
     self:HookHelpTipFrames()
-    self:ApplyBuffFrameHide()
     self:ApplyTargetFrameAurasHide()
     self.consumables.ApplyInventoryConsumableHighlights(self)
     self.cooldownOverlay.Apply(self)
@@ -175,10 +174,6 @@ end
 function UITweaks:ADDON_LOADED(_, addonName)
     if addonName == "Blizzard_HelpTip" then
         self:HookHelpTipFrames()
-    elseif addonName == "Blizzard_BuffFrame" then
-        self:ApplyBuffFrameHide()
-        self:ApplyVisibilityState()
-        self:ScheduleDelayedVisibilityUpdate(true)
     elseif addonName == "Blizzard_GroupLootHistory" then
         self:UpdateGroupLootHistoryVisibility()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
@@ -226,7 +221,6 @@ function UITweaks:PLAYER_REGEN_ENABLED()
 end
 
 function UITweaks:PLAYER_ENTERING_WORLD()
-    self:ApplyBuffFrameHide()
     self:ApplyVisibilityState()
     self:ScheduleDelayedVisibilityUpdate(true)
     self.consumables.RequestInventoryConsumableRefresh(self, true)
@@ -778,68 +772,6 @@ function UITweaks:UpdateObjectiveTrackerState()
     end
 end
 
-local function setBuffFrameAlpha(alpha)
-    if BuffFrame then
-        BuffFrame:SetAlpha(alpha)
-        BuffFrame:Show()
-        if BuffFrame.CollapseAndExpandButton then
-            BuffFrame.CollapseAndExpandButton:SetAlpha(alpha)
-            BuffFrame.CollapseAndExpandButton:Show()
-        end
-    end
-end
-
-local function setBuffFrameHoverPolling(enabled)
-    if not BuffFrame then return end
-    if BuffFrame.UITweaksHoverTicker then
-        BuffFrame.UITweaksHoverTicker:Cancel()
-        BuffFrame.UITweaksHoverTicker = nil
-    end
-    if not enabled then return end
-
-    BuffFrame.UITweaksHoverTicker = C_Timer.NewTicker(0.1, function()
-        if not (UITweaks.db and UITweaks.db.profile.hideBuffFrame and BuffFrame) then return end
-        local overBuffs = BuffFrame:IsMouseOver()
-        local overButton = BuffFrame.CollapseAndExpandButton and BuffFrame.CollapseAndExpandButton:IsMouseOver()
-        if overBuffs or overButton then
-            setBuffFrameAlpha(1)
-        else
-            setBuffFrameAlpha(0)
-        end
-    end)
-end
-
-local function ensureBuffFrameLoaded()
-    if BuffFrame then return true end
-    if UIParentLoadAddOn then
-        local loaded = UIParentLoadAddOn("Blizzard_BuffFrame")
-        if loaded and BuffFrame then return true end
-    end
-end
-
-function UITweaks:ApplyBuffFrameHide(retry)
-    if ensureBuffFrameLoaded() and BuffFrame then
-        if self.db.profile.hideBuffFrame then
-            if not BuffFrame.UITweaksHooked then
-                -- Keep the buff frame faded out after UI refreshes.
-                BuffFrame:HookScript("OnShow", function()
-                    if UITweaks.db and UITweaks.db.profile.hideBuffFrame then
-                        setBuffFrameAlpha(0)
-                    end
-                end)
-                BuffFrame.UITweaksHooked = true
-            end
-            setBuffFrameHoverPolling(true)
-            setBuffFrameAlpha(0)
-        else
-            setBuffFrameHoverPolling(false)
-            setBuffFrameAlpha(1)
-        end
-    elseif not retry then
-        C_Timer.After(0.5, function() self:ApplyBuffFrameHide(true) end)
-    end
-end
-
 function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
     local inCombat = forceInCombat or (InCombatLockdown and InCombatLockdown())
     local opacityKey = (inCombat or self.visibilityDelayActive)
@@ -857,34 +789,6 @@ function UITweaks:ApplyTargetFrameAurasHide()
     _G.TargetFrame.maxBuffs = 0
     _G.TargetFrame.maxDebuffs = 0
     _G.TargetFrame:UpdateAuras()
-end
-
-function UITweaks:UpdateBackpackButtonVisibility()
-    if self.bagsBarHoverTicker then
-        self.bagsBarHoverTicker:Cancel()
-        self.bagsBarHoverTicker = nil
-    end
-    if not self.db.profile.hideBackpackButton then
-        if _G.BagsBar then
-            _G.BagsBar:SetAlpha(1)
-            _G.BagsBar:Show()
-        end
-        return
-    end
-    if _G.BagsBar then
-        _G.BagsBar:SetAlpha(0)
-        _G.BagsBar:Show()
-    end
-    if _G.BagsBar then
-        self.bagsBarHoverTicker = C_Timer.NewTicker(0.1, function()
-            if not (UITweaks.db and UITweaks.db.profile.hideBackpackButton and _G.BagsBar) then return end
-            if _G.BagsBar:IsMouseOver() then
-                _G.BagsBar:SetAlpha(1)
-            else
-                _G.BagsBar:SetAlpha(0)
-            end
-        end)
-    end
 end
 
 function UITweaks:UpdateDamageMeterVisibility(retry)
@@ -1024,44 +928,6 @@ function UITweaks:UpdateConsolePortTempAbilityFrameVisibility()
             frame.UITweaksHooked = true
         end
         frame:Hide()
-    end
-end
-
-local function getMicroMenuButtons()
-    local buttons = {}
-    local function addButtonsFromParent(parent)
-        if not (parent and parent.GetChildren) then return end
-        local children = { parent:GetChildren() }
-        for _, child in ipairs(children) do
-            if child and child.IsObjectType and child:IsObjectType("Button") then
-                buttons[#buttons + 1] = child
-            elseif child and child.GetChildren then
-                addButtonsFromParent(child)
-            end
-        end
-    end
-    local parent = _G.MicroMenuContainer or _G.MicroButtonAndBagsBar or _G.MicroMenu
-    addButtonsFromParent(parent)
-    return buttons
-end
-
-function UITweaks:UpdateMicroMenuVisibility()
-    for _, button in ipairs(getMicroMenuButtons()) do
-        local name = button and button.GetName and button:GetName() or ""
-        if self.db.profile.hideMicroMenuButtons and name ~= "QueueStatusButton" then
-            if not button.UITweaksHooked then
-                button:HookScript("OnShow", function(btn)
-                    if UITweaks.db and UITweaks.db.profile.hideMicroMenuButtons then
-                        local btnName = btn and btn.GetName and btn:GetName() or ""
-                        if btnName ~= "QueueStatusButton" then
-                            btn:Hide()
-                        end
-                    end
-                end)
-                button.UITweaksHooked = true
-            end
-            button:Hide()
-        end
     end
 end
 
@@ -1886,10 +1752,8 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateChatControlButtonsVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()
     self:UpdateGroupLootHistoryVisibility()
-    self:UpdateMicroMenuVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateTotemFrameVisibility()
-    self:UpdateBackpackButtonVisibility()
 end
 
 function UITweaks:EnsureHelpTipHooks()
