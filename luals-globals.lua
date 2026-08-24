@@ -23,6 +23,7 @@ CPAPI = CPAPI
 AbbreviateNumbers = AbbreviateNumbers
 ClearAction = ClearAction
 ClearCursor = ClearCursor
+CloseAllBags = CloseAllBags
 CreateFrame = CreateFrame
 ContainerFrameUtil_EnumerateContainerFrames = ContainerFrameUtil_EnumerateContainerFrames
 DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME

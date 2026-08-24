@@ -9,6 +9,7 @@ Stock UI Tweaks is an Ace3 addon organized around a small core and focused featu
 - `UITweaksConsumables.lua` detects active consumables and updates inventory highlights.
 - `UITweaksCooldownOverlay.lua` places Blizzard Cooldown Manager icons over matching ConsolePort action buttons.
 - `UITweaksImmersion.lua` applies the optional Immersion and ConsolePort controller compatibility layer.
+- `UITweaksConsolePortBags.lua` closes all open inventory bags from ConsolePort's cancel action.
 - `UITweaksConsolePortMenu.lua` adds optional actions to ConsolePort's menu ring and applies controller compatibility to modern dropdowns.
 - `UITweaksConsolePortItemMenu.lua` adds optional commands to ConsolePort's inventory item options.
 - `UITweaksDebug.lua` contains alpha-only diagnostics and debugging UI.
@@ -22,6 +23,8 @@ AceAddon initializes the shared database, then passes the addon instance to the 
 The Cooldown Manager overlay module matches Blizzard cooldown entries to ConsolePort action buttons by spell ID. It keeps the native Blizzard item frames and their update behavior, but anchors them to the matching ConsolePort buttons through separate visibility containers so the original Cooldown Manager visibility settings still apply. Matched buttons keep their secure input frame, persistent ConsolePort frame texture, and gamepad hotkeys while their original action artwork is hidden, and each native item samples the button's effective opacity during existing overlay updates.
 
 The Immersion compatibility module activates only when its setting is enabled and both Immersion and ConsolePort are loaded. It wraps Immersion's controller command and hint methods in memory, leaving Immersion's installed files unchanged. A UI reload removes the wrappers; UITweaks reapplies them only if the setting remains enabled.
+
+The ConsolePort bags module wraps ConsolePort's cancel-handler lookup for nodes contained by Blizzard inventory bag frames. ConsolePort invokes the replacement while its cursor is anywhere within an inventory bag, closing every open bag without changing cancel behavior on other UI frames.
 
 The ConsolePort inventory item module extends ConsolePort's Triangle options in memory. For recognized weapon oils, it adds a secure command that uses the selected bag item and applies it to the main-hand equipment slot.
 

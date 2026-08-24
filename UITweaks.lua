@@ -29,6 +29,7 @@ function UITweaks:OnInitialize()
     self.consumables = type(require) == "function" and require("UITweaksConsumables") or addonTable.Consumables
     self.cooldownOverlay = type(require) == "function" and require("UITweaksCooldownOverlay") or addonTable.CooldownOverlay
     self.immersion = type(require) == "function" and require("UITweaksImmersion") or addonTable.Immersion
+    self.consolePortBags = type(require) == "function" and require("UITweaksConsolePortBags") or addonTable.ConsolePortBags
     self.consolePortMenu = type(require) == "function" and require("UITweaksConsolePortMenu") or addonTable.ConsolePortMenu
     self.consolePortItemMenu = type(require) == "function" and require("UITweaksConsolePortItemMenu") or addonTable.ConsolePortItemMenu
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
@@ -52,6 +53,7 @@ function UITweaks:OnEnable()
     self.consumables.ApplyInventoryConsumableHighlights(self)
     self.cooldownOverlay.Apply(self)
     self.immersion.Apply(self)
+    self.consolePortBags.Apply(self)
     self.consolePortMenu.Apply(self)
     self.consolePortItemMenu.Apply(self)
     self.debug.OnEnable(self)
@@ -190,6 +192,8 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self.immersion.Apply(self)
     elseif addonName == "ConsolePort_Menu" or addonName == "Blizzard_Menu" then
         self.consolePortMenu.Apply(self)
+    elseif addonName == "ConsolePort_Cursor" then
+        self.consolePortBags.Apply(self)
     elseif addonName == "ConsolePort"
         or addonName == "ConsolePort_ActionBar"
         or addonName == "ConsolePortActionBar"
@@ -250,6 +254,8 @@ function UITweaks:BAG_UPDATE_DELAYED()
 end
 
 function UITweaks:BAG_OPEN()
+    self.consolePortBags.Apply(self)
+    C_Timer.After(0, function() self.consolePortBags.Apply(self) end)
     self.consumables.RequestInventoryConsumableRefresh(self, true)
 end
 
