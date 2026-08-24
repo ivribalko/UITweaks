@@ -19,6 +19,7 @@ C_Item = C_Item
 C_Spell = C_Spell
 C_Timer = C_Timer
 C_UnitAuras = C_UnitAuras
+CPAPI = CPAPI
 AbbreviateNumbers = AbbreviateNumbers
 ClearAction = ClearAction
 ClearCursor = ClearCursor
@@ -112,6 +113,7 @@ unpack = unpack
 ---@field ChatFrameChannelButton any
 ---@field ChatFrameMenuButton any
 ---@field ConsolePort any
+---@field ConsolePortItemMenu any
 ---@field ConsolePortActionBarConfig any
 ---@field ConsolePortTempAbilityFrame any
 ---@field ConsolePortUIHandle any

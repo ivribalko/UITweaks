@@ -30,6 +30,7 @@ function UITweaks:OnInitialize()
     self.cooldownOverlay = type(require) == "function" and require("UITweaksCooldownOverlay") or addonTable.CooldownOverlay
     self.immersion = type(require) == "function" and require("UITweaksImmersion") or addonTable.Immersion
     self.consolePortMenu = type(require) == "function" and require("UITweaksConsolePortMenu") or addonTable.ConsolePortMenu
+    self.consolePortItemMenu = type(require) == "function" and require("UITweaksConsolePortItemMenu") or addonTable.ConsolePortItemMenu
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
     options.OnInitialize(self)
@@ -52,6 +53,7 @@ function UITweaks:OnEnable()
     self.cooldownOverlay.Apply(self)
     self.immersion.Apply(self)
     self.consolePortMenu.Apply(self)
+    self.consolePortItemMenu.Apply(self)
     self.debug.OnEnable(self)
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()
@@ -195,6 +197,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
         or addonName == "ConsolePort_GroupCrossbar"
     then
         self:UpdateConsolePortTempAbilityFrameVisibility()
+        self.consolePortItemMenu.Apply(self)
     end
 end
 
