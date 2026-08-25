@@ -114,6 +114,7 @@ unpack = unpack
 ---@field ChatFrameChannelButton any
 ---@field ChatFrameMenuButton any
 ---@field ConsolePort any
+---@field ConsolePortCrosshair Frame
 ---@field ConsolePortItemMenu any
 ---@field ConsolePortActionBarConfig any
 ---@field ConsolePortTempAbilityFrame any

@@ -45,6 +45,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Fix Dropdowns For ConsolePort — Allow ConsolePort's controller X button to open modern dropdown menus throughout the UI, such as the Raid Finder raid selector and Premade Groups filter.
 - Focus Mailbox Open All Button — Focus the ConsolePort controller cursor on the mailbox's Open All button when opening the mailbox.
 - Hide ConsolePort 'New Ability Available!' Frame — Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.
+- Only Show ConsolePort Crosshair In Combat — Only allow ConsolePort's crosshair to appear while in combat.
 - Overlay Cooldown Manager Icons On ConsolePort Action Bar — Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, native spell-activation glows, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.
 - Remove Active Buff Timers And Use Yellow Swipes — Hide countdown timer numbers and use the Essential Cooldown yellow swipe color on Cooldown Manager icons overlaid on the ConsolePort action bar while their buff is active. Cooldown timer numbers remain visible.
 - Respect Turn Character With Camera While Casting — Prevent ConsolePort from changing Turn Character With Camera to Always while casting, channeling, or empowering spells.
@@ -91,6 +92,7 @@ Exceptions:
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
 - Use `/reload` after code or setting changes.
 - Assume `self.db`, `self.debug`, and `self.options` always exist; do not add nil/existence guards for them.
+- Use WoW secure state drivers with the `[combat]` macro conditional for binary combat-driven frame visibility; keep combat events and lockdown checks for fades, alpha changes, and protected operations.
 - Prefer frame `OnEnter`/`OnLeave` hooks or other event-driven updates over high-frequency `C_Timer.NewTicker` polling for hover-driven UI visibility; repeated scans in 0.1s tickers can cause large CPU spikes.
 - Do not implement immediate “restore defaults on disable” behavior; require `/reload` to revert to stock UI defaults.
 - Debug panel is alpha-only and intentionally omitted from this README.

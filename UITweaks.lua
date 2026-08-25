@@ -204,6 +204,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
         or addonName == "ConsolePort_GroupCrossbar"
     then
         self:UpdateConsolePortTempAbilityFrameVisibility()
+        self:UpdateConsolePortCrosshairVisibility()
         self.consolePortMovement.Apply(self)
         self.consolePortItemMenu.Apply(self)
     end
@@ -802,6 +803,14 @@ function UITweaks:UpdateConsolePortTempAbilityFrameVisibility()
         end
         frame:Hide()
     end
+end
+
+function UITweaks:UpdateConsolePortCrosshairVisibility()
+    if not self.db.profile.onlyShowConsolePortCrosshairInCombat then return end
+    local frame = _G.ConsolePortCrosshair
+    if not frame or not frame:GetScript("OnUpdate") or frame.UITweaksCombatVisibilityDriver then return end
+    RegisterStateDriver(frame, "visibility", "[combat] show; hide")
+    frame.UITweaksCombatVisibilityDriver = true
 end
 
 local function ensureTotemBarLoaded()
@@ -1647,6 +1656,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateChatTabsVisibility()
     self:UpdateChatControlButtonsVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()
+    self:UpdateConsolePortCrosshairVisibility()
     self:UpdateCompactRaidFrameManagerVisibility()
     self:UpdateGroupLootHistoryVisibility()
     self:UpdateStanceButtonsVisibility()
