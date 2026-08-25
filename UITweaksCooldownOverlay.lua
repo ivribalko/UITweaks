@@ -174,7 +174,29 @@ local function getViewerItems(viewer)
     return items
 end
 
-local function setItemUnmatched(item, container)
+local function restoreItemTimer(addon, item)
+    local timerShown = addon.cooldownOverlayItemTimerShown[item]
+    if timerShown == nil then return end
+    item:SetTimerShown(timerShown)
+    addon.cooldownOverlayItemTimerShown[item] = nil
+end
+
+local function hideItemTimer(addon, item)
+    if not (item.SetTimerShown and item.IsTimerShown) then return end
+    if addon.cooldownOverlayItemTimerShown[item] == nil then
+        addon.cooldownOverlayItemTimerShown[item] = item:IsTimerShown()
+    end
+    item:SetTimerShown(false)
+end
+
+local function isItemShowingActiveBuff(item, viewerName)
+    if viewerName == "BuffIconCooldownViewer" then
+        return item.IsActive and item:IsActive()
+    end
+    return item.wasSetFromAura == true
+end
+
+local function setItemUnmatched(addon, item, container)
     if C_RestrictedActions
         and C_RestrictedActions.CheckAllowProtectedFunctions
         and not C_RestrictedActions.CheckAllowProtectedFunctions(item, true)
@@ -185,6 +207,7 @@ local function setItemUnmatched(item, container)
     item:ClearAllPoints()
     item:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", -1000, -1000)
     item:SetAlpha(0)
+    restoreItemTimer(addon, item)
     return true
 end
 
@@ -342,6 +365,11 @@ local function hookViewerItem(addon, item)
     item:HookScript("OnHide", function()
         CooldownOverlay.RequestUpdate(addon)
     end)
+    if item.RefreshData then
+        hooksecurefunc(item, "RefreshData", function()
+            CooldownOverlay.RequestUpdate(addon)
+        end)
+    end
 end
 
 function CooldownOverlay.Update(addon)
@@ -365,10 +393,17 @@ function CooldownOverlay.Update(addon)
                 local button = viewer:IsShown() and item:IsShown()
                     and findMatchingButton(getCooldownItemSpellIDs(item), buttons, assignedButtons)
                 if button and setItemMatched(item, container, button) then
+                    if addon.db.profile.removeTimerFromCooldownManagerOverlays
+                        and isItemShowingActiveBuff(item, viewerName)
+                    then
+                        hideItemTimer(addon, item)
+                    else
+                        restoreItemTimer(addon, item)
+                    end
                     assignedButtons[button] = true
                     matchedButtons[button] = item
                 else
-                    setItemUnmatched(item, container)
+                    setItemUnmatched(addon, item, container)
                 end
             end
         end
@@ -424,6 +459,7 @@ function CooldownOverlay.Apply(addon)
     addon.cooldownOverlayContainers = {}
     addon.cooldownOverlayMatchedButtons = {}
     addon.cooldownOverlayButtonArtwork = {}
+    addon.cooldownOverlayItemTimerShown = {}
     addon.cooldownOverlayEventFrame = CreateFrame("Frame")
     for _, eventName in ipairs(watchedEvents) do
         addon.cooldownOverlayEventFrame:RegisterEvent(eventName)

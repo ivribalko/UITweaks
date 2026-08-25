@@ -41,6 +41,7 @@ Options.defaults = {
         closeAllInventoryBagsWithConsolePortCancel = false,
         hideConsolePortTempAbilityFrame = false,
         overlayCooldownManagerOnConsolePort = false,
+        removeTimerFromCooldownManagerOverlays = false,
         consolePortBarSharing = false,
         disableImmersionDialogListItemScaling = false,
         fixDropdownsForConsolePort = false,
@@ -471,6 +472,22 @@ function Options.OnInitialize(self)
                         order = 10.1,
                         width = "full",
                     },
+                    removeTimerFromCooldownManagerOverlays = toggleOption(
+                        "removeTimerFromCooldownManagerOverlays",
+                        "Remove Active Buff Timers From Cooldown Manager Overlays",
+                        "Hide countdown timer numbers on Cooldown Manager icons overlaid on the ConsolePort action bar while their buff is active. Cooldown timer numbers remain visible.",
+                        10.2,
+                        function(val)
+                            if val then
+                                self.cooldownOverlay.RequestUpdate(self)
+                            end
+                        end,
+                        function()
+                            local consolePortLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
+                                or (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
+                            return not self.db.profile.overlayCooldownManagerOnConsolePort or not consolePortLoaded
+                        end
+                    ),
                     consolePortBarSharing = toggleOption(
                         "consolePortBarSharing",
                         "Share ConsolePort Action Bar Settings For All Characters",
