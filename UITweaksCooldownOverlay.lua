@@ -37,6 +37,10 @@ local watchedEvents = {
 
 local hotkeyKeys = { "Hotkey", "Hotkey1", "Hotkey2" }
 
+local linkedActionSpellIDs = {
+    [264173] = 264178, -- Demonic Core -> Demonbolt
+}
+
 local function canAccessValue(value)
     if issecretvalue and issecretvalue(value) then return false end
     if value == nil then return true end
@@ -67,6 +71,10 @@ end
 local function addSpellID(spellIDs, spellID)
     if not canAccessValue(spellID) or type(spellID) ~= "number" or spellID <= 0 then return end
     spellIDs[spellID] = true
+    local linkedActionSpellID = linkedActionSpellIDs[spellID]
+    if linkedActionSpellID then
+        spellIDs[linkedActionSpellID] = true
+    end
     if C_Spell and C_Spell.GetOverrideSpell then
         local overrideSpellID = C_Spell.GetOverrideSpell(spellID)
         if canAccessValue(overrideSpellID) and overrideSpellID and overrideSpellID > 0 then
