@@ -26,5 +26,6 @@ UITweaksConsumables.lua
 UITweaksCooldownOverlay.lua
 UITweaksImmersion.lua
 UITweaksConsolePortBags.lua
+UITweaksConsolePortMovement.lua
 UITweaksConsolePortMenu.lua
 UITweaksConsolePortItemMenu.lua

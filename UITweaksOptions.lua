@@ -42,6 +42,7 @@ Options.defaults = {
         hideConsolePortTempAbilityFrame = false,
         overlayCooldownManagerOnConsolePort = false,
         removeTimerFromCooldownManagerOverlays = false,
+        respectConsolePortCameraSettingWhileCasting = false,
         consolePortBarSharing = false,
         disableImmersionDialogListItemScaling = false,
         fixDropdownsForConsolePort = false,
@@ -488,11 +489,26 @@ function Options.OnInitialize(self)
                             return not self.db.profile.overlayCooldownManagerOnConsolePort or not consolePortLoaded
                         end
                     ),
+                    respectConsolePortCameraSettingWhileCasting = toggleOption(
+                        "respectConsolePortCameraSettingWhileCasting",
+                        "Respect Turn Character With Camera While Casting",
+                        "Prevent ConsolePort from changing Turn Character With Camera to Always while casting, channeling, or empowering spells.",
+                        11,
+                        function(val)
+                            if val then
+                                self.consolePortMovement.Apply(self)
+                            end
+                        end,
+                        function()
+                            return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
+                                and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
+                        end
+                    ),
                     consolePortBarSharing = toggleOption(
                         "consolePortBarSharing",
                         "Share ConsolePort Action Bar Settings For All Characters",
                         "Warning: This will overwrite your ConsolePort UI settings. When enabled, Stock UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
-                        11,
+                        12,
                         function()
                             return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
@@ -501,14 +517,14 @@ function Options.OnInitialize(self)
                     consolePortBarSharingNote = {
                         type = "description",
                         name = "Note: Enabling this setting overwrites your ConsolePort UI settings. Stock UI Tweaks saves the current layout when you log out and restores it when you log in on any character.",
-                        order = 11.1,
+                        order = 12.1,
                         width = "full",
                     },
                     useCircleToCancelImmersion = toggleOption(
                         "useCircleToCancelImmersion",
                         "Use Circle To Cancel Immersion Dialogues",
                         "Use Circle to cancel or close Immersion dialogue and Triangle to inspect items or back out of item inspection when using ConsolePort.",
-                        12,
+                        13,
                         function(val)
                             if val then
                                 self.immersion.Apply(self)
@@ -526,7 +542,7 @@ function Options.OnInitialize(self)
                         type = "execute",
                         name = "Open ConsolePort Designer",
                         desc = "Open the ConsolePort action bar configuration window.",
-                        order = 13,
+                        order = 14,
                         width = "full",
                         func = function()
                             if not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
@@ -547,7 +563,7 @@ function Options.OnInitialize(self)
                         type = "execute",
                         name = "Open Advanced Cooldown Settings",
                         desc = "Open Blizzard's Advanced Cooldown Settings on the Auras tab.",
-                        order = 14,
+                        order = 15,
                         width = "full",
                         func = function()
                             self.cooldownOverlay.OpenSettings()
