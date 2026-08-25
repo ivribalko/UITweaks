@@ -31,8 +31,8 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - In Dungeons — Fade out the objective tracker in combat while in dungeon instances.
 - Everywhere Else — Fade out the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).
 - Hide Target Frame Buffs and Debuffs — Hide all buffs and debuffs from the target frame.
-- Player and Target Frame Opacity In Combat — Set the player and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).
-- Player and Target Frame Opacity Out of Combat — Set the player and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).
+- Player and Target Frame Opacity In Combat — Set the player unit frame, player cast bar, and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).
+- Player and Target Frame Opacity Out of Combat — Set the player unit frame, player cast bar, and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).
 
 ### ConsolePort
 

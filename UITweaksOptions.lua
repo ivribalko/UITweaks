@@ -307,7 +307,7 @@ function Options.OnInitialize(self)
                     playerAndTargetFrameOpacityInCombat = rangeOption(
                         "playerAndTargetFrameOpacityInCombat",
                         "Player and Target Frame Opacity In Combat",
-                        "Set the player and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).",
+                        "Set the player unit frame, player cast bar, and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).",
                         3,
                         0,
                         100,
@@ -319,7 +319,7 @@ function Options.OnInitialize(self)
                     playerAndTargetFrameOpacityOutOfCombat = rangeOption(
                         "playerAndTargetFrameOpacityOutOfCombat",
                         "Player and Target Frame Opacity Out of Combat",
-                        "Set the player and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).",
+                        "Set the player unit frame, player cast bar, and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).",
                         4,
                         0,
                         100,

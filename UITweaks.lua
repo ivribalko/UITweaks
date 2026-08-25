@@ -630,14 +630,60 @@ function UITweaks:UpdateObjectiveTrackerState()
     end
 end
 
-function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
+function UITweaks:GetPlayerAndTargetFrameAlpha(forceInCombat)
     local inCombat = forceInCombat or (InCombatLockdown and InCombatLockdown())
     local opacityKey = inCombat
         and "playerAndTargetFrameOpacityInCombat"
         or "playerAndTargetFrameOpacityOutOfCombat"
-    local alpha = (tonumber(self.db.profile[opacityKey]) or 100) / 100
+    return (tonumber(self.db.profile[opacityKey]) or 100) / 100
+end
+
+function UITweaks:UpdatePlayerCastingBarFadeAnimationAlpha(frame, alpha)
+    if frame.FadeOutAnim then
+        local fadeAnimation = frame.FadeOutAnim:GetAnimations()
+        if fadeAnimation then
+            fadeAnimation:SetFromAlpha(alpha)
+            fadeAnimation:SetToAlpha(0)
+        end
+    end
+
+    if frame.HoldFadeOutAnim then
+        local holdAnimation, fadeAnimation = frame.HoldFadeOutAnim:GetAnimations()
+        if holdAnimation then
+            holdAnimation:SetFromAlpha(alpha)
+            holdAnimation:SetToAlpha(alpha)
+        end
+        if fadeAnimation then
+            fadeAnimation:SetFromAlpha(alpha)
+            fadeAnimation:SetToAlpha(0)
+        end
+    end
+end
+
+function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
+    local alpha = self:GetPlayerAndTargetFrameAlpha(forceInCombat)
+    local playerCastingBar = _G.PlayerCastingBarFrame
+
+    if playerCastingBar and not self.playerCastingBarOpacityHooked then
+        -- Blizzard restores the cast bar to full alpha whenever a cast starts.
+        hooksecurefunc(playerCastingBar, "ApplyAlpha", function(frame, blizzardAlpha)
+            local effectiveAlpha = blizzardAlpha * UITweaks:GetPlayerAndTargetFrameAlpha()
+            frame:SetAlpha(effectiveAlpha)
+            UITweaks:UpdatePlayerCastingBarFadeAnimationAlpha(frame, effectiveAlpha)
+            if frame.additionalFadeWidgets then
+                for widget in pairs(frame.additionalFadeWidgets) do
+                    widget:SetAlpha(effectiveAlpha)
+                end
+            end
+        end)
+        self.playerCastingBarOpacityHooked = true
+    end
 
     if PlayerFrame then PlayerFrame:SetAlpha(alpha) end
+    if playerCastingBar then
+        playerCastingBar:SetAlpha(alpha)
+        self:UpdatePlayerCastingBarFadeAnimationAlpha(playerCastingBar, alpha)
+    end
     if _G.TargetFrame then _G.TargetFrame:SetAlpha(alpha) end
 end
 

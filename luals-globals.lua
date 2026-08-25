@@ -124,6 +124,7 @@ unpack = unpack
 ---@field ImmersionAPI any
 ---@field ImmersionFrame any
 ---@field OpenAllMail any
+---@field PlayerCastingBarFrame Frame
 ---@field QuickJoinToastButton any
 ---@field ShapeshiftBarFrame any
 ---@field StanceBar any
