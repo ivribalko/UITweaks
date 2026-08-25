@@ -181,12 +181,17 @@ local function restoreItemTimer(addon, item)
     addon.cooldownOverlayItemTimerShown[item] = nil
 end
 
-local function hideItemTimer(addon, item)
+local function applyItemActiveBuffAppearance(addon, item)
     if not (item.SetTimerShown and item.IsTimerShown) then return end
     if addon.cooldownOverlayItemTimerShown[item] == nil then
         addon.cooldownOverlayItemTimerShown[item] = item:IsTimerShown()
     end
     item:SetTimerShown(false)
+
+    local cooldown = item.GetCooldownFrame and item:GetCooldownFrame()
+    if cooldown then
+        cooldown:SetSwipeColor(1, 0.95, 0.57, 0.7)
+    end
 end
 
 local function isItemShowingActiveBuff(item, viewerName)
@@ -356,10 +361,19 @@ local function hookViewer(addon, viewer)
     end)
 end
 
-local function hookViewerItem(addon, item)
+local function refreshItemActiveBuffAppearance(addon, item, viewerName)
+    if addon.db.profile.removeTimerFromCooldownManagerOverlays
+        and isItemShowingActiveBuff(item, viewerName)
+    then
+        applyItemActiveBuffAppearance(addon, item)
+    end
+end
+
+local function hookViewerItem(addon, item, viewerName)
     if item.uitweaksCooldownOverlayHooked then return end
     item.uitweaksCooldownOverlayHooked = true
     item:HookScript("OnShow", function()
+        refreshItemActiveBuffAppearance(addon, item, viewerName)
         CooldownOverlay.RequestUpdate(addon)
     end)
     item:HookScript("OnHide", function()
@@ -367,6 +381,13 @@ local function hookViewerItem(addon, item)
     end)
     if item.RefreshData then
         hooksecurefunc(item, "RefreshData", function()
+            refreshItemActiveBuffAppearance(addon, item, viewerName)
+            CooldownOverlay.RequestUpdate(addon)
+        end)
+    end
+    if item.RefreshCooldownOnly then
+        hooksecurefunc(item, "RefreshCooldownOnly", function()
+            refreshItemActiveBuffAppearance(addon, item, viewerName)
             CooldownOverlay.RequestUpdate(addon)
         end)
     end
@@ -389,14 +410,14 @@ function CooldownOverlay.Update(addon)
             hookViewer(addon, viewer)
             local container = ensureViewerContainer(addon, viewer)
             for _, item in ipairs(getViewerItems(viewer)) do
-                hookViewerItem(addon, item)
+                hookViewerItem(addon, item, viewerName)
                 local button = viewer:IsShown() and item:IsShown()
                     and findMatchingButton(getCooldownItemSpellIDs(item), buttons, assignedButtons)
                 if button and setItemMatched(item, container, button) then
                     if addon.db.profile.removeTimerFromCooldownManagerOverlays
                         and isItemShowingActiveBuff(item, viewerName)
                     then
-                        hideItemTimer(addon, item)
+                        applyItemActiveBuffAppearance(addon, item)
                     else
                         restoreItemTimer(addon, item)
                     end

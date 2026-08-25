@@ -474,8 +474,8 @@ function Options.OnInitialize(self)
                     },
                     removeTimerFromCooldownManagerOverlays = toggleOption(
                         "removeTimerFromCooldownManagerOverlays",
-                        "Remove Active Buff Timers From Cooldown Manager Overlays",
-                        "Hide countdown timer numbers on Cooldown Manager icons overlaid on the ConsolePort action bar while their buff is active. Cooldown timer numbers remain visible.",
+                        "Remove Active Buff Timers And Use Yellow Swipes",
+                        "Hide countdown timer numbers and use the Essential Cooldown yellow swipe color on Cooldown Manager icons overlaid on the ConsolePort action bar while their buff is active. Cooldown timer numbers remain visible.",
                         10.2,
                         function(val)
                             if val then
