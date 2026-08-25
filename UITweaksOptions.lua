@@ -557,7 +557,7 @@ function Options.OnInitialize(self)
                     adjustMinimapZoomBasedOnPlayerSpeed = toggleOption(
                         "adjustMinimapZoomBasedOnPlayerSpeed",
                         "Adjust Minimap Zoom Based On Player Speed",
-                        "Automatically zoom the minimap in while stationary, use one zoom level while moving or in combat, and fully zoom it out while flying.",
+                        "Smoothly zoom the minimap in while stationary, use one zoom level while moving or in combat, and fully zoom it out while flying.",
                         2,
                         function(val)
                             if val then

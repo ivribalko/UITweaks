@@ -14,6 +14,7 @@ local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 local OBJECTIVE_TRACKER_FADE_DURATION = 0.25
 local MINIMAP_SPEED_ZOOM_UPDATE_INTERVAL = 0.5
+local MINIMAP_ZOOM_EASING_DURATION = 0.45
 local SPEECH_BUBBLE_CVARS = {
     "chatBubbles",
     "chatBubblesParty",
@@ -955,6 +956,33 @@ function UITweaks:CloseOptionsPanel()
     end
 end
 
+function UITweaks:EaseMinimapZoomTo(desiredZoom)
+    local startingZoom = Minimap:GetZoom()
+    self.minimapSpeedZoomTarget = desiredZoom
+    self.minimapSpeedZoomAnimationID = (self.minimapSpeedZoomAnimationID or 0) + 1
+    local animationID = self.minimapSpeedZoomAnimationID
+
+    if startingZoom == desiredZoom then
+        self.minimapSpeedZoomLevel = desiredZoom
+        return
+    end
+
+    local direction = desiredZoom > startingZoom and 1 or -1
+    local stepCount = math.abs(desiredZoom - startingZoom)
+    for step = 1, stepCount do
+        local progress = step / stepCount
+        local easedTime = math.acos(1 - (2 * progress)) / math.pi
+        local zoomLevel = startingZoom + (direction * step)
+        C_Timer.After(MINIMAP_ZOOM_EASING_DURATION * easedTime, function()
+            if self.minimapSpeedZoomAnimationID ~= animationID then return end
+            if not self.db.profile.adjustMinimapZoomBasedOnPlayerSpeed then return end
+
+            self.minimapSpeedZoomLevel = zoomLevel
+            Minimap:SetZoom(zoomLevel)
+        end)
+    end
+end
+
 function UITweaks:UpdateMinimapZoomForPlayerSpeed()
     local maximumZoom = math.max(0, Minimap:GetZoomLevels() - 1)
     local walkRunZoom = math.floor((maximumZoom * 0.6) + 0.5)
@@ -981,14 +1009,14 @@ function UITweaks:UpdateMinimapZoomForPlayerSpeed()
         end
     end
 
-    if desiredZoom == self.minimapSpeedZoomLevel then return end
-    self.minimapSpeedZoomLevel = desiredZoom
-    Minimap:SetZoom(desiredZoom)
+    if desiredZoom == self.minimapSpeedZoomTarget then return end
+    self:EaseMinimapZoomTo(desiredZoom)
 end
 
 function UITweaks:StartMinimapSpeedZoomMonitor()
     if self.minimapSpeedZoomTicker or not self.db.profile.adjustMinimapZoomBasedOnPlayerSpeed then return end
     self.minimapSpeedZoomLevel = nil
+    self.minimapSpeedZoomTarget = nil
     self:UpdateMinimapZoomForPlayerSpeed()
     self.minimapSpeedZoomTicker = C_Timer.NewTicker(MINIMAP_SPEED_ZOOM_UPDATE_INTERVAL, function()
         self:UpdateMinimapZoomForPlayerSpeed()
@@ -1000,7 +1028,9 @@ function UITweaks:StopMinimapSpeedZoomMonitor()
         self.minimapSpeedZoomTicker:Cancel()
         self.minimapSpeedZoomTicker = nil
     end
+    self.minimapSpeedZoomAnimationID = (self.minimapSpeedZoomAnimationID or 0) + 1
     self.minimapSpeedZoomLevel = nil
+    self.minimapSpeedZoomTarget = nil
 end
 
 function UITweaks:UpdateMinimapButtonPosition()
