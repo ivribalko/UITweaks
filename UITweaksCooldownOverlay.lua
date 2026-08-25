@@ -24,11 +24,14 @@ local watchedEvents = {
     "ADDON_RESTRICTION_STATE_CHANGED",
     "ACTIONBAR_SLOT_CHANGED",
     "COOLDOWN_VIEWER_DATA_LOADED",
+    "COOLDOWN_VIEWER_SPELL_OVERRIDE_UPDATED",
     "COOLDOWN_VIEWER_TABLE_HOTFIXED",
     "PLAYER_ENTERING_WORLD",
     "PLAYER_PVP_TALENT_UPDATE",
     "PLAYER_REGEN_ENABLED",
     "PLAYER_SPECIALIZATION_CHANGED",
+    "SPELL_ACTIVATION_OVERLAY_GLOW_HIDE",
+    "SPELL_ACTIVATION_OVERLAY_GLOW_SHOW",
     "SPELLS_CHANGED",
     "TRAIT_CONFIG_UPDATED",
     "UPDATE_MACROS",
@@ -38,7 +41,9 @@ local watchedEvents = {
 local hotkeyKeys = { "Hotkey", "Hotkey1", "Hotkey2" }
 
 local linkedActionSpellIDs = {
-    [264173] = 264178, -- Demonic Core -> Demonbolt
+    [264173] = { 264178 }, -- Demonic Core -> Demonbolt
+    [433885] = { 105174, 116858, 434636, 1250197 }, -- Ruination aura -> Hand of Gul'dan, Chaos Bolt, Ruination, Eye of Gul'dan
+    [433891] = { 686, 29722, 434506 }, -- Infernal Bolt aura -> Shadow Bolt, Incinerate, Infernal Bolt
 }
 
 local function canAccessValue(value)
@@ -70,15 +75,18 @@ end
 
 local function addSpellID(spellIDs, spellID)
     if not canAccessValue(spellID) or type(spellID) ~= "number" or spellID <= 0 then return end
+    if spellIDs[spellID] then return end
     spellIDs[spellID] = true
-    local linkedActionSpellID = linkedActionSpellIDs[spellID]
-    if linkedActionSpellID then
-        spellIDs[linkedActionSpellID] = true
+    local actionSpellIDs = linkedActionSpellIDs[spellID]
+    if actionSpellIDs then
+        for _, actionSpellID in ipairs(actionSpellIDs) do
+            addSpellID(spellIDs, actionSpellID)
+        end
     end
     if C_Spell and C_Spell.GetOverrideSpell then
         local overrideSpellID = C_Spell.GetOverrideSpell(spellID)
         if canAccessValue(overrideSpellID) and overrideSpellID and overrideSpellID > 0 then
-            spellIDs[overrideSpellID] = true
+            addSpellID(spellIDs, overrideSpellID)
         end
     end
 end
@@ -138,13 +146,16 @@ local function getConsolePortButtonSpellID(button)
     end
 end
 
+local function isConsolePortActionButton(frame)
+    local signature = frame.GetAttribute and frame:GetAttribute("signature")
+    return canAccessValue(signature)
+        and type(signature) == "string"
+        and (signature:match("^ClusterButton:") or signature:match("^GroupButton:"))
+end
+
 local function collectConsolePortButtons(frame, buttons)
     for _, child in ipairs({ frame:GetChildren() }) do
-        local signature = child.GetAttribute and child:GetAttribute("signature")
-        if canAccessValue(signature)
-            and type(signature) == "string"
-            and (signature:match("^ClusterButton:") or signature:match("^GroupButton:"))
-        then
+        if isConsolePortActionButton(child) then
             buttons[#buttons + 1] = child
         end
         collectConsolePortButtons(child, buttons)
@@ -232,6 +243,17 @@ local function isConsolePortHotkey(button, frame)
     return false
 end
 
+local function isConsolePortGlow(button, frame)
+    return button.__LBGoverlay == frame
+end
+
+local function raiseConsolePortGlow(button, frameLevel)
+    local overlay = button.__LBGoverlay
+    if overlay then
+        overlay:SetFrameLevel(frameLevel)
+    end
+end
+
 local function hideButtonArtwork(addon, button)
     local states = addon.cooldownOverlayButtonArtwork[button]
     if not states then
@@ -249,7 +271,7 @@ local function hideButtonArtwork(addon, button)
         end
     end
     for _, child in ipairs({ button:GetChildren() }) do
-        if not isConsolePortHotkey(button, child) then
+        if not isConsolePortHotkey(button, child) and not isConsolePortGlow(button, child) then
             if states[child] == nil then
                 states[child] = child:GetAlpha()
             end
@@ -282,6 +304,7 @@ local function setItemMatched(item, container, button)
     item:SetAlpha(button:GetEffectiveAlpha())
     item:SetFrameStrata(button:GetFrameStrata())
     item:SetFrameLevel(button:GetFrameLevel() + 20)
+    raiseConsolePortGlow(button, item:GetFrameLevel() + 10)
     raiseConsolePortHotkeys(button, item:GetFrameLevel() + 20)
     return true
 end

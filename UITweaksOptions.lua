@@ -455,7 +455,7 @@ function Options.OnInitialize(self)
                     overlayCooldownManagerOnConsolePort = toggleOption(
                         "overlayCooldownManagerOnConsolePort",
                         "Overlay Cooldown Manager Icons On ConsolePort Action Bar",
-                        "Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.",
+                        "Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, native spell-activation glows, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.",
                         10,
                         function(val)
                             if val then
