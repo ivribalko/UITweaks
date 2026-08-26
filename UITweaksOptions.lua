@@ -13,6 +13,7 @@ Options.defaults = {
         hideTargetFrameAuras = false,
         playerAndTargetFrameOpacityInCombat = 100,
         playerAndTargetFrameOpacityOutOfCombat = 100,
+        showGlobalCooldownOnPlayerCastBar = false,
         hideChatTabs = false,
         hideAllSpeechBubbles = false,
         hideChatMenuButton = false,
@@ -326,6 +327,17 @@ function Options.OnInitialize(self)
                         1,
                         function()
                             self:UpdatePlayerAndTargetFrameOpacity()
+                        end
+                    ),
+                    showGlobalCooldownOnPlayerCastBar = toggleOption(
+                        "showGlobalCooldownOnPlayerCastBar",
+                        "Show Global Cooldown On Player Cast Bar",
+                        "Show the global cooldown on the player cast bar after using an instant spell when no cast or channel is active, and hide the global cooldown overlay on ConsolePort action buttons.",
+                        5,
+                        function(val)
+                            if val then
+                                self.cooldownOverlay.ApplyConsolePortGlobalCooldownVisibility(self)
+                            end
                         end
                     ),
                 },

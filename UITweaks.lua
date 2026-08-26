@@ -13,6 +13,7 @@ local ABANDON_QUEST_MACRO_BODY = "/uitabandonquest"
 local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 local OBJECTIVE_TRACKER_FADE_DURATION = 0.25
+local GLOBAL_COOLDOWN_SPELL_ID = 61304
 local MINIMAP_SPEED_ZOOM_UPDATE_INTERVAL = 0.5
 local MINIMAP_ZOOM_EASING_DURATION = 0.45
 local SPEECH_BUBBLE_CVARS = {
@@ -50,10 +51,12 @@ function UITweaks:OnEnable()
     self:ApplyChatBackgroundAlpha()
     self:ApplySpeechBubbleVisibility()
     self:ApplyPartyAndRaidFrameScale()
+    self:CreateGlobalCooldownCastBarEventFrame()
     self:HookHelpTipFrames()
     self:ApplyTargetFrameAurasHide()
     self.consumables.ApplyInventoryConsumableHighlights(self)
     self.cooldownOverlay.Apply(self)
+    self.cooldownOverlay.ApplyConsolePortGlobalCooldownVisibility(self)
     self.immersion.Apply(self)
     self.consolePortBags.Apply(self)
     self.consolePortMovement.Apply(self)
@@ -74,6 +77,7 @@ function UITweaks:OnEnable()
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     self:RegisterEvent("BAG_UPDATE_DELAYED")
     self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+    self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
     self:RegisterEvent("UNIT_AURA")
     self:RegisterEvent("NAVIGATION_FRAME_CREATED")
     self:RegisterEvent("WEAPON_ENCHANT_CHANGED")
@@ -191,6 +195,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self:UpdateTotemFrameVisibility()
     elseif addonName == "Blizzard_CooldownViewer" or addonName == "ConsolePort_Bar" then
         self.cooldownOverlay.Apply(self)
+        self.cooldownOverlay.ApplyConsolePortGlobalCooldownVisibility(self)
     elseif addonName == "Immersion" then
         self.immersion.Apply(self)
     elseif addonName == "ConsolePort_Menu" or addonName == "Blizzard_Menu" then
@@ -318,6 +323,65 @@ end
 
 function UITweaks:PLAYER_TARGET_CHANGED()
     self:UpdatePlayerAndTargetFrameOpacity()
+end
+
+function UITweaks:CreateGlobalCooldownCastBarEventFrame()
+    local eventFrame = CreateFrame("Frame")
+    eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+    eventFrame:SetScript("OnEvent", function(_, _, _, _, _, castBarID)
+        self:HandlePlayerSpellcastSucceeded(castBarID)
+    end)
+    self.globalCooldownCastBarEventFrame = eventFrame
+end
+
+function UITweaks:HandlePlayerSpellcastSucceeded(castBarID)
+    local playerCastingBar = _G.PlayerCastingBarFrame
+    if not self.db.profile.showGlobalCooldownOnPlayerCastBar
+        or not playerCastingBar
+        or castBarID
+        or playerCastingBar.casting
+        or playerCastingBar.channeling
+        or playerCastingBar.reverseChanneling
+    then
+        return
+    end
+    self.pendingGlobalCooldown = true
+    C_Timer.After(0, function()
+        if self.pendingGlobalCooldown then self:SPELL_UPDATE_COOLDOWN() end
+    end)
+end
+
+function UITweaks:SPELL_UPDATE_COOLDOWN()
+    self.cooldownOverlay.UpdateConsolePortGlobalCooldownVisibility(self)
+    if not self.pendingGlobalCooldown then return end
+
+    self.pendingGlobalCooldown = nil
+    if not self.db.profile.showGlobalCooldownOnPlayerCastBar then return end
+
+    local cooldownInfo = C_Spell.GetSpellCooldown(GLOBAL_COOLDOWN_SPELL_ID)
+    if not cooldownInfo or not cooldownInfo.isActive then return end
+
+    local startTime = cooldownInfo.startTime
+    local duration = cooldownInfo.duration
+    local modRate = cooldownInfo.modRate
+    if issecretvalue
+        and (issecretvalue(startTime) or issecretvalue(duration) or issecretvalue(modRate))
+    then
+        return
+    end
+    if type(startTime) ~= "number"
+        or type(duration) ~= "number"
+        or type(modRate) ~= "number"
+        or modRate <= 0
+    then
+        return
+    end
+
+    local maxValue = duration / modRate
+    local value = GetTime() - startTime
+    if maxValue <= 0 or value < 0 or value >= maxValue then return end
+
+    self:ShowGlobalCooldownOnPlayerCastBar(value, maxValue)
 end
 
 function UITweaks:UNIT_AURA(_, unit)
@@ -660,6 +724,35 @@ function UITweaks:UpdatePlayerCastingBarFadeAnimationAlpha(frame, alpha)
     end
 end
 
+function UITweaks:ShowGlobalCooldownOnPlayerCastBar(value, maxValue)
+    local frame = _G.PlayerCastingBarFrame
+    if not frame or frame.casting or frame.channeling or frame.reverseChanneling then return end
+
+    frame.UITweaksShowingGlobalCooldown = true
+    frame.barType = _G.CastingBarType.Standard
+    frame.castID = nil
+    frame.spellID = nil
+    frame.value = value
+    frame.maxValue = maxValue
+    frame:SetMinMaxValues(0, maxValue)
+    frame:SetValue(value)
+    frame:UpdateBarFillTexture(false)
+    frame:ClearStages()
+    frame:ShowSpark()
+    if frame.Flash then
+        frame.Flash:SetAlpha(0)
+        frame.Flash:Hide()
+    end
+    if frame.Text then frame.Text:SetText("Global Cooldown") end
+
+    frame.casting = true
+    frame.channeling = nil
+    frame.reverseChanneling = nil
+    frame:StopAnims()
+    frame:ApplyAlpha(1)
+    frame:UpdateShownState(frame:ShouldShowCastBar())
+end
+
 function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
     local alpha = self:GetPlayerAndTargetFrameAlpha(forceInCombat)
     local playerCastingBar = _G.PlayerCastingBarFrame
@@ -675,6 +768,12 @@ function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
                     widget:SetAlpha(effectiveAlpha)
                 end
             end
+        end)
+        hooksecurefunc(playerCastingBar, "HandleCastStart", function(frame)
+            frame.UITweaksShowingGlobalCooldown = nil
+        end)
+        hooksecurefunc(playerCastingBar, "FinishSpell", function(frame)
+            frame.UITweaksShowingGlobalCooldown = nil
         end)
         self.playerCastingBarOpacityHooked = true
     end

@@ -173,6 +173,24 @@ local function getConsolePortButtons()
     return buttons
 end
 
+local function hideButtonGlobalCooldown(addon, button)
+    if not addon.db.profile.showGlobalCooldownOnPlayerCastBar or not button.GetCooldownInfo then return end
+    local cooldownInfo = button:GetCooldownInfo()
+    if issecretvalue and issecretvalue(cooldownInfo) then return end
+    if not cooldownInfo or cooldownInfo.isOnGCD ~= true then return end
+    if button.cooldown and button.cooldown.Clear then button.cooldown:Clear() end
+end
+
+local function hookButtonGlobalCooldown(addon, button)
+    if button.uitweaksGlobalCooldownHooked then return end
+    local cooldown = button.cooldown
+    if not (cooldown and cooldown.SetCooldownFromDurationObject) then return end
+    button.uitweaksGlobalCooldownHooked = true
+    hooksecurefunc(cooldown, "SetCooldownFromDurationObject", function()
+        hideButtonGlobalCooldown(addon, button)
+    end)
+end
+
 local function getViewerItems(viewer)
     local items = {}
     if not (viewer and viewer.itemFramePool) then return items end
@@ -469,6 +487,20 @@ function CooldownOverlay.RequestUpdate(addon)
         addon.cooldownOverlayUpdatePending = false
         CooldownOverlay.Update(addon)
     end)
+end
+
+function CooldownOverlay.UpdateConsolePortGlobalCooldownVisibility(addon)
+    if not addon.db.profile.showGlobalCooldownOnPlayerCastBar then return end
+    for _, button in ipairs(getConsolePortButtons()) do
+        hookButtonGlobalCooldown(addon, button)
+        hideButtonGlobalCooldown(addon, button)
+    end
+end
+
+function CooldownOverlay.ApplyConsolePortGlobalCooldownVisibility(addon)
+    if not addon.db.profile.showGlobalCooldownOnPlayerCastBar then return end
+    if not loadAddOn("ConsolePort_Bar") then return end
+    CooldownOverlay.UpdateConsolePortGlobalCooldownVisibility(addon)
 end
 
 function CooldownOverlay.OpenSettings()
