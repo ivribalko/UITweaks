@@ -13,6 +13,7 @@ local ABANDON_QUEST_MACRO_BODY = "/uitabandonquest"
 local NEXT_QUEST_MACRO_BODY = "/uitnextquest"
 local PREVIOUS_QUEST_MACRO_BODY = "/uitprevquest"
 local OBJECTIVE_TRACKER_FADE_DURATION = 0.25
+local GLOBAL_COOLDOWN_FILL_GRAY = 0.45
 local GLOBAL_COOLDOWN_SPELL_ID = 61304
 local MINIMAP_SPEED_ZOOM_UPDATE_INTERVAL = 0.5
 local MINIMAP_ZOOM_EASING_DURATION = 0.45
@@ -724,6 +725,14 @@ function UITweaks:UpdatePlayerCastingBarFadeAnimationAlpha(frame, alpha)
     end
 end
 
+function UITweaks:ApplyGlobalCooldownCastBarAppearance(frame)
+    frame:SetColorFill(GLOBAL_COOLDOWN_FILL_GRAY, GLOBAL_COOLDOWN_FILL_GRAY, GLOBAL_COOLDOWN_FILL_GRAY, 1)
+    frame:HideSpark()
+    if frame.FlashAnim then frame.FlashAnim:Stop() end
+    if frame.StandardFinish then frame.StandardFinish:Stop() end
+    if frame.Flash then frame.Flash:Hide() end
+end
+
 function UITweaks:ShowGlobalCooldownOnPlayerCastBar(value, maxValue)
     local frame = _G.PlayerCastingBarFrame
     if not frame or frame.casting or frame.channeling or frame.reverseChanneling then return end
@@ -738,17 +747,13 @@ function UITweaks:ShowGlobalCooldownOnPlayerCastBar(value, maxValue)
     frame:SetValue(value)
     frame:UpdateBarFillTexture(false)
     frame:ClearStages()
-    frame:ShowSpark()
-    if frame.Flash then
-        frame.Flash:SetAlpha(0)
-        frame.Flash:Hide()
-    end
-    if frame.Text then frame.Text:SetText("Global Cooldown") end
+    if frame.Text then frame.Text:SetText("") end
 
     frame.casting = true
     frame.channeling = nil
     frame.reverseChanneling = nil
     frame:StopAnims()
+    self:ApplyGlobalCooldownCastBarAppearance(frame)
     frame:ApplyAlpha(1)
     frame:UpdateShownState(frame:ShouldShowCastBar())
 end
@@ -773,7 +778,11 @@ function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
             frame.UITweaksShowingGlobalCooldown = nil
         end)
         hooksecurefunc(playerCastingBar, "FinishSpell", function(frame)
+            local wasShowingGlobalCooldown = frame.UITweaksShowingGlobalCooldown
             frame.UITweaksShowingGlobalCooldown = nil
+            if wasShowingGlobalCooldown then
+                UITweaks:ApplyGlobalCooldownCastBarAppearance(frame)
+            end
         end)
         self.playerCastingBarOpacityHooked = true
     end

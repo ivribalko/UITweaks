@@ -33,7 +33,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Hide Target Frame Buffs and Debuffs — Hide all buffs and debuffs from the target frame.
 - Player and Target Frame Opacity In Combat — Set the player unit frame, player cast bar, and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).
 - Player and Target Frame Opacity Out of Combat — Set the player unit frame, player cast bar, and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).
-- Show Global Cooldown On Player Cast Bar — Show the global cooldown on the player cast bar after using an instant spell when no cast or channel is active, and hide the global cooldown overlay on ConsolePort action buttons.
+- Show Global Cooldown On Player Cast Bar — Show the global cooldown as a muted gray bar on the player cast bar after using an instant spell when no cast or channel is active, and hide the global cooldown overlay on ConsolePort action buttons.
 
 ### ConsolePort
 

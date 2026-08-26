@@ -332,7 +332,7 @@ function Options.OnInitialize(self)
                     showGlobalCooldownOnPlayerCastBar = toggleOption(
                         "showGlobalCooldownOnPlayerCastBar",
                         "Show Global Cooldown On Player Cast Bar",
-                        "Show the global cooldown on the player cast bar after using an instant spell when no cast or channel is active, and hide the global cooldown overlay on ConsolePort action buttons.",
+                        "Show the global cooldown as a muted gray bar on the player cast bar after using an instant spell when no cast or channel is active, and hide the global cooldown overlay on ConsolePort action buttons.",
                         5,
                         function(val)
                             if val then
