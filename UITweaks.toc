@@ -29,3 +29,4 @@ UITweaksConsolePortBags.lua
 UITweaksConsolePortMovement.lua
 UITweaksConsolePortMenu.lua
 UITweaksConsolePortItemMenu.lua
+UITweaksAggroRadius.lua

@@ -54,6 +54,7 @@ Options.defaults = {
         alwaysShowQuestMarkerDistance = false,
         adjustMinimapZoomBasedOnPlayerSpeed = false,
         highlightActiveConsumablesInInventory = false,
+        showMobAggroRadiusOnMouseOverOutOfCombat = false,
         minimapPos = 225,
     },
     global = {
@@ -722,6 +723,15 @@ function Options.OnInitialize(self)
                             else
                                 self:StopSkyridingBarMonitor()
                             end
+                        end
+                    ),
+                    showMobAggroRadiusOnMouseOverOutOfCombat = toggleOption(
+                        "showMobAggroRadiusOnMouseOverOutOfCombat",
+                        "Show Mob Aggro Radius On Mouse Over Out Of Combat",
+                        "Show the estimated distance remaining before entering a hostile mob's aggro radius in its tooltip when you mouse over it while out of combat.",
+                        12,
+                        function(val)
+                            if val then self.aggroRadius.Apply(self) end
                         end
                     ),
                 },
