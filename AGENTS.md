@@ -16,7 +16,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 
 ### Chat
 
-- Auto-Hide Chat Tabs — Auto-Hide chat tab titles until you mouse over them. Set Options -> Social -> New Whispers: In-line to prevent new tabs from appearing.
+- Auto-Hide Chat Tabs — Auto-Hide chat tab titles, including newly created tabs, until you mouse over them.
 - Hide All Speech Bubbles — Hide all native world-space speech bubbles from players and NPCs. Separate Talking Head, gossip, quest, and raid warning UI remains visible.
 - Hide Chat Bubble Button — Auto-hide the chat button with the speech bubble icon until you mouse over the chat buttons area.
 - Hide Chat Channels Button — Auto-hide the chat button that opens the channel list until you mouse over the chat buttons area.

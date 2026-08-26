@@ -703,18 +703,9 @@ function UITweaks:UpdateChatTabsVisibility()
         self.chatTabsHoverTicker:Cancel()
         self.chatTabsHoverTicker = nil
     end
-    local function isChatWindowActive(index, tab)
-        if FCF_IsChatWindowIndexActive then
-            return FCF_IsChatWindowIndexActive(index)
-        end
-        if tab and tab.IsShown then
-            return tab:IsShown()
-        end
-        return false
-    end
-    for i = 1, NUM_CHAT_WINDOWS do
-        local tabName = "ChatFrame" .. i .. "Tab"
-        local tab = _G[tabName]
+
+    local function updateTab(tab)
+        local tabName = tab:GetName()
         if tab and not tab.UITweaksHooked then
             -- Keep tabs faded out even when hover/OnShow tries to reveal them.
             tab:HookScript("OnShow", function(frame)
@@ -724,24 +715,43 @@ function UITweaks:UpdateChatTabsVisibility()
             end)
             tab.UITweaksHooked = true
         end
-        if tab then
-            if self.db.profile.hideChatTabs then
-                if isChatWindowActive(i, tab) then
-                    tab:SetAlpha(0)
-                    self.hiddenChatTabs[tabName] = true
-                end
-            else
-                tab:SetAlpha(1)
-                self.hiddenChatTabs[tabName] = nil
-            end
+
+        if self.db.profile.hideChatTabs then
+            tab:SetAlpha(tab:IsMouseOver() and 1 or 0)
+            self.hiddenChatTabs[tabName] = true
+        else
+            tab:SetAlpha(1)
+            self.hiddenChatTabs[tabName] = nil
         end
     end
+
+    if not self.chatTabCreationHooked then
+        hooksecurefunc("FCF_SetWindowName", function(chatFrame)
+            local tab = chatFrame and _G[chatFrame:GetName() .. "Tab"]
+            if tab then updateTab(tab) end
+        end)
+        self.chatTabCreationHooked = true
+    end
+
+    for i = 1, NUM_CHAT_WINDOWS do
+        local tab = _G["ChatFrame" .. i .. "Tab"]
+        if tab then updateTab(tab) end
+    end
+
+    if not self.db.profile.hideChatTabs then
+        for tabName in pairs(self.hiddenChatTabs) do
+            local tab = _G[tabName]
+            if tab then tab:SetAlpha(1) end
+            self.hiddenChatTabs[tabName] = nil
+        end
+    end
+
     if self.db.profile.hideChatTabs then
         self.chatTabsHoverTicker = C_Timer.NewTicker(0.1, function()
             if not (UITweaks.db and UITweaks.db.profile.hideChatTabs) then return end
-            for i = 1, NUM_CHAT_WINDOWS do
-                local tab = _G["ChatFrame" .. i .. "Tab"]
-                if tab and isChatWindowActive(i, tab) then
+            for tabName in pairs(UITweaks.hiddenChatTabs) do
+                local tab = _G[tabName]
+                if tab then
                     if tab:IsMouseOver() then
                         tab:SetAlpha(1)
                     else
