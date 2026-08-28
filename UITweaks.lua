@@ -36,6 +36,7 @@ function UITweaks:OnInitialize()
     self.consolePortMenu = type(require) == "function" and require("UITweaksConsolePortMenu") or addonTable.ConsolePortMenu
     self.consolePortItemMenu = type(require) == "function" and require("UITweaksConsolePortItemMenu") or addonTable.ConsolePortItemMenu
     self.aggroRadius = type(require) == "function" and require("UITweaksAggroRadius") or addonTable.AggroRadius
+    self.playerFrameDebuffs = type(require) == "function" and require("UITweaksPlayerFrameDebuffs") or addonTable.PlayerFrameDebuffs
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
     options.OnInitialize(self)
@@ -63,6 +64,7 @@ function UITweaks:OnEnable()
     self.consolePortMenu.Apply(self)
     self.consolePortItemMenu.Apply(self)
     self.aggroRadius.Apply(self)
+    self.playerFrameDebuffs.Apply(self)
     self.debug.OnEnable(self)
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()

@@ -33,6 +33,8 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Hide Target Frame Buffs and Debuffs — Hide all buffs and debuffs from the target frame.
 - Player and Target Frame Opacity In Combat — Set the player unit frame, player cast bar, and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).
 - Player and Target Frame Opacity Out of Combat — Set the player unit frame, player cast bar, and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).
+- Show Raid Frame Debuffs On My Player Frame — Show debuffs that Blizzard displays on raid frames in Blizzard's secure debuff-type gradient overlay over the player name, health bar, and mana bar.
+- Test Player Frame Debuff Colors — Cycle through the gradient overlays for Magic, Curse, Disease, Poison, and Bleed.
 
 ### ConsolePort
 
@@ -88,7 +90,7 @@ Exceptions:
 ## Dev Notes
 
 - Addon files live in the repository root.
-- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksAggroRadius.lua` (mouseover mob aggro radius estimates), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortBags.lua` (ConsolePort inventory bag cancel behavior), `UITweaksConsolePortTabs.lua` (ConsolePort tab controls), `UITweaksConsolePortMovement.lua` (ConsolePort casting camera compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring and dropdown compatibility), `UITweaksConsolePortItemMenu.lua` (ConsolePort inventory item options), `UITweaksDebug.lua` (debug tools/UI).
+- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksAggroRadius.lua` (mouseover mob aggro radius estimates), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortBags.lua` (ConsolePort inventory bag cancel behavior), `UITweaksConsolePortTabs.lua` (ConsolePort tab controls), `UITweaksConsolePortMovement.lua` (ConsolePort casting camera compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring and dropdown compatibility), `UITweaksConsolePortItemMenu.lua` (ConsolePort inventory item options), `UITweaksPlayerFrameDebuffs.lua` (raid-frame debuffs over the player frame), `UITweaksDebug.lua` (debug tools/UI).
 - Add new Lua files in the repository root and list them in `UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`

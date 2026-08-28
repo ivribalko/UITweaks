@@ -19,6 +19,7 @@ C_Item = C_Item
 C_Spell = C_Spell
 C_Timer = C_Timer
 C_UnitAuras = C_UnitAuras
+CompactRaidGroupTypeEnum = CompactRaidGroupTypeEnum
 CPAPI = CPAPI
 AbbreviateNumbers = AbbreviateNumbers
 ClearAction = ClearAction

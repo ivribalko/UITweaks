@@ -11,6 +11,7 @@ Options.defaults = {
     profile = {
         hideHelpTips = false,
         hideTargetFrameAuras = false,
+        showRaidFrameDebuffsOnPlayerFrame = false,
         playerAndTargetFrameOpacityInCombat = 100,
         playerAndTargetFrameOpacityOutOfCombat = 100,
         hideChatTabs = false,
@@ -335,6 +336,25 @@ function Options.OnInitialize(self)
                             self:UpdatePlayerAndTargetFrameOpacity()
                         end
                     ),
+                    showRaidFrameDebuffsOnPlayerFrame = toggleOption(
+                        "showRaidFrameDebuffsOnPlayerFrame",
+                        "Show Raid Frame Debuffs On My Player Frame",
+                        "Show debuffs that Blizzard displays on raid frames in Blizzard's secure debuff-type gradient overlay over the player name, health bar, and mana bar.",
+                        5,
+                        function()
+                            self.playerFrameDebuffs.UpdateVisibility(self)
+                        end
+                    ),
+                    testPlayerFrameDebuffColors = {
+                        type = "execute",
+                        name = "Test Player Frame Debuff Colors",
+                        desc = "Cycle through the gradient overlays for Magic, Curse, Disease, Poison, and Bleed.",
+                        order = 6,
+                        width = "full",
+                        func = function()
+                            self.playerFrameDebuffs.TestColors(self)
+                        end,
+                    },
                 },
             },
             consolePortSettings = {

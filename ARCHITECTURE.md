@@ -15,6 +15,7 @@ Stock UI Tweaks is an Ace3 addon organized around a small core and focused featu
 - `UITweaksConsolePortMovement.lua` prevents ConsolePort from overriding its camera-facing preference during spell casts.
 - `UITweaksConsolePortMenu.lua` adds optional actions to ConsolePort's menu ring and applies controller compatibility to modern dropdowns.
 - `UITweaksConsolePortItemMenu.lua` adds optional commands to ConsolePort's inventory item options.
+- `UITweaksPlayerFrameDebuffs.lua` places Blizzard's secure raid-frame debuff display over the player health bar.
 - `UITweaksDebug.lua` contains alpha-only diagnostics and debugging UI.
 - `Libs/` contains embedded Ace3 dependencies.
 - `Textures/` and the root icon files contain addon artwork.
@@ -38,5 +39,7 @@ The ConsolePort tabs module listens for L1 and R1 only while a supported window 
 The ConsolePort movement module suppresses ConsolePort's temporary cast, channel, and empowered-cast handlers that force character facing to follow the camera. Vehicle-specific camera behavior remains unchanged.
 
 The ConsolePort inventory item module extends ConsolePort's Triangle options in memory. For recognized weapon oils, it adds a secure command that uses the selected bag item and applies it to the main-hand equipment slot.
+
+The player-frame debuff module registers a secure Blizzard private-aura container for the player unit so Blizzard renders and updates the raid-frame debuff icons and debuff-type gradient spanning the player name, health bar, and mana bar, including for restricted encounter auras. The labeled Combat settings preview is separate because WoW does not expose secret combat-aura names to addon code.
 
 The minimap shortcut registers through LibDataBroker and LibDBIcon when another enabled addon provides those libraries, allowing minimap managers to discover it through standard callbacks. A standalone button provides the same shortcut when those libraries are unavailable.
