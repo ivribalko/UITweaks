@@ -127,9 +127,20 @@ local function getDungeonsAndRaidsTabs(frame, includeUnavailable)
     return availableTabs
 end
 
+local function getWorldMapTabLibrary()
+    return LibStub("LibWorldMapTabs", true)
+end
+
 local function getMapTabs(frame, includeUnavailable)
     local tabs = {}
     for _, tab in ipairs(frame.TabButtons) do
+        if includeUnavailable or tab:IsShown() then
+            table.insert(tabs, tab)
+        end
+    end
+
+    local tabLibrary = getWorldMapTabLibrary()
+    for _, tab in ipairs(tabLibrary and tabLibrary.tabs or {}) do
         if includeUnavailable or tab:IsShown() then
             table.insert(tabs, tab)
         end
@@ -202,18 +213,21 @@ local function refreshOverlay(record)
     lastTabOverlays.increment:Show()
 end
 
+local watchTabs
+
 local function scheduleOverlayRefresh(record)
     if record.refreshPending then return end
     record.refreshPending = true
     C_Timer.After(0, function()
         record.refreshPending = nil
         if overlayRecords[record.frame] == record then
+            watchTabs(record)
             refreshOverlay(record)
         end
     end)
 end
 
-local function watchTabs(record)
+watchTabs = function(record)
     for _, tab in ipairs(record.getTabs(record.frame, true)) do
         if tab and not watchedTabs[tab] then
             tab:HookScript("OnShow", function() scheduleOverlayRefresh(record) end)
@@ -282,6 +296,7 @@ local function hookFrame(addon, consolePort, data, frame, changeTab, getTabs)
         if pressedShoulders[button] then return end
 
         pressedShoulders[button] = true
+        watchTabs(overlayRecords[frame])
         local handled = changeTab(frame, direction)
         if not handled then self:SetPropagateKeyboardInput(true) end
         if handled then scheduleOverlayRefresh(overlayRecords[frame]) end
@@ -366,13 +381,33 @@ local function changeBankTab(frame, direction)
 end
 
 local function changeMapTab(frame, direction)
-    local displayModes = {}
-    for _, tab in ipairs(getMapTabs(frame)) do
-        table.insert(displayModes, tab.displayMode)
+    local tabs = getMapTabs(frame)
+    local tabLibrary = getWorldMapTabLibrary()
+    local currentDisplayMode = tabLibrary and tabLibrary.activeDisplayMode or frame.displayMode
+    local currentTab
+    for _, tab in ipairs(tabs) do
+        if tab.displayMode == currentDisplayMode then
+            currentTab = tab
+            break
+        end
     end
 
-    return selectFrameAdjacent(frame, frame.displayMode, displayModes, direction, function(displayMode)
-        frame:SetDisplayMode(displayMode)
+    return selectFrameAdjacent(frame, currentTab, tabs, direction, function(tab)
+        local isLibraryTab = false
+        for _, libraryTab in ipairs(tabLibrary and tabLibrary.tabs or {}) do
+            if libraryTab == tab then
+                isLibraryTab = true
+                break
+            end
+        end
+
+        if isLibraryTab then
+            tabLibrary:SetDisplayMode(tab.displayMode)
+        elseif tab.customMouseUpHandler then
+            tab.customMouseUpHandler(tab, "LeftButton", true)
+        elseif tab.displayMode ~= nil then
+            frame:SetDisplayMode(tab.displayMode)
+        end
     end)
 end
 
