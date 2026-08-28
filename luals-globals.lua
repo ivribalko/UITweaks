@@ -74,6 +74,7 @@ PickupAction = PickupAction
 PickupItem = PickupItem
 PickupMacro = PickupMacro
 PlaceAction = PlaceAction
+PanelTemplates_GetSelectedTab = PanelTemplates_GetSelectedTab
 PlayerFrame = PlayerFrame
 RegisterStateDriver = RegisterStateDriver
 ReloadUI = ReloadUI
@@ -111,9 +112,15 @@ unpack = unpack
 
 -- Additional _G fields used via dynamic lookups.
 ---@class _G
+---@field BankFrame Frame
 ---@field CastingBarType any
 ---@field ChatFrameChannelButton any
 ---@field ChatFrameMenuButton any
+---@field CharacterFrame Frame
+---@field CharacterFrameTab1 Button
+---@field CharacterFrameTab2 Button
+---@field CharacterFrameTab3 Button
+---@field CollectionsJournal Frame
 ---@field ConsolePort any
 ---@field ConsolePortCrosshair Frame
 ---@field ConsolePortItemMenu any
@@ -121,11 +128,16 @@ unpack = unpack
 ---@field ConsolePortTempAbilityFrame any
 ---@field ConsolePortUIHandle any
 ---@field CooldownViewerSettings any
+---@field EncounterJournal Frame
+---@field EJ_ContentTab_Select function
 ---@field GroupLootHistoryFrame any
 ---@field ImmersionAPI any
 ---@field ImmersionFrame any
 ---@field OpenAllMail any
 ---@field PlayerCastingBarFrame Frame
+---@field PVEFrame Frame
+---@field PlayerSpellsFrame Frame
+---@field QuestMapFrame Frame
 ---@field QuickJoinToastButton any
 ---@field ShapeshiftBarFrame any
 ---@field StanceBar any

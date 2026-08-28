@@ -31,6 +31,7 @@ function UITweaks:OnInitialize()
     self.cooldownOverlay = type(require) == "function" and require("UITweaksCooldownOverlay") or addonTable.CooldownOverlay
     self.immersion = type(require) == "function" and require("UITweaksImmersion") or addonTable.Immersion
     self.consolePortBags = type(require) == "function" and require("UITweaksConsolePortBags") or addonTable.ConsolePortBags
+    self.consolePortTabs = type(require) == "function" and require("UITweaksConsolePortTabs") or addonTable.ConsolePortTabs
     self.consolePortMovement = type(require) == "function" and require("UITweaksConsolePortMovement") or addonTable.ConsolePortMovement
     self.consolePortMenu = type(require) == "function" and require("UITweaksConsolePortMenu") or addonTable.ConsolePortMenu
     self.consolePortItemMenu = type(require) == "function" and require("UITweaksConsolePortItemMenu") or addonTable.ConsolePortItemMenu
@@ -57,6 +58,7 @@ function UITweaks:OnEnable()
     self.cooldownOverlay.Apply(self)
     self.immersion.Apply(self)
     self.consolePortBags.Apply(self)
+    self.consolePortTabs.Apply(self)
     self.consolePortMovement.Apply(self)
     self.consolePortMenu.Apply(self)
     self.consolePortItemMenu.Apply(self)
@@ -197,6 +199,13 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self.immersion.Apply(self)
     elseif addonName == "ConsolePort_Menu" or addonName == "Blizzard_Menu" then
         self.consolePortMenu.Apply(self)
+    elseif addonName == "Blizzard_EncounterJournal"
+        or addonName == "Blizzard_GroupFinder"
+        or addonName == "Blizzard_WorldMap"
+        or addonName == "Blizzard_PlayerSpells"
+        or addonName == "Blizzard_Collections"
+    then
+        self.consolePortTabs.Apply(self)
     elseif addonName == "ConsolePort_Cursor" then
         self.consolePortBags.Apply(self)
     elseif addonName == "ConsolePort"
@@ -207,6 +216,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
     then
         self:UpdateConsolePortTempAbilityFrameVisibility()
         self:UpdateConsolePortCrosshairVisibility()
+        self.consolePortTabs.Apply(self)
         self.consolePortMovement.Apply(self)
         self.consolePortItemMenu.Apply(self)
     end
@@ -835,15 +845,10 @@ function UITweaks:UpdateGroupLootHistoryVisibility()
     local frame = _G.GroupLootHistoryFrame
     if not frame then return end
     if self.db.profile.hideGroupLootHistoryFrame then
-        if not frame.UITweaksHooked then
-            frame:HookScript("OnShow", function(shownFrame)
-                if UITweaks.db and UITweaks.db.profile.hideGroupLootHistoryFrame then
-                    shownFrame:Hide()
-                end
-            end)
-            frame.UITweaksHooked = true
-        end
+        frame:UnregisterEvent("LOOT_HISTORY_GO_TO_ENCOUNTER")
         frame:Hide()
+    else
+        frame:RegisterEvent("LOOT_HISTORY_GO_TO_ENCOUNTER")
     end
 end
 

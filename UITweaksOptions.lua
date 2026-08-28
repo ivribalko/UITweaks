@@ -38,6 +38,7 @@ Options.defaults = {
         addMythicPlusFinderToConsolePortMenu = false,
         addOilToMainHandConsolePortShortcut = false,
         addSoundToggleToConsolePortMenu = false,
+        addTabControlsToConsolePort = false,
         closeAllInventoryBagsWithConsolePortCancel = false,
         hideConsolePortTempAbilityFrame = false,
         onlyShowConsolePortCrosshairInCombat = false,
@@ -95,6 +96,10 @@ function Options.OnInitialize(self)
         profile.fixDropdownsForConsolePort = true
     end
     profile.fixRaidFinderDropdownForConsolePort = nil
+    if rawget(profile, "addMapTabControlsToConsolePort") then
+        profile.addTabControlsToConsolePort = true
+    end
+    profile.addMapTabControlsToConsolePort = nil
 
     local function getOption(key)
         return function()
@@ -386,11 +391,26 @@ function Options.OnInitialize(self)
                             end
                         end
                     ),
+                    addTabControlsToConsolePort = toggleOption(
+                        "addTabControlsToConsolePort",
+                        "Add Tab Controls To ConsolePort",
+                        "Use L1 and R1 to switch between tabs in the Adventure Guide, Bank, Character, Dungeons & Raids, Map, Talents and Spellbook, and Warband Collections windows when using ConsolePort, with controller button icons shown on the tab controls.",
+                        5,
+                        function(val)
+                            if val then
+                                self.consolePortTabs.Apply(self)
+                            end
+                        end,
+                        function()
+                            return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
+                                and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
+                        end
+                    ),
                     closeAllInventoryBagsWithConsolePortCancel = toggleOption(
                         "closeAllInventoryBagsWithConsolePortCancel",
                         "Close All Inventory Bags With ConsolePort Cancel",
                         "Close all open inventory bags at once when pressing ConsolePort's cancel button (Circle by default) while its cursor is focused anywhere in an inventory bag.",
-                        5,
+                        6,
                         function(val)
                             if val then
                                 self.consolePortBags.Apply(self)
@@ -405,7 +425,7 @@ function Options.OnInitialize(self)
                         "disableImmersionDialogListItemScaling",
                         "Disable Immersion Dialog List Item Scaling",
                         "Prevent Immersion's active dialogue list items from growing when hovered or selected.",
-                        6,
+                        7,
                         function(val)
                             if val then
                                 self.immersion.Apply(self)
@@ -420,7 +440,7 @@ function Options.OnInitialize(self)
                         "fixDropdownsForConsolePort",
                         "Fix Dropdowns For ConsolePort",
                         "Allow ConsolePort's controller X button to open modern dropdown menus throughout the UI, such as the Raid Finder raid selector and Premade Groups filter.",
-                        7,
+                        8,
                         function(val)
                             if val then
                                 self.consolePortMenu.Apply(self)
@@ -435,7 +455,7 @@ function Options.OnInitialize(self)
                         "focusMailboxOpenAllButton",
                         "Focus Mailbox Open All Button",
                         "Focus the ConsolePort controller cursor on the mailbox's Open All button when opening the mailbox.",
-                        8,
+                        9,
                         nil,
                         function()
                             return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
@@ -446,7 +466,7 @@ function Options.OnInitialize(self)
                         "hideConsolePortTempAbilityFrame",
                         "Hide ConsolePort 'New Ability Available!' Frame",
                         "Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.",
-                        9,
+                        10,
                         function()
                             self:UpdateConsolePortTempAbilityFrameVisibility()
                         end,
@@ -459,7 +479,7 @@ function Options.OnInitialize(self)
                         "onlyShowConsolePortCrosshairInCombat",
                         "Only Show ConsolePort Crosshair In Combat",
                         "Only allow ConsolePort's crosshair to appear while in combat.",
-                        10,
+                        11,
                         function(val)
                             if val then
                                 self:UpdateConsolePortCrosshairVisibility()
@@ -474,7 +494,7 @@ function Options.OnInitialize(self)
                         "overlayCooldownManagerOnConsolePort",
                         "Overlay Cooldown Manager Icons On ConsolePort Action Bar",
                         "Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, native spell-activation glows, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.",
-                        11,
+                        12,
                         function(val)
                             if val then
                                 self.cooldownOverlay.Apply(self)
@@ -488,14 +508,14 @@ function Options.OnInitialize(self)
                     cooldownManagerTrackingNote = {
                         type = "description",
                         name = "Note: Some spells track more reliably as cooldowns, while others track more reliably as tracked buffs. Use Advanced Cooldown Settings to choose whichever works best for each spell. Changes made in Blizzard's Advanced Cooldown Settings require /reload before the overlays update.",
-                        order = 11.1,
+                        order = 12.1,
                         width = "full",
                     },
                     removeTimerFromCooldownManagerOverlays = toggleOption(
                         "removeTimerFromCooldownManagerOverlays",
                         "Remove Active Buff Timers And Use Yellow Swipes",
                         "Hide countdown timer numbers and use the Essential Cooldown yellow swipe color on Cooldown Manager icons overlaid on the ConsolePort action bar while their buff is active. Cooldown timer numbers remain visible.",
-                        11.2,
+                        12.2,
                         function(val)
                             if val then
                                 self.cooldownOverlay.RequestUpdate(self)
@@ -511,7 +531,7 @@ function Options.OnInitialize(self)
                         "respectConsolePortCameraSettingWhileCasting",
                         "Respect Turn Character With Camera While Casting",
                         "Prevent ConsolePort from changing Turn Character With Camera to Always while casting, channeling, or empowering spells.",
-                        12,
+                        13,
                         function(val)
                             if val then
                                 self.consolePortMovement.Apply(self)
@@ -526,7 +546,7 @@ function Options.OnInitialize(self)
                         "consolePortBarSharing",
                         "Share ConsolePort Action Bar Settings For All Characters",
                         "Warning: This will overwrite your ConsolePort UI settings. When enabled, Stock UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as \"UITweaksProfile\" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.",
-                        13,
+                        14,
                         function()
                             return not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
@@ -535,14 +555,14 @@ function Options.OnInitialize(self)
                     consolePortBarSharingNote = {
                         type = "description",
                         name = "Note: Enabling this setting overwrites your ConsolePort UI settings. Stock UI Tweaks saves the current layout when you log out and restores it when you log in on any character.",
-                        order = 13.1,
+                        order = 14.1,
                         width = "full",
                     },
                     useCircleToCancelImmersion = toggleOption(
                         "useCircleToCancelImmersion",
                         "Use Circle To Cancel Immersion Dialogues",
                         "Use Circle to cancel or close Immersion dialogue and Triangle to inspect items or back out of item inspection when using ConsolePort.",
-                        14,
+                        15,
                         function(val)
                             if val then
                                 self.immersion.Apply(self)
@@ -560,7 +580,7 @@ function Options.OnInitialize(self)
                         type = "execute",
                         name = "Open ConsolePort Designer",
                         desc = "Open the ConsolePort action bar configuration window.",
-                        order = 15,
+                        order = 16,
                         width = "full",
                         func = function()
                             if not (C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("ConsolePort"))
@@ -581,7 +601,7 @@ function Options.OnInitialize(self)
                         type = "execute",
                         name = "Open Advanced Cooldown Settings",
                         desc = "Open Blizzard's Advanced Cooldown Settings on the Auras tab.",
-                        order = 16,
+                        order = 17,
                         width = "full",
                         func = function()
                             self.cooldownOverlay.OpenSettings()
@@ -650,7 +670,7 @@ function Options.OnInitialize(self)
                     hideGroupLootHistoryFrame = toggleOption(
                         "hideGroupLootHistoryFrame",
                         "Hide Group Loot History",
-                        "Hide the group loot history frame.",
+                        "Prevent the group loot history frame from opening automatically when rolls begin. It can still be opened from chat links.",
                         6,
                         function()
                             self:UpdateGroupLootHistoryVisibility()

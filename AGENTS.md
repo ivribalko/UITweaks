@@ -40,6 +40,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Add Mythic+ Finder To ConsolePort Menu Ring — Add a Mythic+ Finder button next to ConsolePort's Group Finder button in the menu ring. It opens the Premade Groups dungeon search directly.
 - Add Oil To Main-Hand Shortcut To ConsolePort Inventory Options — Add an Apply to Main-Hand Weapon shortcut to ConsolePort's Triangle options for weapon oil items in inventory.
 - Add Sound Toggle To ConsolePort Menu Ring — Add a Sound button to ConsolePort's menu ring that toggles Settings -> Game -> Audio -> Enable Sound and shows whether sound is enabled or disabled.
+- Add Tab Controls To ConsolePort — Use L1 and R1 to switch between tabs in the Adventure Guide, Bank, Character, Dungeons & Raids, Map, Talents and Spellbook, and Warband Collections windows when using ConsolePort, with controller button icons shown on the tab controls.
 - Close All Inventory Bags With ConsolePort Cancel — Close all open inventory bags at once when pressing ConsolePort's cancel button (Circle by default) while its cursor is focused anywhere in an inventory bag.
 - Disable Immersion Dialog List Item Scaling — Prevent Immersion's active dialogue list items from growing when hovered or selected.
 - Fix Dropdowns For ConsolePort — Allow ConsolePort's controller X button to open modern dropdown menus throughout the UI, such as the Raid Finder raid selector and Premade Groups filter.
@@ -61,7 +62,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Always Show Quest Marker Distance — Always show the built-in quest marker distance, even when not facing the objective.
 - Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.
 - Hide Compact Raid Frame Manager — Hide the compact raid frame manager.
-- Hide Group Loot History — Hide the group loot history frame.
+- Hide Group Loot History — Prevent the group loot history frame from opening automatically when rolls begin. It can still be opened from chat links.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
 - Hide Totem Frame — Hide the totem frame, including warlock pets.
 - Highlight Active Consumables In Inventory — Highlight inventory consumables with a green frame and remaining buff time when their player aura or weapon enchant is active. Supports flasks, food, oils, and other consumables that apply a helpful aura or temporary weapon enchant. If a Well Fed buff is active, all food items are highlighted with that buff's remaining time. Cases where a consumable applies an aura with a different name than the item spell are not supported (except Well Fed food). Does not update during combat.
@@ -87,7 +88,7 @@ Exceptions:
 ## Dev Notes
 
 - Addon files live in the repository root.
-- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksAggroRadius.lua` (mouseover mob aggro radius estimates), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortBags.lua` (ConsolePort inventory bag cancel behavior), `UITweaksConsolePortMovement.lua` (ConsolePort casting camera compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring and dropdown compatibility), `UITweaksConsolePortItemMenu.lua` (ConsolePort inventory item options), `UITweaksDebug.lua` (debug tools/UI).
+- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksAggroRadius.lua` (mouseover mob aggro radius estimates), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortBags.lua` (ConsolePort inventory bag cancel behavior), `UITweaksConsolePortTabs.lua` (ConsolePort tab controls), `UITweaksConsolePortMovement.lua` (ConsolePort casting camera compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring and dropdown compatibility), `UITweaksConsolePortItemMenu.lua` (ConsolePort inventory item options), `UITweaksDebug.lua` (debug tools/UI).
 - Add new Lua files in the repository root and list them in `UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`
@@ -101,3 +102,4 @@ Exceptions:
 - When changing this addon, use other addons in the same parent folder as reference sources when useful, but never edit them.
 - Check WoW UI source at [https://github.com/Gethe/wow-ui-source](https://github.com/Gethe/wow-ui-source) if Blizzard UI behavior or implementation details need verification.
 - Debug helpers: `/console scriptErrors 1`, `/eventtrace`, `/fstack`.
+- When runtime state would help diagnose a problem, suggest temporary in-game diagnostic logging by throwing a descriptive Lua error so !BugGrabber/BugSack captures the state and stack trace.

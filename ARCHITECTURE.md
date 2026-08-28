@@ -11,6 +11,7 @@ Stock UI Tweaks is an Ace3 addon organized around a small core and focused featu
 - `UITweaksCooldownOverlay.lua` places Blizzard Cooldown Manager icons over matching ConsolePort action buttons.
 - `UITweaksImmersion.lua` applies the optional Immersion and ConsolePort controller compatibility layer.
 - `UITweaksConsolePortBags.lua` closes all open inventory bags from ConsolePort's cancel action.
+- `UITweaksConsolePortTabs.lua` switches supported Blizzard windows between their visible tabs with ConsolePort's shoulder buttons and overlays controller-aware button hints on the tab controls.
 - `UITweaksConsolePortMovement.lua` prevents ConsolePort from overriding its camera-facing preference during spell casts.
 - `UITweaksConsolePortMenu.lua` adds optional actions to ConsolePort's menu ring and applies controller compatibility to modern dropdowns.
 - `UITweaksConsolePortItemMenu.lua` adds optional commands to ConsolePort's inventory item options.
@@ -31,6 +32,8 @@ The Cooldown Manager overlay module matches Blizzard cooldown entries to Console
 The Immersion compatibility module activates only when its setting is enabled and both Immersion and ConsolePort are loaded. It wraps Immersion's controller command and hint methods in memory, leaving Immersion's installed files unchanged. A UI reload removes the wrappers; UITweaks reapplies them only if the setting remains enabled.
 
 The ConsolePort bags module wraps ConsolePort's cancel-handler lookup for nodes contained by Blizzard inventory bag frames. ConsolePort invokes the replacement while its cursor is anywhere within an inventory bag, closing every open bag without changing cancel behavior on other UI frames.
+
+The ConsolePort tabs module listens for L1 and R1 only while a supported window is visible and ConsolePort's interface cursor is active. It cycles through the visible tabs in the Adventure Guide, Bank, Character, Dungeons & Raids, Map, Talents and Spellbook, and Warband Collections windows, skipping tabs unavailable to the current character or game mode. It overlays ConsolePort's active-controller L1 and R1 icons at the ends of each tab group and refreshes them when tab availability or the active controller icon set changes. All unrelated controller input continues through the normal input path.
 
 The ConsolePort movement module suppresses ConsolePort's temporary cast, channel, and empowered-cast handlers that force character facing to follow the camera. Vehicle-specific camera behavior remains unchanged.
 
