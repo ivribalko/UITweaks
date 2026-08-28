@@ -186,7 +186,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
         self:UpdateCompactRaidFrameManagerVisibility()
         self:ApplyPartyAndRaidFrameScale()
     elseif addonName == "Blizzard_GroupLootHistory" then
-        self:UpdateGroupLootHistoryVisibility()
+        self:UpdateLootNotificationVisibility()
     elseif addonName == "Blizzard_ActionBarController" or addonName == "Blizzard_ActionBar" then
         self:UpdateStanceButtonsVisibility()
     elseif addonName == "Blizzard_ObjectiveTracker" then
@@ -840,15 +840,30 @@ local function ensureGroupLootHistoryLoaded()
     return _G.GroupLootHistoryFrame ~= nil
 end
 
-function UITweaks:UpdateGroupLootHistoryVisibility()
-    if not ensureGroupLootHistoryLoaded() then return end
-    local frame = _G.GroupLootHistoryFrame
-    if not frame then return end
-    if self.db.profile.hideGroupLootHistoryFrame then
-        frame:UnregisterEvent("LOOT_HISTORY_GO_TO_ENCOUNTER")
-        frame:Hide()
-    else
-        frame:RegisterEvent("LOOT_HISTORY_GO_TO_ENCOUNTER")
+local lootNotificationEvents = {
+    "AZERITE_EMPOWERED_ITEM_LOOTED",
+    "LOOT_ITEM_ROLL_WON",
+    "SHOW_LOOT_TOAST",
+    "SHOW_LOOT_TOAST_LEGENDARY_LOOTED",
+    "SHOW_LOOT_TOAST_UPGRADE",
+    "SHOW_PVP_FACTION_LOOT_TOAST",
+    "SHOW_RATED_PVP_REWARD_TOAST",
+}
+
+function UITweaks:UpdateLootNotificationVisibility()
+    if not self.db.profile.hideGroupLootHistoryFrame then return end
+
+    if ensureGroupLootHistoryLoaded() then
+        local historyFrame = _G.GroupLootHistoryFrame
+        historyFrame:UnregisterEvent("LOOT_HISTORY_GO_TO_ENCOUNTER")
+        historyFrame:Hide()
+    end
+
+    local alertFrame = _G.AlertFrame
+    if alertFrame then
+        for _, eventName in ipairs(lootNotificationEvents) do
+            alertFrame:UnregisterEvent(eventName)
+        end
     end
 end
 
@@ -1721,7 +1736,7 @@ function UITweaks:ApplyVisibilityState()
     self:UpdateConsolePortTempAbilityFrameVisibility()
     self:UpdateConsolePortCrosshairVisibility()
     self:UpdateCompactRaidFrameManagerVisibility()
-    self:UpdateGroupLootHistoryVisibility()
+    self:UpdateLootNotificationVisibility()
     self:UpdateStanceButtonsVisibility()
     self:UpdateTotemFrameVisibility()
 end

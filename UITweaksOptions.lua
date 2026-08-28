@@ -667,22 +667,22 @@ function Options.OnInitialize(self)
                             self:UpdateCompactRaidFrameManagerVisibility()
                         end
                     ),
-                    hideGroupLootHistoryFrame = toggleOption(
-                        "hideGroupLootHistoryFrame",
-                        "Hide Group Loot History",
-                        "Prevent the group loot history frame from opening automatically when rolls begin. It can still be opened from chat links.",
-                        6,
-                        function()
-                            self:UpdateGroupLootHistoryVisibility()
-                        end
-                    ),
                     hideHelpTips = toggleOption(
                         "hideHelpTips",
                         "Hide Help Tips",
                         "Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.",
-                        7,
+                        6,
                         function()
                             self:HookHelpTipFrames()
+                        end
+                    ),
+                    hideGroupLootHistoryFrame = toggleOption(
+                        "hideGroupLootHistoryFrame",
+                        "Hide Loot Notifications",
+                        "Hide loot-result notifications for you and other players without hiding group-loot voting prompts. The loot history can still be opened from chat links.",
+                        7,
+                        function()
+                            self:UpdateLootNotificationVisibility()
                         end
                     ),
                     hideTotemFrame = toggleOption(

@@ -62,8 +62,8 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Always Show Quest Marker Distance — Always show the built-in quest marker distance, even when not facing the objective.
 - Auto-Hide Stance Bar — Auto-Hide the Blizzard stance bar until you mouse over it.
 - Hide Compact Raid Frame Manager — Hide the compact raid frame manager.
-- Hide Group Loot History — Prevent the group loot history frame from opening automatically when rolls begin. It can still be opened from chat links.
 - Hide Help Tips — Hide help tooltips like 'You have unspent talent points' and 'You can drag this to your action bar'.
+- Hide Loot Notifications — Hide loot-result notifications for you and other players without hiding group-loot voting prompts. The loot history can still be opened from chat links.
 - Hide Totem Frame — Hide the totem frame, including warlock pets.
 - Highlight Active Consumables In Inventory — Highlight inventory consumables with a green frame and remaining buff time when their player aura or weapon enchant is active. Supports flasks, food, oils, and other consumables that apply a helpful aura or temporary weapon enchant. If a Well Fed buff is active, all food items are highlighted with that buff's remaining time. Cases where a consumable applies an aura with a different name than the item spell are not supported (except Well Fed food). Does not update during combat.
 - Party and Raid Frame Scale — Scale Blizzard's party and raid frame containers from 50% to 100%. Set this to 100% and reload to use Blizzard's Edit Mode sizes.
