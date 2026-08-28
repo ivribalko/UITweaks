@@ -204,6 +204,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
     elseif addonName == "ConsolePort_Menu" or addonName == "Blizzard_Menu" then
         self.consolePortMenu.Apply(self)
     elseif addonName == "Blizzard_EncounterJournal"
+        or addonName == "Blizzard_AuctionHouseUI"
         or addonName == "Blizzard_GroupFinder"
         or addonName == "Blizzard_WorldMap"
         or addonName == "Blizzard_PlayerSpells"

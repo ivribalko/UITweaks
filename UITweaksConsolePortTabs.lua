@@ -103,6 +103,53 @@ local function getAdventureGuideTabs(frame, includeUnavailable)
     return availableTabs
 end
 
+local function collectAuctionHouseTabs(parent, referenceTop, tabs, seen, depth)
+    if depth > 2 then return end
+
+    for _, child in ipairs({ parent:GetChildren() }) do
+        if not seen[child]
+            and child:IsObjectType("Button")
+            and child:IsShown()
+            and child.Left
+            and child.Middle
+            and child.Right
+            and child:GetScript("OnClick")
+        then
+            local top = child:GetTop()
+            if top and math.abs(top - referenceTop) <= 4 then
+                table.insert(tabs, child)
+                seen[child] = true
+            end
+        end
+
+        collectAuctionHouseTabs(child, referenceTop, tabs, seen, depth + 1)
+    end
+end
+
+local function getAuctionHouseTabs(frame, includeUnavailable)
+    local tabs = { frame.BuyTab, frame.SellTab, frame.AuctionsTab }
+    local seen = {}
+    for _, tab in ipairs(tabs) do seen[tab] = true end
+
+    local referenceTop = frame.BuyTab:GetTop()
+    if referenceTop then
+        collectAuctionHouseTabs(frame, referenceTop, tabs, seen, 1)
+        table.sort(tabs, function(left, right)
+            return (left:GetLeft() or 0) < (right:GetLeft() or 0)
+        end)
+    end
+
+    if includeUnavailable then return tabs end
+
+    local availableTabs = {}
+    for _, tab in ipairs(tabs) do
+        if tab:IsShown() then
+            table.insert(availableTabs, tab)
+        end
+    end
+    return availableTabs
+end
+
 local function getBankTabs(frame, includeUnavailable)
     local tabs = {}
     for _, tabID in ipairs(frame:GetTabSet()) do
@@ -366,6 +413,22 @@ local function changeAdventureGuideTab(frame, direction)
     end)
 end
 
+local function changeAuctionHouseTab(frame, direction)
+    local tabs = getAuctionHouseTabs(frame)
+    local currentTab
+    for _, tab in ipairs(tabs) do
+        if not tab:IsEnabled() then
+            currentTab = tab
+            break
+        end
+    end
+
+    return selectAdjacent(currentTab, tabs, direction, function(tab)
+        cycleSelections[frame] = tab
+        tab:Click("LeftButton")
+    end)
+end
+
 local function changeBankTab(frame, direction)
     local tabIDs = {}
     for _, tabID in ipairs(frame:GetTabSet()) do
@@ -447,6 +510,7 @@ function ConsolePortTabs.Apply(addon)
 
     local applied = false
     applied = hookFrame(addon, consolePort, data, _G.EncounterJournal, changeAdventureGuideTab, getAdventureGuideTabs) or applied
+    applied = hookFrame(addon, consolePort, data, _G.AuctionHouseFrame, changeAuctionHouseTab, getAuctionHouseTabs) or applied
     applied = hookFrame(addon, consolePort, data, _G.BankFrame, changeBankTab, getBankTabs) or applied
     applied = hookFrame(addon, consolePort, data, _G.CharacterFrame, changeCharacterTab, getCharacterTabs) or applied
     applied = hookFrame(addon, consolePort, data, _G.PVEFrame, changeDungeonsAndRaidsTab, getDungeonsAndRaidsTabs) or applied

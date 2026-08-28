@@ -65,7 +65,8 @@ local function restoreRequirements(entryCreation)
         setRequirement(entryCreation.MythicPlusRating, saved.mythicPlusRating)
     end
     if saved.playstyle and saved.playstyle ~= Enum.LFGEntryGeneralPlaystyle.None then
-        LFGListEntryCreation_OnPlayStyleSelectedInternal(entryCreation, saved.playstyle)
+        -- Blizzard's selection handler calls protected SetEntryTitle(), so restore only its state.
+        entryCreation.generalPlaystyle = saved.playstyle
     end
     LFGListEntryCreation_UpdateValidState(entryCreation)
 end

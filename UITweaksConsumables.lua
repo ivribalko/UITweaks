@@ -11,6 +11,10 @@ local OFF_HAND_SLOT_ID = 17
 local ITEM_CLASS_CONSUMABLE = 0
 local ITEM_SUBCLASS_FOOD_AND_DRINK = 5
 
+local function canAccessValue(value)
+    return not canaccessvalue or canaccessvalue(value)
+end
+
 local function formatRemainingTime(remainingSeconds)
     if not remainingSeconds or remainingSeconds <= 0 then return "" end
     if remainingSeconds >= 3600 then
@@ -26,36 +30,45 @@ local function getHelpfulAuras()
     local auraBySpellID = {}
     local auraByName = {}
 
-    local function is_valid_key(key)
-        local t = type(key)
-        return key ~= nil and (t == "string" or t == "number")
-    end
+    local function storeAura(aura)
+        if not canAccessValue(aura) then return end
 
-    local function safe_assign(tbl, key, value)
-        if type(tbl) ~= "table" then return end
-        if is_valid_key(key) then
-            pcall(function()
-                if tbl[key] == nil then
-                    tbl[key] = value
-                end
-            end)
+        local spellID = aura.spellId
+        local name = aura.name
+        local expirationTime = aura.expirationTime
+        if not canAccessValue(spellID) or not canAccessValue(name) or not canAccessValue(expirationTime) then return end
+        if type(expirationTime) ~= "number" or expirationTime <= 0 then return end
+
+        local readableAura = {
+            expirationTime = expirationTime,
+        }
+        if type(spellID) == "number" and auraBySpellID[spellID] == nil then
+            auraBySpellID[spellID] = readableAura
+        end
+        if type(name) == "string" and auraByName[name] == nil then
+            auraByName[name] = readableAura
         end
     end
 
-    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+    if C_UnitAuras and C_UnitAuras.GetUnitAuras then
+        local auras = C_UnitAuras.GetUnitAuras("player", "HELPFUL")
+        if canAccessValue(auras) and type(auras) == "table" then
+            for _, aura in ipairs(auras) do
+                storeAura(aura)
+            end
+        end
+    elseif AuraUtil and AuraUtil.ForEachAura then
+        AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
+            storeAura(aura)
+        end)
+    elseif C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         local index = 1
         while true do
             local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
             if not aura then break end
-            safe_assign(auraBySpellID, aura.spellId, aura)
-            safe_assign(auraByName, aura.name, aura)
+            storeAura(aura)
             index = index + 1
         end
-    elseif AuraUtil and AuraUtil.ForEachAura then
-        AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
-            safe_assign(auraBySpellID, aura.spellId, aura)
-            safe_assign(auraByName, aura.name, aura)
-        end)
     end
 
     return auraBySpellID, auraByName
