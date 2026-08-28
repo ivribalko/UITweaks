@@ -35,6 +35,7 @@ function UITweaks:OnInitialize()
     self.consolePortMovement = type(require) == "function" and require("UITweaksConsolePortMovement") or addonTable.ConsolePortMovement
     self.consolePortMenu = type(require) == "function" and require("UITweaksConsolePortMenu") or addonTable.ConsolePortMenu
     self.consolePortItemMenu = type(require) == "function" and require("UITweaksConsolePortItemMenu") or addonTable.ConsolePortItemMenu
+    self.groupFinder = type(require) == "function" and require("UITweaksGroupFinder") or addonTable.GroupFinder
     self.aggroRadius = type(require) == "function" and require("UITweaksAggroRadius") or addonTable.AggroRadius
     self.playerFrameDebuffs = type(require) == "function" and require("UITweaksPlayerFrameDebuffs") or addonTable.PlayerFrameDebuffs
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
@@ -63,6 +64,7 @@ function UITweaks:OnEnable()
     self.consolePortMovement.Apply(self)
     self.consolePortMenu.Apply(self)
     self.consolePortItemMenu.Apply(self)
+    self.groupFinder.Apply(self)
     self.aggroRadius.Apply(self)
     self.playerFrameDebuffs.Apply(self)
     self.debug.OnEnable(self)
@@ -208,6 +210,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
         or addonName == "Blizzard_Collections"
     then
         self.consolePortTabs.Apply(self)
+        if addonName == "Blizzard_GroupFinder" then self.groupFinder.Apply(self) end
     elseif addonName == "ConsolePort_Cursor" then
         self.consolePortBags.Apply(self)
     elseif addonName == "ConsolePort"

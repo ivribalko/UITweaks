@@ -56,6 +56,11 @@ Options.defaults = {
         adjustMinimapZoomBasedOnPlayerSpeed = false,
         highlightActiveConsumablesInInventory = false,
         showMobAggroRadiusOnMouseOverOutOfCombat = false,
+        rememberGroupFinderRequirements = false,
+        groupFinderRequirements = {
+            dungeons = {},
+            raids = {},
+        },
         minimapPos = 225,
     },
     global = {
@@ -741,11 +746,20 @@ function Options.OnInitialize(self)
                             self:ApplyPartyAndRaidFrameScale()
                         end
                     ),
+                    rememberGroupFinderRequirements = toggleOption(
+                        "rememberGroupFinderRequirements",
+                        "Remember Start a Group Requirements",
+                        "Remember the minimum item level and playstyle last selected in Dungeon and Raid Start a Group forms, plus the minimum Mythic+ rating selected for Dungeons.",
+                        11,
+                        function(val)
+                            if val then self.groupFinder.Apply(self) end
+                        end
+                    ),
                     skyridingBarSharing = toggleOption(
                         "skyridingBarSharing",
                         "Share Skyriding Action Bar Skills For All Characters",
                         "Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.",
-                        11,
+                        12,
                         function(val)
                             if val then
                                 self:StartSkyridingBarMonitor()
@@ -758,7 +772,7 @@ function Options.OnInitialize(self)
                         "showMobAggroRadiusOnMouseOverOutOfCombat",
                         "Show Mob Aggro Radius On Mouse Over Out Of Combat",
                         "Show the estimated distance remaining before entering a hostile mob's aggro radius in its tooltip when you mouse over it while out of combat.",
-                        12,
+                        13,
                         function(val)
                             if val then self.aggroRadius.Apply(self) end
                         end
