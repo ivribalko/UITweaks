@@ -364,16 +364,6 @@ function Options.OnInitialize(self)
                             self.playerFrameDebuffs.UpdateVisibility(self)
                         end
                     ),
-                    testPlayerFrameDebuffColors = {
-                        type = "execute",
-                        name = "Test Player Frame Debuff Colors",
-                        desc = "Cycle through the gradient overlays for Magic, Curse, Disease, Poison, and Bleed.",
-                        order = 6,
-                        width = "full",
-                        func = function()
-                            self.playerFrameDebuffs.TestColors(self)
-                        end,
-                    },
                 },
             },
             consolePortSettings = {

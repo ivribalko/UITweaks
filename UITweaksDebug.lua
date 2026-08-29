@@ -789,6 +789,16 @@ function Debug.BuildDebugOptions(self, toggleOption)
                     self:UpdateBottomLeftReloadButton()
                 end
             ),
+            testPlayerFrameDebuffs = {
+                type = "execute",
+                name = "Test Player Frame Debuffs",
+                desc = "Cycle through the gradient overlays for Magic, Curse, Disease, Poison, and Bleed.",
+                order = 9,
+                width = "full",
+                func = function()
+                    self.playerFrameDebuffs.TestColors(self)
+                end,
+            },
         },
     }
 end

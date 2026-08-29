@@ -34,7 +34,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Player, Target, and Extra Abilities Opacity In Combat — Set the player unit frame, player cast bar, target unit frame, and Extra Abilities panel opacity in combat from 0% (invisible) to 100% (fully opaque).
 - Player, Target, and Extra Abilities Opacity Out of Combat — Set the player unit frame, player cast bar, target unit frame, and Extra Abilities panel opacity outside combat from 0% (invisible) to 100% (fully opaque).
 - Show Raid Frame Debuffs On My Player Frame — Show debuffs that Blizzard displays on raid frames in Blizzard's secure debuff-type gradient overlay over the player name, health bar, and mana bar.
-- Test Player Frame Debuff Colors — Cycle through the gradient overlays for Magic, Curse, Disease, Poison, and Bleed.
 
 ### ConsolePort
 
