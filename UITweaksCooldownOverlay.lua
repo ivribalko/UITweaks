@@ -40,6 +40,10 @@ local watchedEvents = {
 
 local hotkeyKeys = { "Hotkey", "Hotkey1", "Hotkey2" }
 local REMOVE_ALL_TRACKING_POPUP = "UITWEAKS_REMOVE_ALL_COOLDOWN_TRACKING"
+local hookedConsolePortButtons = setmetatable({}, { __mode = "k" })
+local hookedViewerItems = setmetatable({}, { __mode = "k" })
+local hookedViewers = setmetatable({}, { __mode = "k" })
+local settingsButtons = setmetatable({}, { __mode = "k" })
 
 local linkedActionSpellIDs = {
     [264173] = { 264178 }, -- Demonic Core -> Demonbolt
@@ -129,7 +133,8 @@ StaticPopupDialogs[REMOVE_ALL_TRACKING_POPUP] = {
 }
 
 local function setSettingsButtonShown(settings, shown)
-    settings.uitweaksRemoveAllTrackingButton:SetShown(shown)
+    local button = settingsButtons[settings]
+    if button then button:SetShown(shown) end
 end
 
 local function ensureSettingsButton(addon)
@@ -138,7 +143,7 @@ local function ensureSettingsButton(addon)
 
     local settings = _G.CooldownViewerSettings
     if not (settings and settings.UndoButton) then return end
-    if settings.uitweaksRemoveAllTrackingButton then
+    if settingsButtons[settings] then
         setSettingsButtonShown(settings, true)
         return
     end
@@ -157,7 +162,7 @@ local function ensureSettingsButton(addon)
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", GameTooltip_Hide)
-    settings.uitweaksRemoveAllTrackingButton = button
+    settingsButtons[settings] = button
     setSettingsButtonShown(settings, true)
 end
 
@@ -300,14 +305,13 @@ local function isItemShowingActiveBuff(item, viewerName)
     return item.wasSetFromAura == true
 end
 
-local function setItemUnmatched(addon, item, container)
+local function setItemUnmatched(addon, item)
     if C_RestrictedActions
         and C_RestrictedActions.CheckAllowProtectedFunctions
         and not C_RestrictedActions.CheckAllowProtectedFunctions(item, true)
     then
         return false
     end
-    item:SetParent(container)
     item:ClearAllPoints()
     item:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", -1000, -1000)
     item:SetAlpha(0)
@@ -377,14 +381,13 @@ local function restoreButtonArtwork(addon, button)
     addon.cooldownOverlayButtonArtwork[button] = nil
 end
 
-local function setItemMatched(item, container, button)
+local function setItemMatched(item, button)
     if C_RestrictedActions
         and C_RestrictedActions.CheckAllowProtectedFunctions
         and not C_RestrictedActions.CheckAllowProtectedFunctions(item, true)
     then
         return false
     end
-    item:SetParent(container)
     item:SetScale(1)
     item:ClearAllPoints()
     item:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
@@ -424,30 +427,9 @@ local function findMatchingButton(spellIDs, buttons, assignedButtons)
     return fallback
 end
 
-local function ensureViewerContainer(addon, viewer)
-    local container = addon.cooldownOverlayContainers[viewer]
-    if container then return container end
-
-    container = CreateFrame("Frame", nil, UIParent)
-    container:SetAllPoints(UIParent)
-    container:SetShown(viewer:IsShown())
-    addon.cooldownOverlayContainers[viewer] = container
-
-    viewer:HookScript("OnShow", function()
-        container:Show()
-        CooldownOverlay.RequestUpdate(addon)
-    end)
-    viewer:HookScript("OnHide", function()
-        container:Hide()
-        CooldownOverlay.RequestUpdate(addon)
-    end)
-    viewer:SetAlpha(0)
-    return container
-end
-
 local function hookConsolePortButton(addon, button)
-    if button.uitweaksCooldownOverlayHooked then return end
-    button.uitweaksCooldownOverlayHooked = true
+    if hookedConsolePortButtons[button] then return end
+    hookedConsolePortButtons[button] = true
     button:HookScript("OnAttributeChanged", function(_, attribute)
         if canAccessValue(attribute) and watchedButtonAttributes[attribute] then
             CooldownOverlay.RequestUpdate(addon)
@@ -465,9 +447,15 @@ local function hookConsolePortButton(addon, button)
 end
 
 local function hookViewer(addon, viewer)
-    if viewer.uitweaksCooldownOverlayHooked then return end
-    viewer.uitweaksCooldownOverlayHooked = true
+    if hookedViewers[viewer] then return end
+    hookedViewers[viewer] = true
     hooksecurefunc(viewer, "RefreshLayout", function()
+        CooldownOverlay.RequestUpdate(addon)
+    end)
+    viewer:HookScript("OnShow", function()
+        CooldownOverlay.RequestUpdate(addon)
+    end)
+    viewer:HookScript("OnHide", function()
         CooldownOverlay.RequestUpdate(addon)
     end)
 end
@@ -481,8 +469,8 @@ local function refreshItemActiveBuffAppearance(addon, item, viewerName)
 end
 
 local function hookViewerItem(addon, item, viewerName)
-    if item.uitweaksCooldownOverlayHooked then return end
-    item.uitweaksCooldownOverlayHooked = true
+    if hookedViewerItems[item] then return end
+    hookedViewerItems[item] = true
     item:HookScript("OnShow", function()
         refreshItemActiveBuffAppearance(addon, item, viewerName)
         CooldownOverlay.RequestUpdate(addon)
@@ -519,12 +507,11 @@ function CooldownOverlay.Update(addon)
         local viewer = _G[viewerName]
         if viewer then
             hookViewer(addon, viewer)
-            local container = ensureViewerContainer(addon, viewer)
             for _, item in ipairs(getViewerItems(viewer)) do
                 hookViewerItem(addon, item, viewerName)
                 local button = viewer:IsShown() and item:IsShown()
                     and findMatchingButton(getCooldownItemSpellIDs(item), buttons, assignedButtons)
-                if button and setItemMatched(item, container, button) then
+                if button and setItemMatched(item, button) then
                     if addon.db.profile.removeTimerFromCooldownManagerOverlays
                         and isItemShowingActiveBuff(item, viewerName)
                     then
@@ -535,7 +522,7 @@ function CooldownOverlay.Update(addon)
                     assignedButtons[button] = true
                     matchedButtons[button] = item
                 else
-                    setItemUnmatched(addon, item, container)
+                    setItemUnmatched(addon, item)
                 end
             end
         end
@@ -563,7 +550,7 @@ function CooldownOverlay.UpdateSettingsButton(addon)
     local settings = _G.CooldownViewerSettings
     if addon.db.profile.overlayCooldownManagerOnConsolePort then
         ensureSettingsButton(addon)
-    elseif settings and settings.uitweaksRemoveAllTrackingButton then
+    elseif settings and settingsButtons[settings] then
         setSettingsButtonShown(settings, false)
     end
 end
@@ -600,7 +587,6 @@ function CooldownOverlay.Apply(addon)
 
     ensureSettingsButton(addon)
 
-    addon.cooldownOverlayContainers = {}
     addon.cooldownOverlayMatchedButtons = {}
     addon.cooldownOverlayButtonArtwork = {}
     addon.cooldownOverlayItemTimerShown = {}
