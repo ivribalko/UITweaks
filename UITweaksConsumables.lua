@@ -15,6 +15,10 @@ local function canAccessValue(value)
     return not canaccessvalue or canaccessvalue(value)
 end
 
+local function areAurasSecret()
+    return C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret()
+end
+
 local function formatRemainingTime(remainingSeconds)
     if not remainingSeconds or remainingSeconds <= 0 then return "" end
     if remainingSeconds >= 3600 then
@@ -27,6 +31,8 @@ local function formatRemainingTime(remainingSeconds)
 end
 
 local function getHelpfulAuras()
+    if areAurasSecret() then return end
+
     local auraBySpellID = {}
     local auraByName = {}
 
@@ -50,26 +56,29 @@ local function getHelpfulAuras()
         end
     end
 
-    if C_UnitAuras and C_UnitAuras.GetUnitAuras then
-        local auras = C_UnitAuras.GetUnitAuras("player", "HELPFUL")
-        if canAccessValue(auras) and type(auras) == "table" then
-            for _, aura in ipairs(auras) do
+    local succeeded = pcall(function()
+        if C_UnitAuras and C_UnitAuras.GetUnitAuras then
+            local auras = C_UnitAuras.GetUnitAuras("player", "HELPFUL")
+            if canAccessValue(auras) and type(auras) == "table" then
+                for _, aura in ipairs(auras) do
+                    storeAura(aura)
+                end
+            end
+        elseif AuraUtil and AuraUtil.ForEachAura then
+            AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
                 storeAura(aura)
+            end)
+        elseif C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+            local index = 1
+            while true do
+                local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
+                if not aura then break end
+                storeAura(aura)
+                index = index + 1
             end
         end
-    elseif AuraUtil and AuraUtil.ForEachAura then
-        AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
-            storeAura(aura)
-        end)
-    elseif C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
-        local index = 1
-        while true do
-            local aura = C_UnitAuras.GetAuraDataByIndex("player", index, "HELPFUL")
-            if not aura then break end
-            storeAura(aura)
-            index = index + 1
-        end
-    end
+    end)
+    if not succeeded then return end
 
     return auraBySpellID, auraByName
 end
@@ -359,6 +368,7 @@ function Consumables:RefreshInventoryConsumableHighlights()
     end
 
     local auraBySpellID, auraByName = getHelpfulAuras()
+    if not auraBySpellID then return end
     local wellFedAura = findWellFedAura(auraByName)
     local weaponEnchantStates = buildWeaponEnchantTooltipCache()
     local activeButtons = {}

@@ -39,6 +39,7 @@ local watchedEvents = {
 }
 
 local hotkeyKeys = { "Hotkey", "Hotkey1", "Hotkey2" }
+local REMOVE_ALL_TRACKING_POPUP = "UITWEAKS_REMOVE_ALL_COOLDOWN_TRACKING"
 
 local linkedActionSpellIDs = {
     [264173] = { 264178 }, -- Demonic Core -> Demonbolt
@@ -71,6 +72,93 @@ local function loadAddOn(addonName)
         loader(addonName)
     end
     return isAddOnLoaded(addonName)
+end
+
+local function removeAllCooldownTracking(settings)
+    local dataProvider = settings:GetDataProvider()
+    local layoutManager = settings:GetLayoutManager()
+    if not (dataProvider and layoutManager) then return end
+
+    local hiddenCategoryByCategory = {
+        [Enum.CooldownViewerCategory.Essential] = Enum.CooldownViewerCategory.HiddenActive,
+        [Enum.CooldownViewerCategory.Utility] = Enum.CooldownViewerCategory.HiddenActive,
+        [Enum.CooldownViewerCategory.TrackedBuff] = Enum.CooldownViewerCategory.HiddenPassive,
+        [Enum.CooldownViewerCategory.TrackedBar] = Enum.CooldownViewerCategory.HiddenPassive,
+    }
+    local changes = {}
+    for _, cooldownID in ipairs(dataProvider:GetOrderedCooldownIDs()) do
+        local cooldownInfo = dataProvider:GetCooldownInfoForID(cooldownID)
+        local hiddenCategory = cooldownInfo and hiddenCategoryByCategory[cooldownInfo.category]
+        if hiddenCategory then
+            changes[#changes + 1] = {
+                cooldownID = cooldownID,
+                hiddenCategory = hiddenCategory,
+            }
+        end
+    end
+
+    if #changes == 0 then return end
+
+    local failureStatus
+    layoutManager:LockNotifications()
+    for _, change in ipairs(changes) do
+        local status = dataProvider:SetCooldownToCategory(change.cooldownID, change.hiddenCategory)
+        if status ~= Enum.CooldownLayoutStatus.Success then
+            failureStatus = failureStatus or status
+        end
+    end
+    layoutManager:UnlockNotifications(true)
+
+    if failureStatus and settings.CheckDisplayActionStatus then
+        settings:CheckDisplayActionStatus(Enum.CooldownLayoutAction.ChangeCategory, failureStatus)
+    end
+    settings:RefreshLayout()
+    settings:UpdateSaveButtonStates()
+end
+
+StaticPopupDialogs[REMOVE_ALL_TRACKING_POPUP] = {
+    text = "Remove all tracked buffs, tracked bars, essential cooldowns, and utility cooldowns from this layout? You can use Revert before closing Advanced Cooldown Settings to undo this.",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(_, settings)
+        removeAllCooldownTracking(settings)
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+}
+
+local function setSettingsButtonShown(settings, shown)
+    settings.uitweaksRemoveAllTrackingButton:SetShown(shown)
+end
+
+local function ensureSettingsButton(addon)
+    if not addon.db.profile.overlayCooldownManagerOnConsolePort then return end
+    if not loadAddOn("Blizzard_CooldownViewer") then return end
+
+    local settings = _G.CooldownViewerSettings
+    if not (settings and settings.UndoButton) then return end
+    if settings.uitweaksRemoveAllTrackingButton then
+        setSettingsButtonShown(settings, true)
+        return
+    end
+
+    local button = CreateFrame("Button", nil, settings, "UIPanelButtonTemplate")
+    button:SetSize(60, 22)
+    button:SetPoint("BOTTOMRIGHT", settings.UndoButton, "BOTTOMLEFT", -4, 0)
+    button:SetText("Clear")
+    button:SetScript("OnClick", function()
+        StaticPopup_Show(REMOVE_ALL_TRACKING_POPUP, nil, nil, settings)
+    end)
+    button:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Clear")
+        GameTooltip:AddLine("Moves all tracked buffs, tracked bars, essential cooldowns, and utility cooldowns into Blizzard's hidden categories for this layout.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    button:SetScript("OnLeave", GameTooltip_Hide)
+    settings.uitweaksRemoveAllTrackingButton = button
+    setSettingsButtonShown(settings, true)
 end
 
 local function addSpellID(spellIDs, spellID)
@@ -471,10 +559,20 @@ function CooldownOverlay.RequestUpdate(addon)
     end)
 end
 
-function CooldownOverlay.OpenSettings()
+function CooldownOverlay.UpdateSettingsButton(addon)
+    local settings = _G.CooldownViewerSettings
+    if addon.db.profile.overlayCooldownManagerOnConsolePort then
+        ensureSettingsButton(addon)
+    elseif settings and settings.uitweaksRemoveAllTrackingButton then
+        setSettingsButtonShown(settings, false)
+    end
+end
+
+function CooldownOverlay.OpenSettings(addon)
     if not loadAddOn("Blizzard_CooldownViewer") then return end
     local settings = _G.CooldownViewerSettings
     if not settings then return end
+    CooldownOverlay.UpdateSettingsButton(addon)
 
     local function showCooldownSettings()
         settings:ShowUIPanel()
@@ -499,6 +597,8 @@ function CooldownOverlay.Apply(addon)
         addon.cooldownOverlayApplied = nil
         return
     end
+
+    ensureSettingsButton(addon)
 
     addon.cooldownOverlayContainers = {}
     addon.cooldownOverlayMatchedButtons = {}

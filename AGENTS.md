@@ -31,8 +31,8 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - In Dungeons — Fade out the objective tracker in combat while in dungeon instances.
 - Everywhere Else — Fade out the objective tracker in combat everywhere else (open world, scenarios, PvP, etc.).
 - Hide Target Frame Buffs and Debuffs — Hide all buffs and debuffs from the target frame.
-- Player and Target Frame Opacity In Combat — Set the player unit frame, player cast bar, and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).
-- Player and Target Frame Opacity Out of Combat — Set the player unit frame, player cast bar, and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).
+- Player, Target, and Extra Abilities Opacity In Combat — Set the player unit frame, player cast bar, target unit frame, and Extra Abilities panel opacity in combat from 0% (invisible) to 100% (fully opaque).
+- Player, Target, and Extra Abilities Opacity Out of Combat — Set the player unit frame, player cast bar, target unit frame, and Extra Abilities panel opacity outside combat from 0% (invisible) to 100% (fully opaque).
 - Show Raid Frame Debuffs On My Player Frame — Show debuffs that Blizzard displays on raid frames in Blizzard's secure debuff-type gradient overlay over the player name, health bar, and mana bar.
 - Test Player Frame Debuff Colors — Cycle through the gradient overlays for Magic, Curse, Disease, Poison, and Bleed.
 
@@ -49,7 +49,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Focus Mailbox Open All Button — Focus the ConsolePort controller cursor on the mailbox's Open All button when opening the mailbox.
 - Hide ConsolePort 'New Ability Available!' Frame — Hide ConsolePortTempAbilityFrame, e.g., Dungeon Assistance ability alert in Follower Dungeons.
 - Only Show ConsolePort Crosshair In Combat — Only allow ConsolePort's crosshair to appear while in combat.
-- Overlay Cooldown Manager Icons On ConsolePort Action Bar — Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, native spell-activation glows, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.
+- Overlay Cooldown Manager Icons On ConsolePort Action Bar — Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, native spell-activation glows, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button. Adds a Clear button to the left of Revert in Advanced Cooldown Settings.
 - Remove Active Buff Timers And Use Yellow Swipes — Hide countdown timer numbers and use the Essential Cooldown yellow swipe color on Cooldown Manager icons overlaid on the ConsolePort action bar while their buff is active. Cooldown timer numbers remain visible.
 - Respect Turn Character With Camera While Casting — Prevent ConsolePort from changing Turn Character With Camera to Always while casting, channeling, or empowering spells.
 - Share ConsolePort Action Bar Settings For All Characters — Warning: This will overwrite your ConsolePort UI settings. When enabled, Stock UI Tweaks saves your current ConsolePort action bar layout in ConsolePort's own presets as "UITweaksProfile" every time you log out, then restores that same preset automatically the next time you log in on any character. This keeps your ConsolePort action bar layout, optional bar settings, and action page logic consistent across characters without any manual export/import.

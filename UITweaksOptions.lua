@@ -12,8 +12,8 @@ Options.defaults = {
         hideHelpTips = false,
         hideTargetFrameAuras = false,
         showRaidFrameDebuffsOnPlayerFrame = false,
-        playerAndTargetFrameOpacityInCombat = 100,
-        playerAndTargetFrameOpacityOutOfCombat = 100,
+        playerTargetAndExtraAbilitiesOpacityInCombat = 100,
+        playerTargetAndExtraAbilitiesOpacityOutOfCombat = 100,
         hideChatTabs = false,
         hideAllSpeechBubbles = false,
         hideChatMenuButton = false,
@@ -83,14 +83,28 @@ function Options.OnInitialize(self)
         profile.minimapPos = profile.minimapButtonAngle
         profile.minimapButtonAngle = nil
     end
+    local sharedOpacity = rawget(profile, "playerTargetAndExtraAbilitiesOpacity")
+    if rawget(profile, "playerTargetAndExtraAbilitiesOpacityInCombat") == nil then
+        profile.playerTargetAndExtraAbilitiesOpacityInCombat = rawget(profile, "playerAndTargetFrameOpacityInCombat")
+            or sharedOpacity
+            or 100
+    end
+    if rawget(profile, "playerTargetAndExtraAbilitiesOpacityOutOfCombat") == nil then
+        profile.playerTargetAndExtraAbilitiesOpacityOutOfCombat = rawget(profile, "playerAndTargetFrameOpacityOutOfCombat")
+            or sharedOpacity
+            or 100
+    end
     if profile.hidePlayerFrameOutOfCombat or profile.hideTargetFrameOutOfCombat then
-        profile.playerAndTargetFrameOpacityOutOfCombat = 0
+        profile.playerTargetAndExtraAbilitiesOpacityOutOfCombat = 0
     end
     profile.fadePlayerAndTargetFramesOutOfCombat = nil
     profile.hidePlayerFrameOutOfCombat = nil
     profile.hideTargetFrameOutOfCombat = nil
     profile.playerFrameOpacityOutOfCombat = nil
     profile.targetFrameOpacityOutOfCombat = nil
+    profile.playerAndTargetFrameOpacityInCombat = nil
+    profile.playerAndTargetFrameOpacityOutOfCombat = nil
+    profile.playerTargetAndExtraAbilitiesOpacity = nil
     profile.hideBackpackButton = nil
     profile.hideBuffFrame = nil
     profile.hideMicroMenuButtons = nil
@@ -317,28 +331,28 @@ function Options.OnInitialize(self)
                             self:ApplyTargetFrameAurasHide()
                         end
                     ),
-                    playerAndTargetFrameOpacityInCombat = rangeOption(
-                        "playerAndTargetFrameOpacityInCombat",
-                        "Player and Target Frame Opacity In Combat",
-                        "Set the player unit frame, player cast bar, and target unit frame opacity in combat from 0% (invisible) to 100% (fully opaque).",
+                    playerTargetAndExtraAbilitiesOpacityInCombat = rangeOption(
+                        "playerTargetAndExtraAbilitiesOpacityInCombat",
+                        "Player, Target, and Extra Abilities Opacity In Combat",
+                        "Set the player unit frame, player cast bar, target unit frame, and Extra Abilities panel opacity in combat from 0% (invisible) to 100% (fully opaque).",
                         3,
                         0,
                         100,
                         1,
                         function()
-                            self:UpdatePlayerAndTargetFrameOpacity()
+                            self:UpdatePlayerTargetAndExtraAbilitiesOpacity()
                         end
                     ),
-                    playerAndTargetFrameOpacityOutOfCombat = rangeOption(
-                        "playerAndTargetFrameOpacityOutOfCombat",
-                        "Player and Target Frame Opacity Out of Combat",
-                        "Set the player unit frame, player cast bar, and target unit frame opacity outside combat from 0% (invisible) to 100% (fully opaque).",
+                    playerTargetAndExtraAbilitiesOpacityOutOfCombat = rangeOption(
+                        "playerTargetAndExtraAbilitiesOpacityOutOfCombat",
+                        "Player, Target, and Extra Abilities Opacity Out of Combat",
+                        "Set the player unit frame, player cast bar, target unit frame, and Extra Abilities panel opacity outside combat from 0% (invisible) to 100% (fully opaque).",
                         4,
                         0,
                         100,
                         1,
                         function()
-                            self:UpdatePlayerAndTargetFrameOpacity()
+                            self:UpdatePlayerTargetAndExtraAbilitiesOpacity()
                         end
                     ),
                     showRaidFrameDebuffsOnPlayerFrame = toggleOption(
@@ -518,9 +532,10 @@ function Options.OnInitialize(self)
                     overlayCooldownManagerOnConsolePort = toggleOption(
                         "overlayCooldownManagerOnConsolePort",
                         "Overlay Cooldown Manager Icons On ConsolePort Action Bar",
-                        "Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, native spell-activation glows, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button.",
+                        "Overlay Blizzard Cooldown Manager tracked buff, essential cooldown, and utility cooldown icons on matching ConsolePort action bar buttons at the same position and size, replacing the original action artwork while preserving ConsolePort button frames, native spell-activation glows, gamepad icons, and matching button opacity. Updates when ConsolePort toggle keys change the action shown on a button. Adds a Clear button to the left of Revert in Advanced Cooldown Settings.",
                         12,
                         function(val)
+                            self.cooldownOverlay.UpdateSettingsButton(self)
                             if val then
                                 self.cooldownOverlay.Apply(self)
                             end
@@ -629,7 +644,7 @@ function Options.OnInitialize(self)
                         order = 17,
                         width = "full",
                         func = function()
-                            self.cooldownOverlay.OpenSettings()
+                            self.cooldownOverlay.OpenSettings(self)
                         end,
                     },
                 },

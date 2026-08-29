@@ -232,12 +232,12 @@ function UITweaks:PLAYER_REGEN_DISABLED()
     if self:ShouldFadeObjectiveTracker() then
         self:FadeOutObjectiveTrackerIfNeeded()
     end
-    self:UpdatePlayerAndTargetFrameOpacity(true)
+    self:UpdatePlayerTargetAndExtraAbilitiesOpacity(true)
     if self.minimapSpeedZoomTicker then self:UpdateMinimapZoomForPlayerSpeed() end
 end
 
 function UITweaks:PLAYER_REGEN_ENABLED()
-    self:UpdatePlayerAndTargetFrameOpacity()
+    self:UpdatePlayerTargetAndExtraAbilitiesOpacity()
     if self.minimapSpeedZoomTicker then self:UpdateMinimapZoomForPlayerSpeed() end
     if self:ShouldFadeObjectiveTracker() then self:FadeInObjectiveTrackerIfNeeded(true) end
     if self.partyAndRaidFrameScalePending then self:ApplyPartyAndRaidFrameScale() end
@@ -335,7 +335,7 @@ function UITweaks:PLAYER_LOGOUT()
 end
 
 function UITweaks:PLAYER_TARGET_CHANGED()
-    self:UpdatePlayerAndTargetFrameOpacity()
+    self:UpdatePlayerTargetAndExtraAbilitiesOpacity()
 end
 
 function UITweaks:UNIT_AURA(_, unit)
@@ -648,11 +648,11 @@ function UITweaks:UpdateObjectiveTrackerState()
     end
 end
 
-function UITweaks:GetPlayerAndTargetFrameAlpha(forceInCombat)
+function UITweaks:GetPlayerTargetAndExtraAbilitiesAlpha(forceInCombat)
     local inCombat = forceInCombat or (InCombatLockdown and InCombatLockdown())
     local opacityKey = inCombat
-        and "playerAndTargetFrameOpacityInCombat"
-        or "playerAndTargetFrameOpacityOutOfCombat"
+        and "playerTargetAndExtraAbilitiesOpacityInCombat"
+        or "playerTargetAndExtraAbilitiesOpacityOutOfCombat"
     return (tonumber(self.db.profile[opacityKey]) or 100) / 100
 end
 
@@ -678,14 +678,14 @@ function UITweaks:UpdatePlayerCastingBarFadeAnimationAlpha(frame, alpha)
     end
 end
 
-function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
-    local alpha = self:GetPlayerAndTargetFrameAlpha(forceInCombat)
+function UITweaks:UpdatePlayerTargetAndExtraAbilitiesOpacity(forceInCombat)
+    local alpha = self:GetPlayerTargetAndExtraAbilitiesAlpha(forceInCombat)
     local playerCastingBar = _G.PlayerCastingBarFrame
 
     if playerCastingBar and not self.playerCastingBarOpacityHooked then
         -- Blizzard restores the cast bar to full alpha whenever a cast starts.
         hooksecurefunc(playerCastingBar, "ApplyAlpha", function(frame, blizzardAlpha)
-            local effectiveAlpha = blizzardAlpha * UITweaks:GetPlayerAndTargetFrameAlpha()
+            local effectiveAlpha = blizzardAlpha * UITweaks:GetPlayerTargetAndExtraAbilitiesAlpha()
             frame:SetAlpha(effectiveAlpha)
             UITweaks:UpdatePlayerCastingBarFadeAnimationAlpha(frame, effectiveAlpha)
             if frame.additionalFadeWidgets then
@@ -703,6 +703,7 @@ function UITweaks:UpdatePlayerAndTargetFrameOpacity(forceInCombat)
         self:UpdatePlayerCastingBarFadeAnimationAlpha(playerCastingBar, alpha)
     end
     if _G.TargetFrame then _G.TargetFrame:SetAlpha(alpha) end
+    if _G.ExtraAbilityContainer then _G.ExtraAbilityContainer:SetAlpha(alpha) end
 end
 
 function UITweaks:ApplyTargetFrameAurasHide()
@@ -1736,7 +1737,7 @@ function UITweaks:RestoreSkyridingBarLayout()
 end
 
 function UITweaks:ApplyVisibilityState()
-    self:UpdatePlayerAndTargetFrameOpacity()
+    self:UpdatePlayerTargetAndExtraAbilitiesOpacity()
     self:UpdateChatTabsVisibility()
     self:UpdateChatControlButtonsVisibility()
     self:UpdateConsolePortTempAbilityFrameVisibility()
