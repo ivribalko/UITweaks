@@ -243,10 +243,6 @@ function Debug.ShowBlockedActionDebugCopyDialog(self)
         end
     end)
 
-    local defaultChatFrame = _G["DEFAULT_CHAT_FRAME"]
-    if defaultChatFrame and defaultChatFrame.AddMessage then
-        defaultChatFrame:AddMessage(string.format("UITweaks: debug text prepared (%d chars).", string.len(debugText)))
-    end
 end
 
 function Debug.EnsureBlockedActionCounterFrame(self)
