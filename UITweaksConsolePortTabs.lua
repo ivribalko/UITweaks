@@ -8,10 +8,28 @@ local tabOverlays = setmetatable({}, { __mode = "k" })
 local cycleSelections = setmetatable({}, { __mode = "k" })
 local pressedShoulders = {}
 local iconCallbackSource
+local propagationResetFrame = CreateFrame("Frame")
 
 if addonTable then
     addonTable.ConsolePortTabs = ConsolePortTabs
 end
+
+local function setKeyboardPropagation(frame, propagate)
+    if frame:GetPropagateKeyboardInput() == propagate then return true end
+    if InCombatLockdown() then return false end
+
+    frame:SetPropagateKeyboardInput(propagate)
+    return true
+end
+
+propagationResetFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+propagationResetFrame:SetScript("OnEvent", function()
+    pressedShoulders.PADLSHOULDER = nil
+    pressedShoulders.PADRSHOULDER = nil
+    for _, inputFrame in pairs(hookedFrames) do
+        setKeyboardPropagation(inputFrame, true)
+    end
+end)
 
 local function getDirection(button)
     if button == "PADLSHOULDER" then
@@ -328,29 +346,33 @@ local function hookFrame(addon, consolePort, data, frame, changeTab, getTabs)
     inputFrame:SetAttribute("nodeignore", true)
     inputFrame:SetPropagateKeyboardInput(true)
     inputFrame:EnableGamePadButton(true)
+    RegisterStateDriver(inputFrame, "visibility", "[combat] hide; show")
     inputFrame:SetScript("OnGamePadButtonDown", function(self, button)
         local direction = getDirection(button)
         local shouldHandle = addon.db.profile.addTabControlsToConsolePort
+            and not InCombatLockdown()
             and consolePort:IsCursorActive()
             and frame:IsVisible()
             and direction
         if not shouldHandle then
-            self:SetPropagateKeyboardInput(true)
+            setKeyboardPropagation(self, true)
             return
         end
 
-        self:SetPropagateKeyboardInput(false)
-        if pressedShoulders[button] then return end
+        if pressedShoulders[button] then
+            setKeyboardPropagation(self, false)
+            return
+        end
 
         pressedShoulders[button] = true
         watchTabs(overlayRecords[frame])
         local handled = changeTab(frame, direction)
-        if not handled then self:SetPropagateKeyboardInput(true) end
+        setKeyboardPropagation(self, not handled)
         if handled then scheduleOverlayRefresh(overlayRecords[frame]) end
     end)
     inputFrame:SetScript("OnGamePadButtonUp", function(self, button)
         if getDirection(button) then pressedShoulders[button] = nil end
-        self:SetPropagateKeyboardInput(true)
+        setKeyboardPropagation(self, true)
     end)
     frame:HookScript("OnHide", function()
         cycleSelections[frame] = nil
