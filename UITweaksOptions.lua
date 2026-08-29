@@ -411,7 +411,7 @@ function Options.OnInitialize(self)
                     addTabControlsToConsolePort = toggleOption(
                         "addTabControlsToConsolePort",
                         "Add Tab Controls To ConsolePort",
-                        "Use L1 and R1 to switch between tabs in the Adventure Guide, Auction House, Bank, Character, Dungeons & Raids, Map, Talents and Spellbook, and Warband Collections windows when using ConsolePort, with controller button icons shown on the tab controls.",
+                        "Use L1 and R1 to switch between tabs in the Adventure Guide, Auction House, Bank, Character, Dungeons & Raids, Map, Talents and Spellbook, Transmogrify, and Warband Collections windows when using ConsolePort, with controller button icons shown on the tab controls.",
                         5,
                         function(val)
                             if val then

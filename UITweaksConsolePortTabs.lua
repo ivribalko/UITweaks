@@ -224,6 +224,17 @@ local function getPlayerSpellsTabs(frame, includeUnavailable)
     return tabs
 end
 
+local function getTransmogrifyTabs(frame, includeUnavailable)
+    local tabs = {}
+    for _, tabID in ipairs({ frame.itemsTabID, frame.setsTabID, frame.custmSetsTabID, frame.situationsTabID }) do
+        local tab = tabID and frame:GetTabButton(tabID)
+        if tab and (includeUnavailable or tab:IsShown()) then
+            table.insert(tabs, tab)
+        end
+    end
+    return tabs
+end
+
 local function getCollectionsTabs(frame, includeUnavailable)
     local tabs = {}
     for index = 1, 6 do
@@ -513,6 +524,18 @@ local function changePlayerSpellsTab(frame, direction)
     end)
 end
 
+local function changeTransmogrifyTab(frame, direction)
+    local tabs = getTransmogrifyTabs(frame)
+    local tabIDs = {}
+    for _, tab in ipairs(tabs) do
+        table.insert(tabIDs, tab:GetTabID())
+    end
+
+    return selectFrameAdjacent(frame, frame:GetTab(), tabIDs, direction, function(tabID)
+        frame:SetTab(tabID)
+    end)
+end
+
 local function changeCollectionsTab(frame, direction)
     return changeButtonTabs(frame, direction, getCollectionsTabs)
 end
@@ -545,6 +568,11 @@ function ConsolePortTabs.Apply(addon)
     local playerSpells = _G.PlayerSpellsFrame
     if playerSpells and playerSpells.IsTabAvailable and playerSpells.GetTabButton then
         applied = hookFrame(addon, consolePort, data, playerSpells, changePlayerSpellsTab, getPlayerSpellsTabs) or applied
+    end
+
+    local transmogrify = _G.TransmogFrame and _G.TransmogFrame.WardrobeCollection
+    if transmogrify and transmogrify.GetTab and transmogrify.GetTabButton then
+        applied = hookFrame(addon, consolePort, data, transmogrify, changeTransmogrifyTab, getTransmogrifyTabs) or applied
     end
 
     applied = hookFrame(addon, consolePort, data, _G.CollectionsJournal, changeCollectionsTab, getCollectionsTabs) or applied

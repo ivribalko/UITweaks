@@ -208,6 +208,7 @@ function UITweaks:ADDON_LOADED(_, addonName)
         or addonName == "Blizzard_GroupFinder"
         or addonName == "Blizzard_WorldMap"
         or addonName == "Blizzard_PlayerSpells"
+        or addonName == "Blizzard_Transmog"
         or addonName == "Blizzard_Collections"
     then
         self.consolePortTabs.Apply(self)
