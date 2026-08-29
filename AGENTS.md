@@ -38,7 +38,6 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 ### ConsolePort
 
 - Add Leave Instance Group To ConsolePort Menu Ring — Add a separate Leave Instance Group button next to ConsolePort's dungeon teleport button in the menu ring. The button is hidden while you are not in a party or when ConsolePort's regular Leave Party action is already shown.
-- Add Mythic+ Finder To ConsolePort Menu Ring — Add a Mythic+ Finder button next to ConsolePort's Group Finder button in the menu ring. It opens the Premade Groups dungeon search directly.
 - Add Oil To Main-Hand Shortcut To ConsolePort Inventory Options — Add an Apply to Main-Hand Weapon shortcut to ConsolePort's Triangle options for weapon oil items in inventory.
 - Add Sound Toggle To ConsolePort Menu Ring — Add a Sound button to ConsolePort's menu ring that toggles Settings -> Game -> Audio -> Enable Sound and shows whether sound is enabled or disabled.
 - Add Tab Controls To ConsolePort — Use L1 and R1 to switch between tabs in the Adventure Guide, Auction House, Bank, Character, Dungeons & Raids, Map, Talents and Spellbook, and Warband Collections windows when using ConsolePort, with controller button icons shown on the tab controls.

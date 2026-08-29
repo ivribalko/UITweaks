@@ -36,7 +36,6 @@ Options.defaults = {
         chatFontOverrideEnabled = false,
         chatFontSize = 16,
         addLeaveInstanceGroupToConsolePortMenu = false,
-        addMythicPlusFinderToConsolePortMenu = false,
         addOilToMainHandConsolePortShortcut = false,
         addSoundToggleToConsolePortMenu = false,
         addTabControlsToConsolePort = false,
@@ -377,17 +376,6 @@ function Options.OnInitialize(self)
                         "Add Leave Instance Group To ConsolePort Menu Ring",
                         "Add a separate Leave Instance Group button next to ConsolePort's dungeon teleport button in the menu ring. The button is hidden while you are not in a party or when ConsolePort's regular Leave Party action is already shown.",
                         1,
-                        function(val)
-                            if val then
-                                self.consolePortMenu.Apply(self)
-                            end
-                        end
-                    ),
-                    addMythicPlusFinderToConsolePortMenu = toggleOption(
-                        "addMythicPlusFinderToConsolePortMenu",
-                        "Add Mythic+ Finder To ConsolePort Menu Ring",
-                        "Add a Mythic+ Finder button next to ConsolePort's Group Finder button in the menu ring. It opens the Premade Groups dungeon search directly.",
-                        2,
                         function(val)
                             if val then
                                 self.consolePortMenu.Apply(self)

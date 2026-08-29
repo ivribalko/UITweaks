@@ -1,7 +1,5 @@
 local addonName, addonTable = ...
 local ConsolePortMenu = {}
-local MYTHIC_PLUS_CATEGORY_ID = 2
-local mythicPlusFinderWatcher
 
 if addonTable then
     addonTable.ConsolePortMenu = ConsolePortMenu
@@ -40,11 +38,6 @@ local function enableDropdownGamepadClick(dropdown)
     end)
 end
 
-local function enableGroupFinderFilterGamepadClick()
-    local panel = LFGListFrame and LFGListFrame.SearchPanel
-    enableDropdownGamepadClick(panel and panel.FilterButton)
-end
-
 local function isModernDropdown(frame)
     if not frame then return false end
     if IsDropdownButtonIntrinsic then
@@ -76,46 +69,6 @@ local function enableAllDropdownGamepadClicks(addon)
     end
 end
 
-local function tryOpenMythicPlusFinder()
-    if not LFGListFrame or C_LFGList.HasActiveEntryInfo() then return true end
-    local filters = bit.bor(Enum.LFGListFilter.PvE, Enum.LFGListFilter.Recommended)
-    if #C_LFGList.GetAvailableActivities(MYTHIC_PLUS_CATEGORY_ID, nil, filters) == 0 then
-        return false
-    end
-
-    LFGListFrame_SetBaseFilters(LFGListFrame, Enum.LFGListFilter.PvE)
-    local panel = LFGListFrame.CategorySelection
-    LFGListCategorySelection_SelectCategory(panel, MYTHIC_PLUS_CATEGORY_ID, 0)
-    LFGListCategorySelection_StartFindGroup(panel)
-    return true
-end
-
-local function waitToOpenMythicPlusFinder()
-    if not mythicPlusFinderWatcher then
-        mythicPlusFinderWatcher = CreateFrame("Frame")
-        mythicPlusFinderWatcher:SetScript("OnEvent", function(watcher)
-            if tryOpenMythicPlusFinder() then
-                watcher:UnregisterEvent("LFG_LIST_AVAILABILITY_UPDATE")
-            end
-        end)
-    end
-    mythicPlusFinderWatcher:RegisterEvent("LFG_LIST_AVAILABILITY_UPDATE")
-end
-
-local function openMythicPlusFinder()
-    if not isAddOnLoaded("Blizzard_GroupFinder") and C_AddOns and C_AddOns.LoadAddOn then
-        C_AddOns.LoadAddOn("Blizzard_GroupFinder")
-    end
-    if not PVEFrame_ShowFrame or not LFGListPVEStub or not LFGListFrame then return end
-
-    enableGroupFinderFilterGamepadClick()
-    PVEFrame_ShowFrame("GroupFinderFrame", LFGListPVEStub)
-    C_LFGList.RequestAvailableActivities()
-    if not tryOpenMythicPlusFinder() then
-        waitToOpenMythicPlusFinder()
-    end
-end
-
 local function createLeaveInstanceGroupButtonData()
     return {
         UITweaksLeaveInstanceGroup = true,
@@ -125,15 +78,6 @@ local function createLeaveInstanceGroupButtonData()
         OnShow = function(button)
             button:SetEnabled(canLeaveInstanceGroup())
         end,
-    }
-end
-
-local function createMythicPlusFinderButtonData()
-    return {
-        UITweaksMythicPlusFinder = true,
-        text = "Mythic+ Finder",
-        img = "Interface\\LFGFRAME\\UI-LFG-PORTRAIT",
-        click = openMythicPlusFinder,
     }
 end
 
@@ -174,17 +118,6 @@ local function findScenarioButtonIndex(selector)
     end
 end
 
-local function findGroupFinderButtonIndex(selector)
-    for button in selector:EnumerateActive() do
-        if (DUNGEONS_BUTTON and button.text == DUNGEONS_BUTTON)
-            or (LFDMicroButton and button.ref == LFDMicroButton)
-            or (LFGMicroButton and button.ref == LFGMicroButton)
-        then
-            return button:GetID()
-        end
-    end
-end
-
 local function findLeaveInstanceGroupButton(selector)
     for button in selector:EnumerateActive() do
         if button.UITweaksLeaveInstanceGroup then
@@ -217,14 +150,6 @@ local function isLeavePartyButtonShown(selector)
         end
     end
     return false
-end
-
-local function findMythicPlusFinderButton(selector)
-    for button in selector:EnumerateActive() do
-        if button.UITweaksMythicPlusFinder then
-            return button
-        end
-    end
 end
 
 local function findSoundToggleButton(selector)
@@ -353,13 +278,12 @@ end
 
 function ConsolePortMenu.Apply(addon)
     local addLeaveButton = addon.db.profile.addLeaveInstanceGroupToConsolePortMenu
-    local addMythicPlusButton = addon.db.profile.addMythicPlusFinderToConsolePortMenu
     local addSoundToggleButton = addon.db.profile.addSoundToggleToConsolePortMenu
     local fixDropdowns = addon.db.profile.fixDropdownsForConsolePort
     if fixDropdowns then
         enableAllDropdownGamepadClicks(addon)
     end
-    if not addLeaveButton and not addMythicPlusButton and not addSoundToggleButton then return false end
+    if not addLeaveButton and not addSoundToggleButton then return false end
     if addLeaveButton then
         ensureGroupWatcher(addon)
     end
@@ -395,20 +319,6 @@ function ConsolePortMenu.Apply(addon)
             createLeaveInstanceGroupButtonData()
         )
         if not leaveInstanceGroupButton then return false end
-        updateSelectorSize(selector, buttonCount)
-    end
-
-    local mythicPlusFinderButton = findMythicPlusFinderButton(selector)
-    if addMythicPlusButton and not mythicPlusFinderButton then
-        local groupFinderIndex = findGroupFinderButtonIndex(selector)
-        if not groupFinderIndex then return false end
-        local buttonCount
-        mythicPlusFinderButton, buttonCount = addButtonToInitializedSelector(
-            selector,
-            groupFinderIndex + 1,
-            createMythicPlusFinderButtonData()
-        )
-        if not mythicPlusFinderButton then return false end
         updateSelectorSize(selector, buttonCount)
     end
 
