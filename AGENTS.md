@@ -41,6 +41,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Add Oil To Main-Hand Shortcut To ConsolePort Inventory Options — Add an Apply to Main-Hand Weapon shortcut to ConsolePort's Triangle options for weapon oil items in inventory.
 - Add Sound Toggle To ConsolePort Menu Ring — Add a Sound button to ConsolePort's menu ring that toggles Settings -> Game -> Audio -> Enable Sound and shows whether sound is enabled or disabled.
 - Add Tab Controls To ConsolePort — Use L1 and R1 to switch between tabs in the Adventure Guide, Auction House, Bank, Character, Dungeons & Raids, Map, Talents and Spellbook, Transmogrify, and Warband Collections windows when using ConsolePort, with controller button icons shown on the tab controls.
+  - Note: Bank tab controls can cause Blizzard's protected bank tab purchase action to be blocked. Disable this setting and `/reload` before purchasing a bank tab.
 - Close All Inventory Bags With ConsolePort Cancel — Close all open inventory bags at once when pressing ConsolePort's cancel button (Circle by default) while its cursor is focused anywhere in an inventory bag.
 - Disable Immersion Dialog List Item Scaling — Prevent Immersion's active dialogue list items from growing when hovered or selected.
 - Fix Dropdowns For ConsolePort — Allow ConsolePort's controller X button to open modern dropdown menus throughout the UI, such as the Raid Finder raid selector and Premade Groups filter.
@@ -70,6 +71,7 @@ After changing any setting, use the **Reload** button (or run `/reload`).
 - Remember Start a Group Requirements — Remember the minimum item level and playstyle last selected in Dungeon and Raid Start a Group forms, plus the minimum Mythic+ rating selected for Dungeons.
 - Share Skyriding Action Bar Skills For All Characters — Warning: This will overwrite your Skyriding action bar skills layout. When enabled, Stock UI Tweaks saves the Skyriding action bar (bonus bar 5) after you dismount (actual mount, not shapeshift), then restores that layout on login for any character. It will not overwrite slots using empty or unavailable skills.
 - Show Mob Aggro Radius On Mouse Over Out Of Combat — Show the estimated distance remaining before entering a hostile mob's aggro radius in its tooltip when you mouse over it while out of combat.
+- Show XP Progress On Player Frame — Show the current experience percentage toward the next level between the player name and level. Nothing is shown at maximum level.
 
 ## Settings Rules
 
@@ -89,7 +91,7 @@ Exceptions:
 ## Dev Notes
 
 - Addon files live in the repository root.
-- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksAggroRadius.lua` (mouseover mob aggro radius estimates), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksGroupFinder.lua` (Dungeon and Raid listing requirement memory), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortBags.lua` (ConsolePort inventory bag cancel behavior), `UITweaksConsolePortTabs.lua` (ConsolePort tab controls), `UITweaksConsolePortMovement.lua` (ConsolePort casting camera compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring and dropdown compatibility), `UITweaksConsolePortItemMenu.lua` (ConsolePort inventory item options), `UITweaksPlayerFrameDebuffs.lua` (raid-frame debuffs over the player frame), `UITweaksDebug.lua` (debug tools/UI).
+- Main addon files are split as: `UITweaks.lua` (core), `UITweaksOptions.lua` (defaults + options), `UITweaksAggroRadius.lua` (mouseover mob aggro radius estimates), `UITweaksConsumables.lua` (inventory consumable highlights), `UITweaksCooldownOverlay.lua` (Cooldown Manager and ConsolePort action button overlay), `UITweaksGroupFinder.lua` (Dungeon and Raid listing requirement memory), `UITweaksImmersion.lua` (Immersion controller compatibility), `UITweaksConsolePortBags.lua` (ConsolePort inventory bag cancel behavior), `UITweaksConsolePortTabs.lua` (ConsolePort tab controls), `UITweaksConsolePortMovement.lua` (ConsolePort casting camera compatibility), `UITweaksConsolePortMenu.lua` (ConsolePort menu ring and dropdown compatibility), `UITweaksConsolePortItemMenu.lua` (ConsolePort inventory item options), `UITweaksPlayerFrameDebuffs.lua` (raid-frame debuffs over the player frame), `UITweaksPlayerFrameXP.lua` (XP progress on the player frame), `UITweaksDebug.lua` (debug tools/UI).
 - Add new Lua files in the repository root and list them in `UITweaks.toc`.
 - No build step. Install by copying/symlinking the `UITweaks` folder into WoW AddOns.
 - Example install (macOS): `ln -s "$PWD" /Applications/World\ of\ Warcraft/_retail_/Interface/AddOns/`

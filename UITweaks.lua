@@ -38,6 +38,7 @@ function UITweaks:OnInitialize()
     self.groupFinder = type(require) == "function" and require("UITweaksGroupFinder") or addonTable.GroupFinder
     self.aggroRadius = type(require) == "function" and require("UITweaksAggroRadius") or addonTable.AggroRadius
     self.playerFrameDebuffs = type(require) == "function" and require("UITweaksPlayerFrameDebuffs") or addonTable.PlayerFrameDebuffs
+    self.playerFrameXP = type(require) == "function" and require("UITweaksPlayerFrameXP") or addonTable.PlayerFrameXP
     self.debug = type(require) == "function" and require("UITweaksDebug") or addonTable.Debug
     self.db = LibStub("AceDB-3.0"):New("UITweaksDB", options.defaults, true)
     options.OnInitialize(self)
@@ -67,6 +68,7 @@ function UITweaks:OnEnable()
     self.groupFinder.Apply(self)
     self.aggroRadius.Apply(self)
     self.playerFrameDebuffs.Apply(self)
+    self.playerFrameXP.Apply(self)
     self.debug.OnEnable(self)
     self:ApplyVisibilityState()
     self:UpdateObjectiveTrackerState()

@@ -12,6 +12,7 @@ Options.defaults = {
         hideHelpTips = false,
         hideTargetFrameAuras = false,
         showRaidFrameDebuffsOnPlayerFrame = false,
+        showXPProgressOnPlayerFrame = false,
         playerTargetAndExtraAbilitiesOpacityInCombat = 100,
         playerTargetAndExtraAbilitiesOpacityOutOfCombat = 100,
         hideChatTabs = false,
@@ -423,6 +424,12 @@ function Options.OnInitialize(self)
                                 and not (IsAddOnLoaded and IsAddOnLoaded("ConsolePort"))
                         end
                     ),
+                    addTabControlsToConsolePortNote = {
+                        type = "description",
+                        name = "Note: Bank tab controls can cause Blizzard's protected bank tab purchase action to be blocked. Disable this setting and /reload before purchasing a bank tab.",
+                        order = 5.1,
+                        width = "full",
+                    },
                     closeAllInventoryBagsWithConsolePortCancel = toggleOption(
                         "closeAllInventoryBagsWithConsolePortCancel",
                         "Close All Inventory Bags With ConsolePort Cancel",
@@ -768,6 +775,15 @@ function Options.OnInitialize(self)
                         13,
                         function(val)
                             if val then self.aggroRadius.Apply(self) end
+                        end
+                    ),
+                    showXPProgressOnPlayerFrame = toggleOption(
+                        "showXPProgressOnPlayerFrame",
+                        "Show XP Progress On Player Frame",
+                        "Show the current experience percentage toward the next level between the player name and level. Nothing is shown at maximum level.",
+                        14,
+                        function(val)
+                            if val then self.playerFrameXP.Apply(self) end
                         end
                     ),
                 },

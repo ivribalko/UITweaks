@@ -17,6 +17,7 @@ Stock UI Tweaks is an Ace3 addon organized around a small core and focused featu
 - `UITweaksConsolePortItemMenu.lua` adds optional commands to ConsolePort's inventory item options.
 - `UITweaksGroupFinder.lua` remembers and restores Dungeon and Raid listing requirements in Blizzard's Start a Group form.
 - `UITweaksPlayerFrameDebuffs.lua` places Blizzard's secure raid-frame debuff display over the player health bar.
+- `UITweaksPlayerFrameXP.lua` displays progress toward the next level in the player-frame header.
 - `UITweaksDebug.lua` contains alpha-only diagnostics and debugging UI.
 - `Libs/` contains embedded Ace3 dependencies.
 - `Textures/` and the root icon files contain addon artwork.
@@ -46,5 +47,7 @@ The ConsolePort inventory item module extends ConsolePort's Triangle options in 
 The Group Finder module hooks Blizzard's Dungeon and Raid entry-creation form after it loads. It saves each category's item-level and playstyle choices independently, also retaining the Dungeon Mythic+ rating, and restores them after Blizzard clears and prepares a new listing form. Editing an active listing does not replace the remembered choices.
 
 The player-frame debuff module registers a secure Blizzard private-aura container for the player unit so Blizzard renders and updates the raid-frame debuff icons and debuff-type gradient spanning the player name, health bar, and mana bar, including for restricted encounter auras. The labeled Combat settings preview is separate because WoW does not expose secret combat-aura names to addon code.
+
+The player-frame XP module adds a compact percentage between the player name and level. When Blizzard replaces the native level with an instance role icon, the module includes the level beside the percentage without removing the role icon. It updates from XP and level events and remains hidden at effective maximum level, while XP gain is disabled, and while the player frame displays vehicle art.
 
 The minimap shortcut registers through LibDataBroker and LibDBIcon when another enabled addon provides those libraries, allowing minimap managers to discover it through standard callbacks. A standalone button provides the same shortcut when those libraries are unavailable.

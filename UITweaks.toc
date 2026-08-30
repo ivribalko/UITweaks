@@ -33,3 +33,4 @@ UITweaksConsolePortItemMenu.lua
 UITweaksGroupFinder.lua
 UITweaksAggroRadius.lua
 UITweaksPlayerFrameDebuffs.lua
+UITweaksPlayerFrameXP.lua
