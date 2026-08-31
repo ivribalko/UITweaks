@@ -89,6 +89,26 @@ local function addPrivateAuraAnchor(container)
     })
 end
 
+local function hookPrivateAuraTooltipLifecycle()
+    local tooltip = _G.PrivateAurasTooltip
+    if not tooltip or tooltip.UITweaksLifecycleHooked then return end
+
+    tooltip:HookScript("OnUpdate", function(currentTooltip)
+        local owner = currentTooltip:GetOwner()
+        if not owner then
+            currentTooltip:Hide()
+            return
+        end
+
+        for _, focus in ipairs(GetMouseFoci()) do
+            if focus == owner then return end
+        end
+
+        currentTooltip:Hide()
+    end)
+    tooltip.UITweaksLifecycleHooked = true
+end
+
 local function createVisualOverlay(healthBar, frameLevel)
     local overlay = CreateFrame("Frame", nil, _G.PlayerFrame)
     anchorToPlayerFrameContent(overlay, healthBar)
@@ -180,6 +200,7 @@ function PlayerFrameDebuffs.Apply(self)
     overlayContainer:SetFrameLevel(healthBar:GetFrameLevel() + 10)
     setContainerAttributes(overlayContainer, 0, 1, false, true)
     addPrivateAuraAnchor(overlayContainer)
+    C_Timer.After(0, hookPrivateAuraTooltipLifecycle)
 
     self.playerFrameRaidDebuffsContainer = container
     self.playerFrameRaidDebuffsOverlayContainer = overlayContainer
